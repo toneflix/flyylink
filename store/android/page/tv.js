@@ -49,7 +49,7 @@ class TvApp {
       <div class="body"><div class="name">${r.title}</div><div class="detail">${r.detail}</div></div>`));
 
     const settings = [
-      ['tv', 'Phone remote', 'On', true],
+      ['tv', 'Remote', 'On', true],
       ['bell', 'Notification pop-ups', 'On', true],
       ['download', 'Open right away', 'On', true],
       ['music', "Show what's playing", 'Turn on', false],

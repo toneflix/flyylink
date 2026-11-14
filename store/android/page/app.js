@@ -57,7 +57,7 @@ class AndroidApp {
   }
 
   carousel(names) {
-    const text = 'Syncing with all your computers';
+    const text = 'Syncing with all your devices';
 
     return `<div class="carousel">${this.hero(names[0], text)}${this.hero(names[1], text, 'peek')}</div>`;
   }
@@ -119,7 +119,7 @@ class AndroidApp {
 
     return this.sheet(`<div class="pair">
       ${this.laptop(150)}
-      <div><div class="title">Pair with ${name}?</div><div class="hint">Same code on your computer?</div></div>
+      <div><div class="title">Pair with ${name}?</div><div class="hint">Same code on both screens?</div></div>
       <div class="digits">${digits}</div>
       <div class="buttons"><div class="filled">Pair</div><div class="outlined">Not now</div></div>
     </div>`);
@@ -148,6 +148,23 @@ class AndroidApp {
       <div class="offer"><span class="chip">${this.icon('image')}</span><div><div class="name">${title}</div><div class="detail">${detail}</div></div></div>
       <div class="buttons"><div class="outlined">Decline</div><div class="filled">Accept</div></div>
     </div>`);
+  }
+
+  /** The TV remote from ui/Remote.kt: what's playing, the D-pad, Back, Home and Options, volume and typing. */
+  remote(name, { title, artist }) {
+    const arrows = [['chevron-up', 'up'], ['chevron-down', 'down'], ['chevron-left', 'left'], ['chevron-right', 'right']]
+      .map(([icon, side]) => `<span class="arrow ${side}">${this.icon(icon)}</span>`).join('');
+    const key = (icon, label, solid = false) => `<div class="key"><span class="round ${solid ? 'solid' : ''}">${this.icon(icon)}</span><span>${label}</span></div>`;
+
+    return `<div class="remote">
+      <div class="top">${this.icon('x')}<div><div class="name">${name}</div><div class="state"><span class="dot"></span>Connected</div></div></div>
+      <div class="playing"><span class="art">${this.icon('music')}</span><div class="body"><div class="title">${title}</div><div class="artist">${artist}</div></div>${this.icon('skip-back')}${this.icon('pause')}${this.icon('skip-forward')}</div>
+      <div class="modes"><span class="on">Buttons</span><span>Touchpad</span></div>
+      <div class="dpad">${arrows}<span class="ok">OK</span></div>
+      <div class="keys">${key('arrow-left', 'Back')}${key('house', 'Home')}${key('ellipsis', 'Options')}</div>
+      <div class="keys"><div class="key"><span class="volume">${this.icon('volume-1')}${this.icon('volume-x')}${this.icon('volume-2')}</span><span>Volume</span></div>${key('play', 'Play', true)}</div>
+      <div class="type">${this.icon('keyboard')}<span>Type on TV</span>${this.icon('corner-down-left')}</div>
+    </div>`;
   }
 
   toast(text) {

@@ -226,6 +226,11 @@ const SCREENS = [
       app.pairSheet('Work PC', '4F7A2C91'),
     ),
   },
+  {
+    id: '08-tv-remote',
+    lines: ['Your phone is', 'the TV remote'],
+    screen: (app) => app.screen(app.remote('Living room TV', { title: 'Midnight City', artist: 'M83' })),
+  },
 ];
 
 const SHOTS = SCREENS.map((spec) => new StoreShot(spec));
