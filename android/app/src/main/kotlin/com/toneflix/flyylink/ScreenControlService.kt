@@ -199,6 +199,20 @@ class ScreenControlService : AccessibilityService() {
             return enabled.split(':').any { it.equals(me, ignoreCase = true) }
         }
 
-        fun settingsIntent() = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        /**
+         * Opens Accessibility settings. Some TVs, such as Hisense, don't answer the standard link, so the Android TV
+         * settings app's Accessibility screen comes first, and plain Settings is the last resort.
+         */
+        fun openSettings(context: Context): Boolean = settingsScreens.any { screen ->
+            screen.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            screen.resolveActivity(context.packageManager) != null && runCatching { context.startActivity(screen) }.isSuccess
+        }
+
+        private val settingsScreens: List<Intent>
+            get() = listOf(
+                Intent().setComponent(ComponentName("com.android.tv.settings", "com.android.tv.settings.accessibility.AccessibilityActivity")),
+                Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS),
+                Intent(Settings.ACTION_SETTINGS),
+            )
     }
 }

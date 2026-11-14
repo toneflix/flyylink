@@ -616,7 +616,7 @@ private fun SetupCards() {
         ControlDisclosureSheet(
             onAccept = {
                 controlDisclosure = false
-                context.startActivity(ScreenControlService.settingsIntent())
+                ScreenControlService.openSettings(context)
             },
             onDecline = { controlDisclosure = false },
         )
