@@ -19,6 +19,7 @@ public partial class App : Application
     private PhotosWindow? photos;
     private ScreenWindow? screen;
     private RemoteDesktopWindow? desktop;
+    private TvRemoteWindow? remote;
 
     public App()
     {
@@ -60,6 +61,7 @@ public partial class App : Application
         model.DialerRequested += () => (messages ??= new MessagesWindow(model)).Present(dial: true);
         model.MirrorRequested += () => (screen ??= new ScreenWindow(model.Mirror)).Present();
         model.DesktopRequested += () => (desktop ??= new RemoteDesktopWindow(model.Desktop)).Present();
+        model.RemoteRequested += id => (remote ??= new TvRemoteWindow(model)).Present(id);
         model.DesktopPicture += bitmap =>
         {
             if (desktop is null) bitmap.Dispose();

@@ -456,6 +456,14 @@ public sealed partial class PanelWindow : Window
         Model.ShowDialer();
     }
 
+    private void Remote_Click(object sender, RoutedEventArgs e)
+    {
+        if (FocusedId is not string id) return;
+
+        Hide();
+        Model.ShowRemote(id);
+    }
+
     private void Mirror_Click(object sender, RoutedEventArgs e)
     {
         if (FocusedId is not string id) return;

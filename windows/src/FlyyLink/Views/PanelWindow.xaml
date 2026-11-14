@@ -403,13 +403,18 @@
                         </Grid>
 
                         <!-- Things to do with a TV -->
-                        <Grid ColumnSpacing="10" Visibility="{x:Bind Model.FocusIsTv, Mode=OneWay}">
+                        <Grid ColumnSpacing="10" RowSpacing="10" Visibility="{x:Bind Model.FocusIsTv, Mode=OneWay}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <views:ActionTile Icon="FileUp" Title="Send file" Click="SendFiles_Click" />
-                            <views:ActionTile Grid.Column="1" Icon="Link" Title="Open link" Subtitle="From your clipboard" Click="OpenLink_Click" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <views:ActionTile Icon="Gamepad2" Title="Remote" Click="Remote_Click" />
+                            <views:ActionTile Grid.Column="1" Icon="FileUp" Title="Send file" Click="SendFiles_Click" />
+                            <views:ActionTile Grid.Row="1" Icon="Link" Title="Open link" Subtitle="From your clipboard" Click="OpenLink_Click" />
                         </Grid>
 
                         <!-- Things to do with another computer -->
