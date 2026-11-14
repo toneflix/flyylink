@@ -6,7 +6,7 @@
 
 <p align="center"><strong>Your Android phone and your computer, finally on speaking terms.</strong></p>
 
-<p align="center">For Android, Mac and Windows. Free on Android. Mac and PC: 14 days free, then pay once.</p>
+<p align="center">For Android, Mac, Windows and TV. Free on Android and TV. Mac and PC: 14 days free, then pay once.</p>
 
 ---
 
@@ -23,6 +23,7 @@
 - **Clipboard.** Copy on one, paste on the other.
 - **Find your phone.** Ring it, even on silent.
 - **Media and battery.** Play, pause, skip, and check the battery.
+- **TV remote.** Your phone or computer is the remote. Type and point, too.
 - **Play on TV.** Photos, videos and music on your smart TV.
 - **Several devices.** Pair as many phones and computers as you like.
 - **No shared Wi-Fi?** Connects through your phone's hotspot.
@@ -38,13 +39,14 @@ Download from [flyylink.toneflix.net](https://flyylink.toneflix.net/#download), 
 |             | Needs                      | How it installs              |
 | ----------- | -------------------------- | ---------------------------- |
 | **Android** | Android 8.0 or later       | APK, Google Play coming soon |
+| **TV**      | Google TV or Fire TV       | Same APK as Android          |
 | **Mac**     | macOS 13 Ventura or later  | Signed app, updates itself   |
 | **Windows** | Windows 10 (1809) or later | Installer, updates itself    |
 
 ### Setting up
 
-1. Put your phone and computer on the same Wi-Fi, or join your phone's hotspot.
-2. Open FlyyLink on both.
+1. Put your devices on the same Wi-Fi, or join your phone's hotspot.
+2. Open FlyyLink on each.
 3. Tap **Pair** and check the code matches.
 4. On the phone, allow notification access and any extras you want.
 

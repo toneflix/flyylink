@@ -3,6 +3,7 @@ import { site } from "./site";
 import {
   Bell,
   MapPin,
+  Cast,
   Clipboard,
   FolderUp,
   Images,
@@ -13,6 +14,7 @@ import {
   Phone,
   Radar,
   Smartphone,
+  Tv,
   Wifi,
 } from "lucide-react";
 
@@ -74,6 +76,16 @@ export const features: Feature[] = [
     body: "Play, pause, skip, and check the battery.",
   },
   {
+    icon: Tv,
+    title: "TV remote",
+    body: "Your phone or computer is the remote. Type and point, too.",
+  },
+  {
+    icon: Cast,
+    title: "Play on TV",
+    body: "Photos, videos and music on your smart TV.",
+  },
+  {
     icon: Smartphone,
     title: "Several phones",
     body: "Pair as many as you like.",
@@ -91,13 +103,13 @@ export const features: Feature[] = [
 ];
 
 export const platforms = [
-  { name: "Android", slug: "android", needs: "Android 8.0 or later", detail: "Free" },
+  { name: "Android", slug: "android", needs: "Android 8.0 or later", detail: "Free on phones, tablets and TVs" },
   { name: "Mac", slug: "mac", needs: "macOS 13 Ventura or later", detail: `${site.trialDays} days free, then pay once` },
   { name: "Windows", slug: "windows", needs: "Windows 10 (1809) or later", detail: `${site.trialDays} days free, then pay once` },
 ];
 
 export const steps = [
-  { title: "Install", body: "Phone and computer." },
+  { title: "Install", body: "Phone, computer or TV." },
   { title: "Same Wi-Fi", body: "Or join your phone's hotspot." },
   { title: "Pair once", body: "Check the code matches." },
 ];
