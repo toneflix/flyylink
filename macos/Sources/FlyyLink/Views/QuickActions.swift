@@ -49,6 +49,9 @@ struct QuickActions: View {
     }
 
     @ViewBuilder private var tvTiles: some View {
+        ActionTile(icon: .gamepad2, title: "Remote") {
+            model.showRemote(device.id)
+        }
         ActionTile(icon: .fileUp, title: "Send file") {
             model.chooseFiles(for: device.id)
         }

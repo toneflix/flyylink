@@ -23,6 +23,7 @@ MAC = [
     "pause", "phone", "phone-off", "play", "radio", "rotate-cw", "screen-share", "settings", "skip-back", "skip-forward",
     "smartphone", "square-pen", "triangle-alert", "unplug", "video", "volume-2", "volume-x", "wifi", "x", "zap",
     "radar", "send",
+    "tv", "house", "arrow-left", "chevron-up", "ellipsis", "volume-1", "delete", "corner-down-left", "gamepad-2",
 ]
 
 ANDROID = [
@@ -40,6 +41,7 @@ WINDOWS = [
     "message-square", "messages-square", "mic", "mic-off", "monitor", "mouse-pointer-2", "music", "pause", "phone", "phone-off", "play",
     "rotate-cw", "screen-share", "search", "settings", "skip-back", "skip-forward", "smartphone", "square-pen", "triangle-alert",
     "unplug", "video", "volume-2", "volume-x", "wifi", "x", "zap", "radar", "send",
+    "tv", "house", "arrow-left", "chevron-up", "ellipsis", "volume-1", "delete", "corner-down-left", "gamepad-2",
 ]
 
 # Drawn solid as well as stroked, like the filled media controls people expect.

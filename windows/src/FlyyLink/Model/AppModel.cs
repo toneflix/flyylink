@@ -681,6 +681,17 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
     public void Seek(string id, string player, long position) => connected[id]?.Send(MediaRequest.Seek(player, position).ToPacket());
 
+    /// Opens the remote for a paired TV.
+    public void ShowRemote(string id)
+    {
+        if (connected[id] is { IsPaired: true }) RemoteRequested?.Invoke(id);
+    }
+
+    public event Action<string>? RemoteRequested;
+
+    /// Sends a remote press to the TV.
+    public void Press(string id, TvRemote press) => connected[id]?.Send(press.ToPacket());
+
     // Calls
 
     public void AnswerCall()

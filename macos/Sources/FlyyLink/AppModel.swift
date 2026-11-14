@@ -166,6 +166,7 @@ final class AppModel: ObservableObject {
     private var screenSize: AnyCancellable?
     let desktop = RemoteDesktop()
     private let desktopWindow: RemoteDesktopWindowController
+    private lazy var remoteWindow = TvRemoteWindowController(model: self)
     private var desktopSize: AnyCancellable?
     private let nearby: NearbyFinder
     private let hotspot = PhoneHotspot()
@@ -332,6 +333,18 @@ final class AppModel: ObservableObject {
 
         locations.request(from: device)
         finding = id
+    }
+
+    /// Opens the remote for a paired TV.
+    func showRemote(_ id: String) {
+        guard let device = connected[id], device.isPaired else { return }
+
+        remoteWindow.show(deviceId: id, name: device.name)
+    }
+
+    /// Sends a remote press to the TV.
+    func press(_ press: TvRemote, on id: String) {
+        connected[id]?.send(press.toPacket())
     }
 
     /// Asks the phone or computer to share its screen and opens the window that shows it.

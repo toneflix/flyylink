@@ -165,6 +165,13 @@ internal static partial class NativeMethods
     public static extern bool GetCursorPos(out POINT point);
 
     [DllImport("user32.dll")]
+    public static extern bool ClipCursor(ref RECT bounds);
+
+    /// Pass IntPtr.Zero to let the pointer go anywhere again.
+    [DllImport("user32.dll")]
+    public static extern bool ClipCursor(IntPtr bounds);
+
+    [DllImport("user32.dll")]
     public static extern bool SetForegroundWindow(IntPtr hwnd);
 
     [DllImport("user32.dll")]
