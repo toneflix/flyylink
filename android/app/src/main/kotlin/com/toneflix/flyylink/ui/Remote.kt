@@ -3,6 +3,8 @@ package com.toneflix.flyylink.ui
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -32,14 +35,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -50,6 +56,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -106,7 +113,10 @@ fun RemoteScreen(deviceId: String, onPress: (TvRemote) -> Unit, onClose: () -> U
 
         playing[deviceId]?.let { NowPlaying(deviceId, it) }
 
-        DPad(onKey = key)
+        var touchpad by rememberSaveable { mutableStateOf(false) }
+        ModeSwitch(touchpad, onChange = { touchpad = it })
+
+        if (touchpad) Touchpad(onPress) else DPad(onKey = key)
 
         Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
             RoundKey(R.drawable.lucide_arrow_left, stringResource(R.string.remote_back)) { key(TvRemote.BACK) }
@@ -166,6 +176,110 @@ private fun MediaButton(@DrawableRes icon: Int, tint: Color, onClick: () -> Unit
         Icon(painterResource(icon), contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
     }
 }
+
+/** Picks between the arrows and the touchpad. */
+@Composable
+private fun ModeSwitch(touchpad: Boolean, onChange: (Boolean) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+
+    Row(
+        Modifier
+            .background(colors.surface, CircleShape)
+            .border(1.dp, colors.outlineVariant, CircleShape)
+            .padding(4.dp),
+    ) {
+        listOf(false to R.string.remote_buttons, true to R.string.remote_touchpad).forEach { (mode, label) ->
+            val selected = mode == touchpad
+            Text(
+                stringResource(label),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(if (selected) colors.primaryContainer else Color.Transparent)
+                    .selectable(selected = selected, role = Role.Tab, onClick = { onChange(mode) })
+                    .padding(horizontal = 22.dp, vertical = 10.dp),
+            )
+        }
+    }
+}
+
+/**
+ * Moves the TV's pointer like a laptop touchpad: slide to move, tap to click, two fingers to scroll.
+ * Moves go out about 60 times a second and scrolls about 10, since each scroll is a swipe on the TV.
+ */
+@Composable
+private fun Touchpad(onPress: (TvRemote) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val haptics = LocalHapticFeedback.current
+
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(300.dp)
+            .background(colors.surface, RoundedCornerShape(28.dp))
+            .border(1.dp, colors.outlineVariant, RoundedCornerShape(28.dp))
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    var fingers = 1
+                    var travelled = 0f
+                    var pending = Offset.Zero
+                    var sentAt = down.uptimeMillis
+                    var now = down.uptimeMillis
+
+                    fun send(force: Boolean) {
+                        val gap = if (fingers > 1) SCROLL_EVERY_MS else MOVE_EVERY_MS
+                        if (pending == Offset.Zero || (!force && now - sentAt < gap)) return
+
+                        val dx = (pending.x / density).toDouble()
+                        val dy = (pending.y / density).toDouble()
+                        onPress(if (fingers > 1) TvRemote.Scroll(dx, dy) else TvRemote.Move(dx, dy))
+                        pending = Offset.Zero
+                        sentAt = now
+                    }
+
+                    do {
+                        val event = awaitPointerEvent()
+                        val pressed = event.changes.filter { it.pressed }
+                        now = event.changes.maxOf { it.uptimeMillis }
+
+                        if (pressed.size > fingers) pending = Offset.Zero
+                        fingers = maxOf(fingers, pressed.size)
+
+                        if (pressed.isNotEmpty()) {
+                            val step = pressed.fold(Offset.Zero) { sum, change -> sum + change.positionChange() } / pressed.size.toFloat()
+                            travelled += step.getDistance()
+                            pending += step
+                        }
+                        event.changes.forEach { it.consume() }
+                        send(force = false)
+                    } while (pressed.isNotEmpty())
+
+                    send(force = true)
+
+                    if (fingers == 1 && travelled < viewConfiguration.touchSlop && now - down.uptimeMillis < TAP_MS) {
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onPress(TvRemote.Click)
+                    }
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            stringResource(R.string.remote_touchpad_hint),
+            fontSize = 13.sp,
+            color = colors.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(24.dp),
+        )
+    }
+}
+
+private const val MOVE_EVERY_MS = 16L
+private const val SCROLL_EVERY_MS = 100L
+private const val TAP_MS = 300L
 
 /** A key that presses once on tap and keeps pressing while held, like a real remote. */
 private fun Modifier.repeatingPress(scope: CoroutineScope, onPress: () -> Unit, onDown: (Boolean) -> Unit = {}) =

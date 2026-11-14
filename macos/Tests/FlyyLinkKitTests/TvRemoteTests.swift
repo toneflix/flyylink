@@ -14,6 +14,14 @@ final class TvRemoteTests: XCTestCase {
         XCTAssertEqual(TvRemote.key(TvRemote.playPause).toPacket().string("key"), "playPause")
     }
 
+    func testPointerRoundTrips() throws {
+        XCTAssertEqual(TvRemote(packet: try wire(TvRemote.move(dx: 12.5, dy: -3).toPacket())), .move(dx: 12.5, dy: -3))
+        XCTAssertEqual(TvRemote(packet: try wire(TvRemote.click.toPacket())), .click)
+        XCTAssertEqual(TvRemote(packet: try wire(TvRemote.scroll(dx: 0, dy: 40).toPacket())), .scroll(dx: 0, dy: 40))
+        XCTAssertNil(TvRemote(packet: try wire(TvRemote.move(dx: TvRemote.maxStep + 1, dy: 0).toPacket())))
+        XCTAssertNil(TvRemote(packet: NetworkPacket(type: PacketType.remote, body: ["action": "move", "dx": .double(1)])))
+    }
+
     func testRejectsNonsense() throws {
         XCTAssertNil(TvRemote(packet: try wire(TvRemote.key("launchMissiles").toPacket())))
         XCTAssertNil(TvRemote(packet: try wire(TvRemote.text("").toPacket())))

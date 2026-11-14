@@ -12,7 +12,7 @@ import com.toneflix.flyylink.protocol.TvRemote
 
 /**
  * Plays a phone's remote presses on the TV. Volume and media keys work on their own; moving around,
- * Back, Home and typing go through [ScreenControlService], which the user turns on once.
+ * Back, Home, typing and the touchpad's pointer go through [ScreenControlService], which the user turns on once.
  */
 object TvRemotePlugin : Plugin {
     override val incoming = setOf(PacketType.REMOTE)
@@ -24,11 +24,9 @@ object TvRemotePlugin : Plugin {
     }
 
     override fun onPacket(device: Device, packet: NetworkPacket) {
-        when (val press = TvRemote.fromPacket(packet)) {
-            is TvRemote.Key -> key(press.key)
-            is TvRemote.Text -> ScreenControlService.remote(press)
-            null -> Unit
-        }
+        val press = TvRemote.fromPacket(packet) ?: return
+
+        if (press is TvRemote.Key) key(press.key) else ScreenControlService.remote(press)
     }
 
     private fun key(key: String) {
