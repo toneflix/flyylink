@@ -13,11 +13,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -43,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +58,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -66,6 +76,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -83,6 +94,7 @@ import com.toneflix.flyylink.openIntent
 import com.toneflix.flyylink.protocol.PairState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private val TvGlow = Brush.radialGradient(
@@ -419,16 +431,36 @@ private fun TvButton(label: String, primary: Boolean, modifier: Modifier = Modif
 }
 
 @Composable
-private fun TvDialogFrame(content: @Composable () -> Unit) {
+private fun TvDialogFrame(
+    width: Dp = 620.dp,
+    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val scroll = rememberScrollState()
+    val scope = rememberCoroutineScope()
+
+    // Kept within the screen and scrolled with the remote's up and down, since the dialog's buttons sit in one row.
     Column(
         Modifier
-            .width(620.dp)
+            .width(width)
+            .heightIn(max = LocalConfiguration.current.screenHeightDp.dp - 48.dp)
             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(32.dp))
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(32.dp))
+            .onKeyEvent { event ->
+                val step = when (event.key) {
+                    Key.DirectionUp -> -240f
+                    Key.DirectionDown -> 240f
+                    else -> return@onKeyEvent false
+                }
+                if (event.type == KeyEventType.KeyDown) scope.launch { scroll.animateScrollBy(step) }
+                true
+            }
+            .verticalScroll(scroll)
             .padding(40.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = horizontalAlignment,
         verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) { content() }
+        content = content,
+    )
 }
 
 @Composable
@@ -498,19 +530,24 @@ private fun TvFlyyDropDialog() {
 /** What the "FlyyLink remote" accessibility service does, shown before the TV's Accessibility settings. */
 @Composable
 private fun TvControlDisclosure(onAccept: () -> Unit, onDecline: () -> Unit) {
-    Dialog(onDismissRequest = onDecline) {
-        TvDialogFrame {
-            Text(stringResource(R.string.tv_control_title), fontSize = 28.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-            Text(stringResource(R.string.tv_control_intro), fontSize = 16.sp, lineHeight = 23.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                listOf(R.string.tv_control_does, R.string.tv_control_typing, R.string.tv_control_only, R.string.tv_control_private, R.string.control_disclosure_local).forEach {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Icon(painterResource(R.drawable.lucide_check), contentDescription = null, tint = Toneflix.gold, modifier = Modifier.size(20.dp))
-                        Text(stringResource(it), fontSize = 15.sp, lineHeight = 21.sp)
+    // Wide and in two columns, so it fits a TV screen with the buttons in view.
+    Dialog(onDismissRequest = onDecline, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        TvDialogFrame(width = 900.dp, horizontalAlignment = Alignment.End) {
+            Row(horizontalArrangement = Arrangement.spacedBy(40.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text(stringResource(R.string.tv_control_title), fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.tv_control_intro), fontSize = 16.sp, lineHeight = 23.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.tv_control_settings), fontSize = 15.sp, lineHeight = 21.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Column(Modifier.weight(1.2f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    listOf(R.string.tv_control_does, R.string.tv_control_typing, R.string.tv_control_only, R.string.tv_control_private, R.string.control_disclosure_local).forEach {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Icon(painterResource(R.drawable.lucide_check), contentDescription = null, tint = Toneflix.gold, modifier = Modifier.size(20.dp))
+                            Text(stringResource(it), fontSize = 15.sp, lineHeight = 21.sp)
+                        }
                     }
                 }
             }
-            Text(stringResource(R.string.tv_control_settings), fontSize = 15.sp, lineHeight = 21.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             TvDialogButtons(
                 confirm = stringResource(R.string.control_disclosure_accept),
                 dismiss = stringResource(R.string.control_disclosure_decline),
