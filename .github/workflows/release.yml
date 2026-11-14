@@ -271,6 +271,20 @@ jobs:
           echo "title=FlyyLink$app ${tag#v}" >> "$GITHUB_OUTPUT"
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
 
+      # A release made on GitHub already has its notes, so only a bare tag gets them generated here.
+      - name: Check for existing notes
+        id: notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          body=$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json body --jq .body 2>/dev/null || true)
+
+          if [ -n "$body" ]; then
+            echo "generate=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "generate=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/download-artifact@v8
         with:
           path: dist
@@ -286,7 +300,7 @@ jobs:
             dist/FlyyLink-*.dmg
             dist/FlyyLink-*.zip
             dist/FlyyLink-Setup-*.exe
-          generate_release_notes: true
+          generate_release_notes: ${{ steps.notes.outputs.generate == 'true' }}
 
       # One fixed release holds the Mac feed, so the app's feed address never changes.
       - name: Publish Mac update feed
