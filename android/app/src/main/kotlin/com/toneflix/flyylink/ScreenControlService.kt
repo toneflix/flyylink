@@ -23,17 +23,21 @@ class ScreenControlService : AccessibilityService() {
     /** Whether the user turned the service on, and whether Android is actually running it. */
     enum class Status { OFF, STOPPED, ON }
 
+    private val pointer by lazy { TvPointer(this, ::screenSize) }
+
     override fun onServiceConnected() {
         instance = this
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
         instance = null
+        pointer.remove()
         return super.onUnbind(intent)
     }
 
     override fun onDestroy() {
         instance = null
+        pointer.remove()
         super.onDestroy()
     }
 
@@ -51,12 +55,17 @@ class ScreenControlService : AccessibilityService() {
         }
     }
 
-    /** One finger from one point to another; a tap is a stroke that doesn't move. */
+    /** One finger from one point to another, as fractions of the screen; a tap is a stroke that doesn't move. */
     private fun stroke(x: Double, y: Double, toX: Double, toY: Double, durationMs: Long) {
         val (width, height) = screenSize()
+
+        strokePixels((x * width).toFloat(), (y * height).toFloat(), (toX * width).toFloat(), (toY * height).toFloat(), durationMs)
+    }
+
+    private fun strokePixels(x: Float, y: Float, toX: Float, toY: Float, durationMs: Long) {
         val path = Path().apply {
-            moveTo((x * width).toFloat(), (y * height).toFloat())
-            lineTo((toX * width).toFloat(), (toY * height).toFloat())
+            moveTo(x, y)
+            lineTo(toX, toY)
         }
         val gesture = GestureDescription.Builder()
             .addStroke(GestureDescription.StrokeDescription(path, 0, durationMs.coerceAtLeast(1)))
@@ -77,6 +86,9 @@ class ScreenControlService : AccessibilityService() {
 
     private fun play(press: TvRemote) {
         when (press) {
+            is TvRemote.Move -> pointer.move(press.dx, press.dy)
+            is TvRemote.Click -> click()
+            is TvRemote.Scroll -> scroll(press.dx, press.dy)
             is TvRemote.Text -> focusedField()?.type(press.text)
             is TvRemote.Key -> when (press.key) {
                 TvRemote.UP -> move(GLOBAL_ACTION_DPAD_UP, View.FOCUS_UP)
@@ -95,6 +107,27 @@ class ScreenControlService : AccessibilityService() {
                 TvRemote.ENTER -> focusedField()?.press(ScreenInput.ENTER, select = false)
             }
         }
+    }
+
+    /** Taps where the pointer is. A click while it's hidden only brings it back. */
+    private fun click() {
+        val (x, y) = pointer.position ?: return pointer.show()
+
+        pointer.show()
+        strokePixels(x, y, x, y, TAP_MS)
+    }
+
+    /** Swipes from the pointer the way the two fingers went, so pages follow them. */
+    private fun scroll(dx: Double, dy: Double) {
+        val (width, height) = screenSize()
+        val (x, y) = pointer.position ?: (width / 2f to height / 2f)
+        val scale = resources.displayMetrics.density * SCROLL_SPEED
+
+        val toX = (x + dx * scale).toFloat().coerceIn(1f, width - 2f)
+        val toY = (y + dy * scale).toFloat().coerceIn(1f, height - 2f)
+        if (toX == x && toY == y) return
+
+        strokePixels(x, y, toX, toY, SCROLL_MS)
     }
 
     /** Moves focus like the TV remote's arrows. Before Android 13 there is no D-pad action, so it searches for the next item. */
@@ -135,6 +168,8 @@ class ScreenControlService : AccessibilityService() {
     companion object {
         private const val TAP_MS = 40L
         private const val LONG_PRESS_MS = 700L
+        private const val SCROLL_MS = 120L
+        private const val SCROLL_SPEED = 2.0
 
         @Volatile private var instance: ScreenControlService? = null
 

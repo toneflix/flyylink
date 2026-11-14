@@ -213,6 +213,9 @@
     <string name="remote_mute">Mute</string>
     <string name="remote_type">Type on TV</string>
     <string name="remote_enter">Enter</string>
+    <string name="remote_buttons">Buttons</string>
+    <string name="remote_touchpad">Touchpad</string>
+    <string name="remote_touchpad_hint">Slide to move. Tap to click. Two fingers to scroll.</string>
 
     <string name="tv_ready">Ready</string>
     <string name="tv_connected_to">Connected to %1$s</string>
