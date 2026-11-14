@@ -342,7 +342,7 @@ private fun TvSettingsRow(firstModifier: Modifier) {
                 ScreenControlService.Status.OFF -> stringResource(R.string.tv_turn_on)
             }
             TvSettingCard(R.drawable.lucide_tv, stringResource(R.string.tv_remote), status, control == ScreenControlService.Status.ON, firstModifier) {
-                if (control == ScreenControlService.Status.ON) context.startActivity(ScreenControlService.settingsIntent()) else disclosure = true
+                if (control == ScreenControlService.Status.ON) ScreenControlService.openSettings(context) else disclosure = true
             }
         }
         item {
@@ -370,7 +370,7 @@ private fun TvSettingsRow(firstModifier: Modifier) {
         TvControlDisclosure(
             onAccept = {
                 disclosure = false
-                runCatching { context.startActivity(ScreenControlService.settingsIntent()) }
+                ScreenControlService.openSettings(context)
             },
             onDecline = { disclosure = false },
         )

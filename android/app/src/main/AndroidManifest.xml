@@ -52,6 +52,14 @@
 
     <!-- Lets us show app names for notifications from launcher apps. -->
     <queries>
+        <!-- Where Accessibility settings live, which differs on some TVs. -->
+        <package android:name="com.android.tv.settings" />
+        <intent>
+            <action android:name="android.settings.ACCESSIBILITY_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.SETTINGS" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
