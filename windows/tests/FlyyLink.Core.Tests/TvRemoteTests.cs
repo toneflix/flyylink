@@ -20,6 +20,16 @@ public class TvRemoteTests
     }
 
     [Fact]
+    public void PointerRoundTrips()
+    {
+        Assert.Equal(new TvRemote.Move(12.5, -3), TvRemote.FromPacket(Wire(new TvRemote.Move(12.5, -3).ToPacket())));
+        Assert.Equal(new TvRemote.Click(), TvRemote.FromPacket(Wire(new TvRemote.Click().ToPacket())));
+        Assert.Equal(new TvRemote.Scroll(0, 40), TvRemote.FromPacket(Wire(new TvRemote.Scroll(0, 40).ToPacket())));
+        Assert.Null(TvRemote.FromPacket(Wire(new TvRemote.Move(TvRemote.MaxStep + 1, 0).ToPacket())));
+        Assert.Null(TvRemote.FromPacket(new NetworkPacket(PacketType.Remote, new JsonObject { ["action"] = "move", ["dx"] = 1.0 })));
+    }
+
+    [Fact]
     public void RejectsNonsense()
     {
         Assert.Null(TvRemote.FromPacket(Wire(new TvRemote.Key("launchMissiles").ToPacket())));

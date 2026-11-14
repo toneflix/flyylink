@@ -15,6 +15,14 @@ class TvRemoteTest {
         assertEquals("playPause", TvRemote.Key(TvRemote.PLAY_PAUSE).toPacket().string("key"))
     }
 
+    @Test fun pointerRoundTrips() {
+        assertEquals(TvRemote.Move(12.5, -3.0), TvRemote.fromPacket(wire(TvRemote.Move(12.5, -3.0).toPacket())))
+        assertEquals(TvRemote.Click, TvRemote.fromPacket(wire(TvRemote.Click.toPacket())))
+        assertEquals(TvRemote.Scroll(0.0, 40.0), TvRemote.fromPacket(wire(TvRemote.Scroll(0.0, 40.0).toPacket())))
+        assertNull(TvRemote.fromPacket(wire(TvRemote.Move(TvRemote.MAX_STEP + 1, 0.0).toPacket())))
+        assertNull(TvRemote.fromPacket(NetworkPacket(PacketType.REMOTE, NetworkPacket.body("action" to "move", "dx" to 1.0))))
+    }
+
     @Test fun rejectsNonsense() {
         assertNull(TvRemote.fromPacket(wire(TvRemote.Key("launchMissiles").toPacket())))
         assertNull(TvRemote.fromPacket(wire(TvRemote.Text("").toPacket())))
