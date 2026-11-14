@@ -42,7 +42,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.toneflix.flyylink.CastItem
 import com.toneflix.flyylink.PlayOnTv
 import com.toneflix.flyylink.R
@@ -52,20 +55,24 @@ import com.toneflix.flyylink.protocol.CastKind
 import com.toneflix.flyylink.protocol.CastState
 import com.toneflix.flyylink.protocol.TvRenderer
 
-/** The home card: what plays on a TV with its controls, or a way to pick something to play. */
+/** The home card: what plays on a TV with its controls, or a way to pick something to play. Hidden while no TV is around. */
 @Composable
 fun PlayOnTvCard() {
     val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     val session by PlayOnTv.session.collectAsStateWithLifecycle()
+    val tvs by PlayOnTv.tvs.collectAsStateWithLifecycle()
     var picked by remember { mutableStateOf<CastItem?>(null) }
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         picked = uri?.let { ShareSender.describe(context, listOf(it)).firstOrNull() }?.let { CastItem.of(context, it) }
     }
 
+    LaunchedEffect(lifecycle) { lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { PlayOnTv.keepSearching() } }
+
     val current = session
     if (current != null) {
         NowPlayingOnTv(current)
-    } else {
+    } else if (tvs.isNotEmpty()) {
         Row(
             Modifier
                 .fillMaxWidth()

@@ -40,6 +40,7 @@ public sealed partial class PanelWindow : Window
     {
         Model = model;
         InitializeComponent();
+        Model.PlayOnTv.KeepSearching();
 
         // Acrylic follows Windows' transparency setting and turns solid when it is off.
         SystemBackdrop = new DesktopAcrylicBackdrop();

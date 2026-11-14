@@ -154,6 +154,7 @@ private fun ShareSheet(outgoing: Outgoing, target: String?, onClose: () -> Unit)
     val progress = remember { mutableStateMapOf<String, SendProgress>() }
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val castItem = remember(outgoing) { (outgoing as? Outgoing.Files)?.items?.singleOrNull()?.let { CastItem.of(context, it) } }
+    val tvs by PlayOnTv.tvs.collectAsStateWithLifecycle()
 
     val flyyDrop = { device: DeviceState ->
         if (flyyDrops[device.id]?.isFinished != false) {
@@ -178,13 +179,15 @@ private fun ShareSheet(outgoing: Outgoing, target: String?, onClose: () -> Unit)
 
     LaunchedEffect(Unit) { FlyyDropPlugin.clearFinished() }
 
+    LaunchedEffect(castItem) { if (castItem != null) PlayOnTv.search() }
+
     // With one device to pick, or one picked already, there is nothing to choose, so start right away.
     LaunchedEffect(macs.size, nearby.size) {
         if (progress.isNotEmpty() || flyyDrops.values.any { !it.isFinished }) return@LaunchedEffect
 
         when {
             target != null -> macs.firstOrNull { it.id == target }?.let(send) ?: nearby.firstOrNull { it.id == target }?.let(flyyDrop)
-            macs.size == 1 && nearby.isEmpty() && castItem == null -> send(macs.first())
+            macs.size == 1 && nearby.isEmpty() && (castItem == null || tvs.isEmpty()) -> send(macs.first())
         }
     }
 
@@ -241,7 +244,7 @@ private fun ShareSheet(outgoing: Outgoing, target: String?, onClose: () -> Unit)
                 }
             }
 
-            castItem?.let { PlayOnTvSection(it, onStarted = onClose) }
+            if (tvs.isNotEmpty()) castItem?.let { PlayOnTvSection(it, onStarted = onClose) }
 
             OutlinedButton(
                 onClick = onClose,

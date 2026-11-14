@@ -265,4 +265,16 @@ class DlnaTest {
             fake.stop(0)
         }
     }
+
+    @Test fun keepsTvsUntilTheyMissTwoSearches() {
+        val living = TvRenderer("uuid:a", "Living Room", "http://10.0.0.2/av")
+        val bedroom = TvRenderer("uuid:b", "bedroom", "http://10.0.0.3/av")
+        val list = TvList()
+
+        assertEquals(listOf(bedroom, living), list.update(listOf(living, bedroom)))
+        assertEquals(listOf(bedroom, living), list.update(listOf(living)))
+        assertEquals(listOf(bedroom, living), list.update(listOf(living, bedroom)))
+        assertEquals(listOf(bedroom, living), list.update(emptyList()))
+        assertEquals(emptyList<TvRenderer>(), list.update(emptyList()))
+    }
 }

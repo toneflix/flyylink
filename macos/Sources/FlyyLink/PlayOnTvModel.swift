@@ -26,17 +26,33 @@ final class PlayOnTvModel: ObservableObject {
     @Published var picked: MediaFile?
     @Published private(set) var error: String?
 
+    private let seen = TvList()
     private var server: MediaServer?
     private var player: TvPlayer?
     private var watcher: Task<Void, Never>?
+    private var looking: Task<Void, Never>?
+
+    init() {
+        keepSearching()
+    }
 
     func search() {
         guard !searching else { return }
 
         searching = true
         Task {
-            tvs = await TvFinder.search()
+            tvs = seen.update(await TvFinder.search())
             searching = false
+        }
+    }
+
+    /// Searches again every 30 seconds, so the list follows TVs as they come and go.
+    private func keepSearching() {
+        looking = Task { [weak self] in
+            while !Task.isCancelled {
+                self?.search()
+                try? await Task.sleep(nanoseconds: 30_000_000_000)
+            }
         }
     }
 

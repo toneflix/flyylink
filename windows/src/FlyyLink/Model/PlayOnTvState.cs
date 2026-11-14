@@ -8,6 +8,7 @@ namespace FlyyLink.Model;
 /// Mirrors PlayOnTv.kt and PlayOnTvModel.swift.
 public sealed class PlayOnTvState : Observable, IDisposable
 {
+    private readonly TvList seen = new();
     private MediaServer? server;
     private TvPlayer? player;
     private CancellationTokenSource? watcher;
@@ -28,6 +29,9 @@ public sealed class PlayOnTvState : Observable, IDisposable
 
     /// A file picked to play, waiting for a TV to be chosen.
     public MediaFile? Picked { get => picked; private set { if (Set(ref picked, value)) RaiseModes(); } }
+
+    /// The card shows only while a TV is around, or while something is picked or playing.
+    public bool IsShown => playing is not null || picked is not null || tvs.Count > 0;
 
     public bool IsIdle => playing is null && picked is null;
 
@@ -68,7 +72,7 @@ public sealed class PlayOnTvState : Observable, IDisposable
         Searching = true;
         try
         {
-            Tvs = await TvFinder.SearchAsync();
+            Tvs = seen.Update(await TvFinder.SearchAsync());
         }
         catch (System.Net.Sockets.SocketException)
         {
@@ -77,6 +81,16 @@ public sealed class PlayOnTvState : Observable, IDisposable
         finally
         {
             Searching = false;
+        }
+    }
+
+    /// Searches again every 30 seconds, so the list follows TVs as they come and go.
+    public async void KeepSearching()
+    {
+        while (true)
+        {
+            Search();
+            await Task.Delay(TimeSpan.FromSeconds(30));
         }
     }
 
@@ -230,12 +244,14 @@ public sealed class PlayOnTvState : Observable, IDisposable
 
     private void RaiseLists()
     {
+        Raise(nameof(IsShown));
         Raise(nameof(PickStatus));
         Raise(nameof(ShowsSearchAgain));
     }
 
     private void RaiseModes()
     {
+        Raise(nameof(IsShown));
         Raise(nameof(IsIdle));
         Raise(nameof(IsPicking));
         Raise(nameof(IsPlaying));

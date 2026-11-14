@@ -388,3 +388,48 @@ public final class MediaServer: @unchecked Sendable {
         return String(cString: buffer)
     }
 }
+
+/// The TVs seen lately. A TV stays listed until it misses `misses` searches in a row, since multicast answers get lost.
+public final class TvList: @unchecked Sendable {
+    private let misses: Int
+    private var known: [String: TvRenderer] = [:]
+    private var missed: [String: Int] = [:]
+    private let lock = NSLock()
+
+    public init(misses: Int = 2) {
+        self.misses = misses
+    }
+
+    public var tvs: [TvRenderer] {
+        lock.withLock { sorted() }
+    }
+
+    /// Takes one search's results and returns the TVs to show.
+    @discardableResult
+    public func update(_ found: [TvRenderer]) -> [TvRenderer] {
+        lock.withLock {
+            let ids = Set(found.map(\.id))
+
+            for id in known.keys where !ids.contains(id) {
+                let count = (missed[id] ?? 0) + 1
+                if count >= misses {
+                    known[id] = nil
+                    missed[id] = nil
+                } else {
+                    missed[id] = count
+                }
+            }
+
+            for tv in found {
+                known[tv.id] = tv
+                missed[tv.id] = nil
+            }
+
+            return sorted()
+        }
+    }
+
+    private func sorted() -> [TvRenderer] {
+        known.values.sorted { $0.name.lowercased() < $1.name.lowercased() }
+    }
+}

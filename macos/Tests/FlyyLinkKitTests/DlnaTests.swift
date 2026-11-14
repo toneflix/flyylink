@@ -223,4 +223,16 @@ final class DlnaTests: XCTestCase {
         let (_, gone) = try await URLSession.shared.data(from: url)
         XCTAssertEqual((gone as? HTTPURLResponse)?.statusCode, 404)
     }
+
+    func testKeepsTvsUntilTheyMissTwoSearches() {
+        let living = TvRenderer(id: "uuid:a", name: "Living Room", avTransportUrl: "http://10.0.0.2/av")
+        let bedroom = TvRenderer(id: "uuid:b", name: "bedroom", avTransportUrl: "http://10.0.0.3/av")
+        let list = TvList()
+
+        XCTAssertEqual(list.update([living, bedroom]), [bedroom, living])
+        XCTAssertEqual(list.update([living]), [bedroom, living])
+        XCTAssertEqual(list.update([living, bedroom]), [bedroom, living])
+        XCTAssertEqual(list.update([]), [bedroom, living])
+        XCTAssertEqual(list.update([]), [])
+    }
 }

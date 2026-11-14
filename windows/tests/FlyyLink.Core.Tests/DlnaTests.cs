@@ -302,6 +302,20 @@ public class DlnaTests
         }
     }
 
+    [Fact]
+    public void KeepsTvsUntilTheyMissTwoSearches()
+    {
+        var living = new TvRenderer("uuid:a", "Living Room", "http://10.0.0.2/av");
+        var bedroom = new TvRenderer("uuid:b", "bedroom", "http://10.0.0.3/av");
+        var list = new TvList();
+
+        Assert.Equal([bedroom, living], list.Update([living, bedroom]));
+        Assert.Equal([bedroom, living], list.Update([living]));
+        Assert.Equal([bedroom, living], list.Update([living, bedroom]));
+        Assert.Equal([bedroom, living], list.Update([]));
+        Assert.Empty(list.Update([]));
+    }
+
     private static async Task<(HttpRequestHead Head, string Body)> ReadRequestAsync(NetworkStream stream)
     {
         var bytes = new List<byte>();

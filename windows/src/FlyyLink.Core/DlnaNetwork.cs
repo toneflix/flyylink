@@ -301,3 +301,49 @@ public sealed class MediaServer : IDisposable
         return ((IPEndPoint)socket.LocalEndPoint!).Address.ToString();
     }
 }
+
+/// The TVs seen lately. A TV stays listed until it misses that many searches in a row, since multicast answers get lost.
+public sealed class TvList(int misses = 2)
+{
+    private readonly Dictionary<string, TvRenderer> _known = [];
+    private readonly Dictionary<string, int> _missed = [];
+
+    public List<TvRenderer> Tvs
+    {
+        get { lock (_known) return Sorted(); }
+    }
+
+    /// Takes one search's results and returns the TVs to show.
+    public List<TvRenderer> Update(IEnumerable<TvRenderer> found)
+    {
+        lock (_known)
+        {
+            var list = found.ToList();
+            var ids = list.Select(tv => tv.Id).ToHashSet();
+
+            foreach (var id in _known.Keys.Where(id => !ids.Contains(id)).ToList())
+            {
+                var count = _missed.GetValueOrDefault(id) + 1;
+                if (count >= misses)
+                {
+                    _known.Remove(id);
+                    _missed.Remove(id);
+                }
+                else
+                {
+                    _missed[id] = count;
+                }
+            }
+
+            foreach (var tv in list)
+            {
+                _known[tv.Id] = tv;
+                _missed.Remove(tv.Id);
+            }
+
+            return Sorted();
+        }
+    }
+
+    private List<TvRenderer> Sorted() => _known.Values.OrderBy(tv => tv.Name, StringComparer.OrdinalIgnoreCase).ToList();
+}

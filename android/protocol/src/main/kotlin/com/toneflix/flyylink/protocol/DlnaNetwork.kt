@@ -301,3 +301,34 @@ class MediaServer : Closeable {
         }
     }
 }
+
+/** The TVs seen lately. A TV stays listed until it misses [misses] searches in a row, since multicast answers get lost. */
+class TvList(private val misses: Int = 2) {
+    private val known = LinkedHashMap<String, TvRenderer>()
+    private val missed = HashMap<String, Int>()
+
+    val tvs: List<TvRenderer> get() = known.values.sortedBy { it.name.lowercase() }
+
+    /** Takes one search's results and returns the TVs to show. */
+    @Synchronized
+    fun update(found: List<TvRenderer>): List<TvRenderer> {
+        val ids = found.map { it.id }.toSet()
+
+        for (id in known.keys.toList() - ids) {
+            val count = (missed[id] ?: 0) + 1
+            if (count >= misses) {
+                known.remove(id)
+                missed.remove(id)
+            } else {
+                missed[id] = count
+            }
+        }
+
+        found.forEach {
+            known[it.id] = it
+            missed.remove(it.id)
+        }
+
+        return tvs
+    }
+}

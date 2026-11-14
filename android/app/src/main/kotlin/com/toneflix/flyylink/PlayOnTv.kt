@@ -11,6 +11,7 @@ import com.toneflix.flyylink.protocol.CastKind
 import com.toneflix.flyylink.protocol.CastState
 import com.toneflix.flyylink.protocol.MediaServer
 import com.toneflix.flyylink.protocol.TvFinder
+import com.toneflix.flyylink.protocol.TvList
 import com.toneflix.flyylink.protocol.TvPlayer
 import com.toneflix.flyylink.protocol.TvRenderer
 import java.io.InputStream
@@ -65,6 +66,7 @@ object PlayOnTv {
     val searching: StateFlow<Boolean> = _searching.asStateFlow()
     val session: StateFlow<TvSession?> = _session.asStateFlow()
 
+    private val seen = TvList()
     private var server: MediaServer? = null
     private var player: TvPlayer? = null
     private var watcher: Job? = null
@@ -74,10 +76,18 @@ object PlayOnTv {
 
         scope.launch {
             try {
-                _tvs.value = TvFinder.search()
+                _tvs.value = seen.update(TvFinder.search())
             } finally {
                 _searching.value = false
             }
+        }
+    }
+
+    /** Searches again every [intervalMs] until cancelled, so the list follows TVs as they come and go. */
+    suspend fun keepSearching(intervalMs: Long = 30_000) {
+        while (true) {
+            search()
+            delay(intervalMs)
         }
     }
 

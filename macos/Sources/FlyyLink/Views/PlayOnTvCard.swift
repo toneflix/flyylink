@@ -2,6 +2,7 @@ import SwiftUI
 import FlyyLinkKit
 
 /// "Play on TV": what plays on a TV with its controls, the TVs to pick from, or a button to choose a file.
+/// Hidden while no TV is around.
 struct PlayOnTvCard: View {
     @ObservedObject var model: PlayOnTvModel
 
@@ -11,7 +12,7 @@ struct PlayOnTvCard: View {
                 NowPlayingOnTv(session: session, model: model)
             } else if let file = model.picked {
                 TvPicker(file: file, model: model)
-            } else {
+            } else if !model.tvs.isEmpty {
                 start
             }
         }
