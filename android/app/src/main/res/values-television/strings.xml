@@ -2,5 +2,5 @@
 <resources>
     <string name="notification_running">Ready for your phone and computer</string>
     <string name="screen_control_label">FlyyLink remote</string>
-    <string name="screen_control_description">Lets your paired phone move around this TV, select, press Back and Home, and type into the selected field. It acts only on presses from your phone, reads nothing else on screen, and collects or shares no data.</string>
+    <string name="screen_control_description">Lets your paired phone or computer move around this TV, select, press Back and Home, and type into the selected field. It acts only on presses from your phone or computer, reads nothing else on screen, and collects or shares no data.</string>
 </resources>

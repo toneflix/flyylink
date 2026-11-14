@@ -40,7 +40,7 @@ struct MenuPanel: View {
         if model.localNetworkBlocked {
             Banner(
                 icon: .wifi,
-                text: "Turn on FlyyLink under Local Network so your phone can find this Mac.",
+                text: "Turn on FlyyLink under Local Network so your devices can find this Mac.",
                 action: ("Open Settings", model.openLocalNetworkSettings)
             )
         }
@@ -220,10 +220,10 @@ private struct SearchingCard: View {
             .frame(height: 96)
 
             VStack(spacing: 5) {
-                Text(hasNearby ? "Pick your phone to pair" : "Looking for your phone")
+                Text(hasNearby ? "Pick a device to pair" : "Looking for your devices")
                     .font(.system(size: 16, weight: .bold))
                 if !hasNearby {
-                    Text("Open FlyyLink on your phone, on the same Wi-Fi.")
+                    Text("Open FlyyLink on your phone or TV, on the same Wi-Fi.")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
