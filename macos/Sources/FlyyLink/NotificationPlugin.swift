@@ -115,6 +115,11 @@ final class NotificationPlugin: NSObject, Plugin, UNUserNotificationCenterDelega
         device.send(NotificationRequests.requestAll())
     }
 
+    /// Fills in what is showing on the phone once its notifications are turned on.
+    func onFeaturesChanged(_ device: Device) {
+        onPaired(device)
+    }
+
     func onPacket(_ packet: NetworkPacket, from device: Device) {
         present(packet, deviceId: device.id, deviceName: device.name, iconsFrom: device)
     }

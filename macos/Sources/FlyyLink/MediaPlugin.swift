@@ -38,6 +38,10 @@ final class MediaPlugin: Plugin {
         device.send(MediaRequest.playerList().toPacket())
     }
 
+    func onFeaturesChanged(_ device: Device) {
+        onPaired(device)
+    }
+
     func onPacket(_ packet: NetworkPacket, from device: Device) {
         if let names = Media.playerList(packet) {
             updateList(names, device: device)

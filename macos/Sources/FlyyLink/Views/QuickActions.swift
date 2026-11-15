@@ -1,4 +1,5 @@
 import AppKit
+import FlyyLinkKit
 import SwiftUI
 
 /// The grid of things to do with the phone or computer the panel shows.
@@ -25,19 +26,25 @@ struct QuickActions: View {
             model.ring(device.id)
         }
         sharedTiles
-        ActionTile(icon: .messageSquare, title: "Messages", subtitle: messagesSubtitle) {
-            showMessages()
+        if has(.messages) {
+            ActionTile(icon: .messageSquare, title: "Messages", subtitle: messagesSubtitle) {
+                showMessages()
+            }
+            ActionTile(icon: .phone, title: "Call") {
+                showMessages()
+                messages.showsDialer = true
+            }
         }
-        ActionTile(icon: .phone, title: "Call") {
-            showMessages()
-            messages.showsDialer = true
+        if has(.mirroring) {
+            ActionTile(icon: .cast, title: "Mirror") {
+                model.mirror(device.id)
+            }
         }
-        ActionTile(icon: .cast, title: "Mirror") {
-            model.mirror(device.id)
-        }
-        ActionTile(icon: .images, title: "Photos") {
-            NSApplication.shared.activate(ignoringOtherApps: true)
-            openWindow(id: FlyyLinkApp.photosWindow)
+        if has(.photos) {
+            ActionTile(icon: .images, title: "Photos") {
+                NSApplication.shared.activate(ignoringOtherApps: true)
+                openWindow(id: FlyyLinkApp.photosWindow)
+            }
         }
         if model.sharesFiles(device.id) {
             ActionTile(icon: .folderOpen, title: "Files", subtitle: "In Finder") {
@@ -69,17 +76,26 @@ struct QuickActions: View {
         ActionTile(icon: .fileUp, title: "Send file") {
             model.chooseFiles(for: device.id)
         }
-        ActionTile(icon: .clipboard, title: "Clipboard", subtitle: clipboardSubtitle) {
-            model.sendClipboard(to: device.id)
+        if has(.clipboard) {
+            ActionTile(icon: .clipboard, title: "Clipboard", subtitle: clipboardSubtitle) {
+                model.sendClipboard(to: device.id)
+            }
         }
-        ActionTile(
-            icon: model.mirrorsNotifications ? .bellRing : .bellOff,
-            title: "Notifications",
-            subtitle: notificationsSubtitle,
-            isOn: model.mirrorsNotifications
-        ) {
-            model.mirrorsNotifications.toggle()
+        if has(.notifications) {
+            ActionTile(
+                icon: model.mirrorsNotifications ? .bellRing : .bellOff,
+                title: "Notifications",
+                subtitle: notificationsSubtitle,
+                isOn: model.mirrorsNotifications
+            ) {
+                model.mirrorsNotifications.toggle()
+            }
         }
+    }
+
+    /// Phones show only what they have turned on; other devices have everything.
+    private func has(_ feature: PhoneFeature) -> Bool {
+        device.features.contains(feature)
     }
 
     private var messagesSubtitle: String {
