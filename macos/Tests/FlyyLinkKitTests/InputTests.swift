@@ -13,6 +13,10 @@ final class InputTests: XCTestCase {
             .scroll(dx: 0, dy: -40),
             .key(code: "KeyA", down: false),
             .key(code: "MetaLeft", down: true),
+            .key(code: "AudioVolumeUp", down: true),
+            .begin(platform: RemoteInput.android, ready: true),
+            .begin(platform: RemoteInput.macOS, ready: false),
+            .text("Héllo 👋"),
         ]
 
         for input in inputs {
@@ -29,7 +33,15 @@ final class InputTests: XCTestCase {
         XCTAssertNil(RemoteInput(packet: packet(["action": "move", "dx": 50_000, "dy": 0])))
         XCTAssertNil(RemoteInput(packet: packet(["action": "key", "code": "Hyper", "down": true])))
         XCTAssertNil(RemoteInput(packet: packet(["action": "button", "button": "left"])))
+        XCTAssertNil(RemoteInput(packet: packet(["action": "text", "text": ""])))
+        XCTAssertNil(RemoteInput(packet: packet(["action": "text", "text": .string(String(repeating: "a", count: RemoteInput.maxText + 1))])))
         XCTAssertNil(RemoteInput(packet: packet(["action": "dance"])))
+    }
+
+    func testBeginWithoutReadyMeansReady() {
+        let packet = NetworkPacket(type: PacketType.input, body: ["action": "begin", "platform": .string(RemoteInput.windows)])
+
+        XCTAssertEqual(RemoteInput(packet: packet), .begin(platform: RemoteInput.windows, ready: true))
     }
 
     func testEdgesMapPointsBothWays() {
@@ -52,6 +64,7 @@ final class InputTests: XCTestCase {
         XCTAssertTrue(KeyCodes.all.contains("Digit0"))
         XCTAssertTrue(KeyCodes.all.contains("F12"))
         XCTAssertTrue(KeyCodes.all.contains("NumpadEnter"))
+        XCTAssertTrue(KeyCodes.all.contains("MediaPlayPause"))
         XCTAssertEqual(KeyCodes.swappingControlAndMeta("ControlLeft"), "MetaLeft")
         XCTAssertEqual(KeyCodes.swappingControlAndMeta("KeyC"), "KeyC")
     }

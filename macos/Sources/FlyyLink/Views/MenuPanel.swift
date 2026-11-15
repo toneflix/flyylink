@@ -130,7 +130,7 @@ private struct PanelHeader: View {
                 Picker("Switch devices with", selection: $model.switcherStyle) {
                     ForEach(PhoneSwitcherStyle.allCases) { Text($0.title).tag($0) }
                 }
-                Toggle("Let my computers control this Mac", isOn: Binding(
+                Toggle("Let my devices control this Mac", isOn: Binding(
                     get: { model.allowsRemoteInput },
                     set: { model.allowsRemoteInput = $0 }
                 ))

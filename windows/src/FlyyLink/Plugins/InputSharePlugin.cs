@@ -4,7 +4,7 @@ using FlyyLink.Shell;
 
 namespace FlyyLink.Plugins;
 
-/// Shares this PC's keyboard and mouse with paired computers, and lets them share theirs ("flyylink.input").
+/// Shares this PC's keyboard and mouse with paired computers, and lets them and paired phones work it ("flyylink.input").
 internal sealed class InputSharePlugin : IPlugin
 {
     private readonly DeviceRegistry devices;
@@ -35,7 +35,7 @@ internal sealed class InputSharePlugin : IPlugin
     /// Called on any thread when the edges, or who is working which computer, change.
     public Action? OnChange { get; set; }
 
-    /// Whether paired computers may work this PC.
+    /// Whether paired computers and phones may work this PC.
     public bool AllowsControl
     {
         get => settings.AllowsRemoteInput;
@@ -70,6 +70,7 @@ internal sealed class InputSharePlugin : IPlugin
             return;
         }
 
+        if (input is RemoteInput.Begin) device.Send(new RemoteInput.Begin(RemoteInput.Windows, AllowsControl).ToPacket());
         if (!AllowsControl) return;
 
         if (input is RemoteInput.Enter enter) Learn(enter.Edge, device.Id);
