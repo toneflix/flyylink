@@ -84,9 +84,9 @@ export default function PrivacyPage() {
         </table>
       </div>
       <p>
-        On a Mac or PC, FlyyLink reads the notifications your computer shows and sends them to your paired phones and
-        computers. On a Mac this needs Full Disk Access, which you turn on in System Settings. Turn it off with
-        &quot;Share this Mac&apos;s notifications&quot; or &quot;Share this PC&apos;s notifications&quot; in FlyyLink&apos;s settings.
+        If you turn on &quot;Share this Mac&apos;s notifications&quot; or &quot;Share this PC&apos;s notifications&quot; in
+        FlyyLink&apos;s settings, FlyyLink reads the notifications your computer shows and sends them to your paired phones
+        and computers. On a Mac this needs Full Disk Access, which you turn on in System Settings. It is off by default.
       </p>
 
       <h2>3. Where your information goes</h2>

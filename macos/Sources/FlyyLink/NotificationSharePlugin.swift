@@ -33,9 +33,9 @@ final class NotificationSharePlugin: Plugin {
     /// Whether Notification Center could be read at the last look.
     var hasAccess: Bool { lock.withLock { readable } }
 
-    /// Turned off from the settings menu: nothing more is sent.
+    /// Off until turned on from the settings menu.
     var isEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: Self.enabledKey) as? Bool ?? true }
+        get { UserDefaults.standard.bool(forKey: Self.enabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: Self.enabledKey) }
     }
 

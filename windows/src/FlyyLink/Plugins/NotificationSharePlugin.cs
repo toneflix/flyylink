@@ -20,13 +20,13 @@ internal sealed class NotificationSharePlugin(DeviceRegistry devices) : IPlugin
     private Dictionary<string, PhoneNotification>? current;
     private UserNotificationListener? listener;
     private bool readsDatabase;
-    private bool enabled = true;
+    private bool enabled;
 
     public IReadOnlySet<string> Incoming { get; } = new HashSet<string> { PacketType.NotificationRequest };
 
     public bool IsAvailable => listener is not null || readsDatabase;
 
-    /// Turned off from the settings menu: nothing more is sent.
+    /// Off until turned on from the settings menu.
     public bool IsEnabled
     {
         get
