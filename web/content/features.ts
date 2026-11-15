@@ -5,6 +5,7 @@ import {
   MapPin,
   Cast,
   Clipboard,
+  FolderOpen,
   FolderUp,
   Images,
   Laptop,
@@ -60,6 +61,11 @@ export const features: Feature[] = [
     icon: Images,
     title: "Photos",
     body: "Your latest shots, on your computer.",
+  },
+  {
+    icon: FolderOpen,
+    title: "Phone storage",
+    body: "Every folder, in Finder or File Explorer.",
   },
   {
     icon: Clipboard,

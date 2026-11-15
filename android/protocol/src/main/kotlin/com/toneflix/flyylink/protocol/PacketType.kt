@@ -99,6 +99,12 @@ object PacketType {
 
     /** A remote control press or typed text for a TV. Body: {"action": "key"|"text", "key"?, "text"?}; see [TvRemote]. */
     const val REMOTE = "flyylink.remote"
+
+    /** Lists, sends, receives, moves or deletes something in the phone's storage. Body: {"id", "action", "path", "to"?}; see [PhoneFiles]. */
+    const val FILES_REQUEST = "flyylink.files.request"
+
+    /** The phone's answer to [FILES_REQUEST]. Body: {"id", "ok", "error"?, "files"?, "file"?}, with a payload for downloads. */
+    const val FILES = "flyylink.files"
 }
 
 /** What each kind of device sends and accepts. Kept in one place so every app advertises the same set. */
@@ -145,9 +151,11 @@ object Capabilities {
         PacketType.FLYYDROP_RESPONSE,
         PacketType.FLYYDROP_CANCEL,
         PacketType.REMOTE,
+        PacketType.FILES_REQUEST,
+        PacketType.FILES,
     )
 
-    /** What a TV sends and accepts: no texts, calls, signal, clipboard, battery, location, photos or screen sharing. */
+    /** What a TV sends and accepts: no texts, calls, signal, clipboard, battery, location, photos, files or screen sharing. */
     val tv: Set<String> = mvp - setOf(
         PacketType.BATTERY,
         PacketType.BATTERY_REQUEST,
@@ -176,6 +184,8 @@ object Capabilities {
         PacketType.SCREEN_INPUT,
         PacketType.INPUT,
         PacketType.RELAY,
+        PacketType.FILES_REQUEST,
+        PacketType.FILES,
     )
 
     fun forType(type: DeviceType): Set<String> = if (type == DeviceType.TV) tv else mvp

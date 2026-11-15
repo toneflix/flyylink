@@ -99,6 +99,15 @@
     <string name="hotspot_ask_title">Your computer wants to use your hotspot</string>
     <string name="hotspot_ask_text">Tap to turn it on</string>
     <string name="setup_photos">Browse photos from your computer</string>
+    <string name="setup_files">Open your phone\'s files on your computer</string>
+
+    <string name="files_disclosure_title">Your files on your computer</string>
+    <string name="files_disclosure_intro">FlyyLink uses All files access so your paired Mac or PC can open this phone\'s storage like a drive.</string>
+    <string name="files_disclosure_browse">Shows your folders and files on your computer, and sends the ones you open</string>
+    <string name="files_disclosure_change">Saves, renames, moves and deletes files only when you do it on your computer</string>
+    <string name="files_disclosure_local">Files go only to your own paired computers, encrypted. They are never sent to us or anyone else</string>
+    <string name="files_disclosure_settings">Next, turn on \"Allow access to manage all files\" for FlyyLink.</string>
+    <string name="files_disclosure_prompt">Next, Android asks for access to your files.</string>
     <string name="setup_location_hint">Choose \"Allow all the time\"</string>
 
     <string name="status_not_paired">Not paired</string>

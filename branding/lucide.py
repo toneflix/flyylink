@@ -22,7 +22,7 @@ MAC = [
     "keyboard", "laptop", "link", "lock", "map-pin", "message-square", "messages-square", "mic", "mic-off", "monitor", "mouse-pointer-2", "music",
     "pause", "phone", "phone-off", "play", "radio", "rotate-cw", "screen-share", "settings", "skip-back", "skip-forward",
     "smartphone", "square-pen", "triangle-alert", "unplug", "video", "volume-2", "volume-x", "wifi", "x", "zap",
-    "radar", "send",
+    "radar", "send", "folder-open",
     "tv", "house", "arrow-left", "chevron-up", "ellipsis", "volume-1", "delete", "corner-down-left", "gamepad-2",
 ]
 
@@ -32,6 +32,7 @@ ANDROID = [
     "message-square", "pointer", "settings", "wifi", "radar", "send", "x", "check", "smartphone", "laptop",
     "tv", "music", "house", "arrow-left", "chevron-up", "chevron-down", "chevron-left", "chevron-right", "ellipsis",
     "play", "pause", "skip-back", "skip-forward", "volume-1", "volume-2", "volume-x", "delete", "corner-down-left", "film",
+    "folder-open",
     "mouse-pointer-2", "presentation", "monitor-off",
 ]
 

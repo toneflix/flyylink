@@ -34,6 +34,7 @@ enum Lucide: String, CaseIterable {
     case fileText = "file-text"
     case fileUp = "file-up"
     case film = "film"
+    case folderOpen = "folder-open"
     case gamepad2 = "gamepad-2"
     case hand = "hand"
     case hash = "hash"
@@ -496,6 +497,26 @@ enum Lucide: String, CaseIterable {
             path.addLine(to: CGPoint(x: 21, y: 7.5))
             path.move(to: CGPoint(x: 17, y: 16.5))
             path.addLine(to: CGPoint(x: 21, y: 16.5))
+        case .folderOpen:
+            path.move(to: CGPoint(x: 6, y: 14))
+            path.addLine(to: CGPoint(x: 7.5, y: 11.1))
+            path.addCurve(to: CGPoint(x: 9.24, y: 10), control1: CGPoint(x: 7.832, y: 10.44), control2: CGPoint(x: 8.501, y: 10.017))
+            path.addLine(to: CGPoint(x: 20, y: 10))
+            path.addCurve(to: CGPoint(x: 21.584, y: 10.774), control1: CGPoint(x: 20.619, y: 9.999), control2: CGPoint(x: 21.204, y: 10.285))
+            path.addCurve(to: CGPoint(x: 21.94, y: 12.5), control1: CGPoint(x: 21.963, y: 11.263), control2: CGPoint(x: 22.095, y: 11.9))
+            path.addLine(to: CGPoint(x: 20.4, y: 18.5))
+            path.addCurve(to: CGPoint(x: 18.45, y: 20), control1: CGPoint(x: 20.171, y: 19.388), control2: CGPoint(x: 19.367, y: 20.006))
+            path.addLine(to: CGPoint(x: 4, y: 20))
+            path.addCurve(to: CGPoint(x: 2, y: 18), control1: CGPoint(x: 2.895, y: 20), control2: CGPoint(x: 2, y: 19.105))
+            path.addLine(to: CGPoint(x: 2, y: 5))
+            path.addCurve(to: CGPoint(x: 4, y: 3), control1: CGPoint(x: 2, y: 3.895), control2: CGPoint(x: 2.895, y: 3))
+            path.addLine(to: CGPoint(x: 7.9, y: 3))
+            path.addCurve(to: CGPoint(x: 9.59, y: 3.9), control1: CGPoint(x: 8.58, y: 2.993), control2: CGPoint(x: 9.216, y: 3.332))
+            path.addLine(to: CGPoint(x: 10.4, y: 5.1))
+            path.addCurve(to: CGPoint(x: 12.07, y: 6), control1: CGPoint(x: 10.77, y: 5.662), control2: CGPoint(x: 11.397, y: 6))
+            path.addLine(to: CGPoint(x: 18, y: 6))
+            path.addCurve(to: CGPoint(x: 20, y: 8), control1: CGPoint(x: 19.105, y: 6), control2: CGPoint(x: 20, y: 6.895))
+            path.addLine(to: CGPoint(x: 20, y: 10))
         case .gamepad2:
             path.move(to: CGPoint(x: 6, y: 11))
             path.addLine(to: CGPoint(x: 10, y: 11))
