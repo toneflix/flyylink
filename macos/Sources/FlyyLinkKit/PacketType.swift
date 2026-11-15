@@ -98,6 +98,12 @@ public enum PacketType {
 
     /// A remote control press or typed text for a TV. Body: {"action": "key"|"text", "key"?, "text"?}; see `TvRemote`.
     public static let remote = "flyylink.remote"
+
+    /// Asks the phone for its contacts. Body: {}.
+    public static let contactsRequest = "flyylink.contacts.request"
+
+    /// The phone's contacts. Body: {"contacts": [{"name", "numbers": [...]}]}; see `PhoneContacts`.
+    public static let contacts = "flyylink.contacts"
 }
 
 public enum Capabilities {
@@ -141,9 +147,11 @@ public enum Capabilities {
         PacketType.flyyDropResponse,
         PacketType.flyyDropCancel,
         PacketType.remote,
+        PacketType.contactsRequest,
+        PacketType.contacts,
     ]
 
-    /// What a TV sends and accepts: no texts, calls, clipboard, battery, location, photos or screen sharing.
+    /// What a TV sends and accepts: no texts, calls, contacts, clipboard, battery, location, photos or screen sharing.
     public static let tv: Set<String> = mvp.subtracting([
         PacketType.battery,
         PacketType.batteryRequest,
@@ -170,6 +178,8 @@ public enum Capabilities {
         PacketType.screenInput,
         PacketType.input,
         PacketType.relay,
+        PacketType.contactsRequest,
+        PacketType.contacts,
     ])
 
     public static func forType(_ type: DeviceType) -> Set<String> { type == .tv ? tv : mvp }

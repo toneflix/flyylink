@@ -107,6 +107,12 @@ public static class PacketType
 
     /// A remote control press or typed text for a TV. Body: {"action": "key"|"text", "key"?, "text"?}; see `TvRemote`.
     public const string Remote = "flyylink.remote";
+
+    /// Asks the phone for its contacts. Body: {}.
+    public const string ContactsRequest = "flyylink.contacts.request";
+
+    /// The phone's contacts. Body: {"contacts": [{"name", "numbers": [...]}]}; see `PhoneContacts`.
+    public const string Contacts = "flyylink.contacts";
 }
 
 public static class Capabilities
@@ -152,9 +158,11 @@ public static class Capabilities
         PacketType.FlyyDropResponse,
         PacketType.FlyyDropCancel,
         PacketType.Remote,
+        PacketType.ContactsRequest,
+        PacketType.Contacts,
     };
 
-    /// What a TV sends and accepts: no texts, calls, clipboard, battery, location, photos or screen sharing.
+    /// What a TV sends and accepts: no texts, calls, contacts, clipboard, battery, location, photos or screen sharing.
     public static readonly IReadOnlySet<string> Tv = Mvp.Except(
     [
         PacketType.Battery,
@@ -182,6 +190,8 @@ public static class Capabilities
         PacketType.ScreenInput,
         PacketType.Input,
         PacketType.Relay,
+        PacketType.ContactsRequest,
+        PacketType.Contacts,
     ]).ToHashSet();
 
     public static IReadOnlySet<string> ForType(DeviceType type) => type == DeviceType.Tv ? Tv : Mvp;
