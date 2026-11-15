@@ -26,6 +26,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
     private readonly SharePlugin share;
     private readonly MediaPlugin media = new();
     private readonly SmsPlugin sms = new();
+    private readonly ContactsPlugin contacts = new();
     private readonly CallPlugin calls = new();
     private readonly LocationPlugin locations = new();
     private readonly PhotosPlugin photos = new();
@@ -87,6 +88,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
         media.OnChange = () => ui.TryEnqueue(Publish);
         locations.OnChange = () => ui.TryEnqueue(Publish);
         sms.OnMessages = (messages, deviceId) => ui.TryEnqueue(() => Messages.Ingest(messages, deviceId));
+        contacts.OnContacts = (list, deviceId) => ui.TryEnqueue(() => Messages.Ingest(list, deviceId));
         calls.OnState = (state, device) =>
         {
             var deviceId = device.Id;
@@ -194,7 +196,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
         };
         var (receiving, until) = settings.FlyyDropReceiving;
         flyyDrop.Drop.Restore(receiving, until);
-        plugins = new PluginRouter([notifications, battery, clipboard, share, media, sms, calls, locations, photos, screen, find, mediaHost, notificationShare, inputShare, screenHost, relay, flyyDrop]);
+        plugins = new PluginRouter([notifications, battery, clipboard, share, media, sms, contacts, calls, locations, photos, screen, find, mediaHost, notificationShare, inputShare, screenHost, relay, flyyDrop]);
 
         updater = new Updater(toasts) { OnInstalling = () => ui.TryEnqueue(() => UpdateInstalling?.Invoke()) };
         Licence = new LicenceModel(ui, toasts);

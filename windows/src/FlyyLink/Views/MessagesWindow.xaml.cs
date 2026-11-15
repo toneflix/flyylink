@@ -158,12 +158,12 @@ public sealed partial class MessagesWindow : Window
 
     private async Task ComposeAsync(string? number)
     {
-        var to = new TextBox { Header = "To", PlaceholderText = "Phone number", Text = number ?? "", InputScope = Scope(InputScopeNameValue.TelephoneNumber) };
+        var to = new ContactPicker(Store.Contacts, "To", number ?? "");
         var body = new TextBox { Header = "Message", PlaceholderText = "Text message", AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MinHeight = 90 };
-        var dialog = Dialog("New message", "Send", new StackPanel { Spacing = 12, Width = 320, Children = { to, body } });
-        dialog.Opened += (_, _) => (number is null ? to : body).Focus(FocusState.Programmatic);
+        var dialog = Dialog("New message", "Send", new StackPanel { Spacing = 12, Width = 320, Children = { to.Box, body } });
+        dialog.Opened += (_, _) => (number is null ? (Control)to.Box : body).Focus(FocusState.Programmatic);
 
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary && !Store.Compose(to.Text, body.Text))
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary && !Store.Compose(to.Number, body.Text))
             await Dialog("Not sent", "OK", new TextBlock { Text = "Check the number, message and phone connection.", TextWrapping = TextWrapping.Wrap }, withCancel: false).ShowAsync();
     }
 
@@ -178,11 +178,11 @@ public sealed partial class MessagesWindow : Window
 
     private async Task DialAsync()
     {
-        var number = new TextBox { PlaceholderText = "Phone number", InputScope = Scope(InputScopeNameValue.TelephoneNumber), FontSize = 18 };
-        var dialog = Dialog("Call from your phone", "Call", new StackPanel { Spacing = 8, Width = 300, Children = { number } });
-        dialog.Opened += (_, _) => number.Focus(FocusState.Programmatic);
+        var number = new ContactPicker(Store.Contacts, fontSize: 18);
+        var dialog = Dialog("Call from your phone", "Call", new StackPanel { Spacing = 8, Width = 300, Children = { number.Box } });
+        dialog.Opened += (_, _) => number.Box.Focus(FocusState.Programmatic);
 
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary) model.Dial(number.Text);
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary && number.Number.Length > 0) model.Dial(number.Number, number.Name);
     }
 
     private ContentDialog Dialog(string title, string action, UIElement content, bool withCancel = true) => new()
@@ -195,6 +195,4 @@ public sealed partial class MessagesWindow : Window
         DefaultButton = ContentDialogButton.Primary,
         RequestedTheme = ((FrameworkElement)Content).ActualTheme,
     };
-
-    private static InputScope Scope(InputScopeNameValue name) => new() { Names = { new InputScopeName(name) } };
 }
