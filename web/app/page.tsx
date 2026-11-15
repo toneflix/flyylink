@@ -142,13 +142,21 @@ export default function Home() {
 
           <div className="platforms">
             {platforms.map((platform) => (
-              <a className="platform" href={`/download/${platform.slug}`} key={platform.name}>
+              <a className="platform" href={platform.href} key={platform.name}>
                 <strong>{platform.name}</strong>
                 <span>{platform.needs}</span>
                 <span>{platform.detail}</span>
-                <span className="platform-cta">
-                  Download <ArrowRight size={16} />
-                </span>
+                {platform.playStore ? (
+                  <img
+                    className="play-badge"
+                    src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+                    alt="Get it on Google Play"
+                  />
+                ) : (
+                  <span className="platform-cta">
+                    Download <ArrowRight size={16} />
+                  </span>
+                )}
               </a>
             ))}
           </div>

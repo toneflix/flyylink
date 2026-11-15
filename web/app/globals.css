@@ -477,7 +477,7 @@ h3 {
 
 .platforms {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 18px;
   margin-top: 40px;
 }
@@ -515,6 +515,13 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.platform .play-badge {
+  height: 62px;
+  width: auto;
+  margin: 2px 0 -10px -10px;
+  align-self: flex-start;
 }
 
 .cta {

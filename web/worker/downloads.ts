@@ -12,6 +12,11 @@ interface Build {
 
 type Latest = Partial<Record<Platform, Build>>;
 
+/** Platforms installed from a store instead of from R2. */
+const stores: Partial<Record<Platform, string>> = {
+  android: "https://play.google.com/store/apps/details?id=com.toneflix.flyylink",
+};
+
 const contentTypes: Record<string, string> = {
   apk: "application/vnd.android.package-archive",
   aab: "application/octet-stream",
@@ -37,6 +42,9 @@ export class Downloads {
   }
 
   private async download(request: Request, platform: string): Promise<Response> {
+    const store = stores[platform as Platform];
+    if (store) return Response.redirect(store, 302);
+
     const build = (await this.latest())[platform as Platform];
     if (!build) return new Response("No release yet.", { status: 404 });
 
