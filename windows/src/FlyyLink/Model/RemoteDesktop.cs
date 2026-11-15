@@ -5,8 +5,16 @@ namespace FlyyLink.Model;
 /// Watching and working another computer's screen, for the remote desktop window. Use on the UI thread.
 public sealed class RemoteDesktop : Observable
 {
-    /// Computers send up to this many pixels on the longer side.
-    public const long MaxSize = 1920;
+    /// The longer side of this PC's main screen in pixels, so the picture is never sent larger than it can be shown.
+    public static long MaxSize
+    {
+        get
+        {
+            var screen = Shell.DesktopBounds.Primary();
+
+            return Math.Clamp((long)Math.Max(screen.MaxX, screen.MaxY) + 1, 1280, 3840);
+        }
+    }
 
     private MirrorPhase phase;
     private string deviceName = "";
