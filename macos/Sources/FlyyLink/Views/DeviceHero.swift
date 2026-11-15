@@ -1,7 +1,7 @@
 import SwiftUI
 import FlyyLinkKit
 
-/// The paired phone or computer at the top of the panel, on the Toneflix gold: picture, name, connection and battery.
+/// The paired phone or computer at the top of the panel, on the Toneflix gold: picture, name, connection, signal and battery.
 struct DeviceHero: View {
     let device: DeviceState
     @ObservedObject var model: AppModel
@@ -14,18 +14,28 @@ struct DeviceHero: View {
                 DeviceNameMenu(device: device, model: model)
 
                 HStack(spacing: 6) {
-                    Circle().fill(Theme.ok).frame(width: 7, height: 7)
-                    Text("Connected")
-                    Image(lucide: .wifi, size: 11, weight: .semibold)
+                    HStack(spacing: 6) {
+                        Circle().fill(Theme.ok).frame(width: 7, height: 7)
+                        Text("Connected")
+                        Image(lucide: .wifi, size: 11, weight: .semibold)
+                    }
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Theme.ok)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(Theme.okTint, in: Capsule())
+                    .help("Connected over Wi-Fi")
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Connected over Wi-Fi")
+
+                    if let signal = device.signal {
+                        SignalBars(signal: signal)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .background(Color.black.opacity(0.08), in: Capsule())
+                            .help(SignalBars.label(signal))
+                    }
                 }
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Theme.ok)
-                .padding(.horizontal, 9)
-                .padding(.vertical, 4)
-                .background(Theme.okTint, in: Capsule())
-                .help("Connected over Wi-Fi")
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("Connected over Wi-Fi")
 
                 HStack(spacing: 6) {
                     Button { model.mirrorsNotifications.toggle() } label: {

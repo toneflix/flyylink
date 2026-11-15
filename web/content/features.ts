@@ -29,7 +29,7 @@ export const features: Feature[] = [
   {
     icon: Bell,
     title: "Notifications",
-    body: "Reply from your keyboard.",
+    body: "Reply from your keyboard. Your computer's show on your phone.",
   },
   {
     icon: MessageSquare,
@@ -73,8 +73,8 @@ export const features: Feature[] = [
   },
   {
     icon: Music,
-    title: "Music and battery",
-    body: "Play, pause, skip, and check the battery.",
+    title: "Music, battery and signal",
+    body: "Play, pause, skip, and check the battery and signal.",
   },
   {
     icon: MousePointer2,

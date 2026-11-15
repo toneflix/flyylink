@@ -15,7 +15,8 @@ public sealed record DeviceState(
     NowPlaying? Media = null,
     PhoneLocation? Location = null,
     bool CanFlyyDrop = false,
-    FlyyDropSend? Outgoing = null)
+    FlyyDropSend? Outgoing = null,
+    CellSignal? Signal = null)
 {
     public bool IsPaired => PairState == PairState.Paired;
 
@@ -44,6 +45,12 @@ public sealed record DeviceState(
     public bool IsCharging => Battery?.IsCharging ?? false;
 
     public bool HasBattery => Battery is not null;
+
+    public bool HasSignal => Signal is not null;
+
+    public int SignalStrength => Signal?.Strength ?? 0;
+
+    public string SignalGeneration => Signal?.Generation ?? "";
 
     public string BatteryText => Battery is { } battery ? $"{battery.Charge}%" : "–";
 

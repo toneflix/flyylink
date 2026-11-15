@@ -1,28 +1,32 @@
 using FlyyLink.Core;
 using FlyyLink.Model;
+using FlyyLink.Shell;
 using Windows.UI.Notifications;
 using Windows.UI.Notifications.Management;
 
 namespace FlyyLink.Plugins;
 
-/// Sends this PC's notifications to paired computers ("kdeconnect.notification"), and removes one here when it is
-/// dismissed there. Windows only lets apps with package identity read notifications, so on an unpackaged install
-/// `IsAvailable` stays false.
+/// Sends this PC's notifications to paired phones and computers ("kdeconnect.notification"), and removes one here
+/// when it is dismissed there. `UserNotificationListener` needs package identity, so an unpackaged install reads
+/// Windows' notification database instead, and can't remove notifications. Mirrors NotificationSharePlugin.swift.
 internal sealed class NotificationSharePlugin(DeviceRegistry devices) : IPlugin
 {
     private const string IdPrefix = "windows.";
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(3);
 
-    private readonly Dictionary<string, PhoneNotification> current = [];
+    private readonly NotificationDatabase database = new();
     private readonly object gate = new();
+    /// What Windows showed at the last look. Null until the first look, which sends nothing.
+    private Dictionary<string, PhoneNotification>? current;
     private UserNotificationListener? listener;
-    private bool enabled = true;
+    private bool readsDatabase;
+    private bool enabled;
 
     public IReadOnlySet<string> Incoming { get; } = new HashSet<string> { PacketType.NotificationRequest };
 
-    public bool IsAvailable => listener is not null;
+    public bool IsAvailable => listener is not null || readsDatabase;
 
-    /// Turned off from the settings menu: nothing more is sent.
+    /// Off until turned on from the settings menu.
     public bool IsEnabled
     {
         get
@@ -35,33 +39,24 @@ internal sealed class NotificationSharePlugin(DeviceRegistry devices) : IPlugin
         }
     }
 
-    /// Asks Windows for access. Call once, on the UI thread.
+    /// Asks Windows for access, or else checks the database can be read. Call once, on the UI thread.
     public async Task StartAsync()
     {
-        try
-        {
-            var candidate = UserNotificationListener.Current;
-            if (await candidate.RequestAccessAsync() != UserNotificationListenerAccessStatus.Allowed) return;
-
-            listener = candidate;
-        }
-        catch (Exception e)
-        {
-            System.Diagnostics.Debug.WriteLine($"Notification access unavailable: {e.Message}");
-            return;
-        }
+        listener = await ListenerAsync();
+        readsDatabase = listener is null && database.Read(1) is not null;
+        if (!IsAvailable) return;
 
         _ = Task.Run(PollAsync);
     }
 
     public void OnPacket(NetworkPacket packet, Device device)
     {
-        if (packet.GetBool("request") == true)
+        if (packet.GetBool("request") == true && IsEnabled && device.Link.Identity.DeviceType.IsComputer())
         {
             List<PhoneNotification> all;
-            lock (gate) all = [.. current.Values];
+            lock (gate) all = [.. (current ?? []).Values];
 
-            if (IsEnabled && device.Link.Identity.DeviceType.IsComputer()) all.ForEach(note => device.Send(note.ToPacket()));
+            all.ForEach(note => device.Send(note.ToPacket()));
         }
 
         if (packet.GetString("cancel") is string id && id.StartsWith(IdPrefix, StringComparison.Ordinal) && uint.TryParse(id[IdPrefix.Length..], out var number))
@@ -77,15 +72,29 @@ internal sealed class NotificationSharePlugin(DeviceRegistry devices) : IPlugin
         }
     }
 
-    /// Windows gives unpackaged apps no change event, so compare what is showing every few seconds.
+    private static async Task<UserNotificationListener?> ListenerAsync()
+    {
+        try
+        {
+            var candidate = UserNotificationListener.Current;
+
+            return await candidate.RequestAccessAsync() == UserNotificationListenerAccessStatus.Allowed ? candidate : null;
+        }
+        catch (Exception e)
+        {
+            System.Diagnostics.Debug.WriteLine($"Notification access unavailable: {e.Message}");
+            return null;
+        }
+    }
+
+    /// Neither source has a change event for unpackaged apps, so compare what is showing every few seconds.
     private async Task PollAsync()
     {
-        while (listener is not null)
+        while (true)
         {
             try
             {
-                var showing = (await listener.GetNotificationsAsync(NotificationKinds.Toast)).Select(Read).OfType<PhoneNotification>().ToList();
-                Update(showing);
+                if (await ShowingAsync() is { } showing) Update(showing);
             }
             catch (Exception e)
             {
@@ -96,29 +105,44 @@ internal sealed class NotificationSharePlugin(DeviceRegistry devices) : IPlugin
         }
     }
 
+    private async Task<List<PhoneNotification>?> ShowingAsync()
+    {
+        if (listener is not null) return (await listener.GetNotificationsAsync(NotificationKinds.Toast)).Select(Read).OfType<PhoneNotification>().ToList();
+
+        return database.Read()?.Select(Read).OfType<PhoneNotification>().ToList();
+    }
+
     private void Update(IReadOnlyList<PhoneNotification> showing)
     {
         List<PhoneNotification> added;
         List<string> removed;
         lock (gate)
         {
-            added = showing.Where(note => !current.ContainsKey(note.Id)).ToList();
-            removed = current.Keys.Where(id => showing.All(note => note.Id != id)).ToList();
+            var previous = current;
+            current = showing.GroupBy(note => note.Id).ToDictionary(group => group.Key, group => group.First());
+            if (previous is null || !enabled) return;
 
-            current.Clear();
-            foreach (var note in showing) current[note.Id] = note;
+            added = showing.Where(note => !previous.ContainsKey(note.Id)).Reverse().ToList();
+            removed = previous.Keys.Where(id => !current.ContainsKey(id)).ToList();
         }
 
-        if (!IsEnabled || (added.Count == 0 && removed.Count == 0)) return;
+        if (added.Count == 0 && removed.Count == 0) return;
 
-        foreach (var device in devices.Paired.Where(d => d.Link.Identity.DeviceType.IsComputer()))
+        foreach (var device in devices.Paired.Where(Receives))
         {
             added.ForEach(note => device.Send(note.ToPacket()));
             removed.ForEach(id => device.Send(PhoneNotification.CancelPacket(id)));
         }
     }
 
-    /// Our own toasts already came from a phone, so they stay here.
+    private static bool Receives(Device device)
+    {
+        var type = device.Link.Identity.DeviceType;
+
+        return type.IsComputer() || type.IsPhone();
+    }
+
+    /// Our own toasts already came from another device, so they stay here.
     private static PhoneNotification? Read(UserNotification notification)
     {
         string appName;
@@ -131,16 +155,22 @@ internal sealed class NotificationSharePlugin(DeviceRegistry devices) : IPlugin
             appName = "Windows";
         }
 
-        if (appName == "FlyyLink") return null;
-
         var texts = notification.Notification.Visual.GetBinding(KnownNotificationBindings.ToastGeneric)?.GetTextElements().Select(t => t.Text).ToList() ?? [];
-        if (texts.Count == 0) return null;
 
-        return new PhoneNotification(
-            $"{IdPrefix}{notification.Id}",
-            appName,
-            texts[0],
-            string.Join("\n", texts.Skip(1)),
-            notification.CreationTime.ToUnixTimeMilliseconds());
+        return Note(notification.Id, appName, texts, notification.CreationTime);
+    }
+
+    private static PhoneNotification? Read(NotificationDatabase.Toast toast)
+    {
+        if (toast.AppId.Contains("FlyyLink", StringComparison.OrdinalIgnoreCase)) return null;
+
+        return Note(toast.Id, AppNames.Of(toast.AppId), toast.Texts, toast.Arrived);
+    }
+
+    private static PhoneNotification? Note(uint id, string appName, IReadOnlyList<string> texts, DateTimeOffset time)
+    {
+        if (appName == "FlyyLink" || texts.Count == 0) return null;
+
+        return new PhoneNotification($"{IdPrefix}{id}", appName, texts[0], string.Join("\n", texts.Skip(1)), time.ToUnixTimeMilliseconds());
     }
 }

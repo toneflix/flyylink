@@ -44,6 +44,8 @@ public static class PacketType
     public const string SmsRequestConversations = "kdeconnect.sms.request_conversations";
     public const string SmsRequestConversation = "kdeconnect.sms.request_conversation";
     public const string Telephony = "kdeconnect.telephony";
+    public const string ConnectivityReport = "kdeconnect.connectivity_report";
+    public const string ConnectivityReportRequest = "kdeconnect.connectivity_report.request";
 
     /// Asks the sender to send the rest of a file that stopped. Body: {"transferId", "offset"}.
     public const string ShareResume = "flyylink.share.resume";
@@ -131,6 +133,8 @@ public static class Capabilities
         PacketType.SmsRequestConversations,
         PacketType.SmsRequestConversation,
         PacketType.Telephony,
+        PacketType.ConnectivityReport,
+        PacketType.ConnectivityReportRequest,
         PacketType.CallRequest,
         PacketType.ClipboardFile,
         PacketType.LocationRequest,
@@ -154,7 +158,7 @@ public static class Capabilities
         PacketType.Remote,
     };
 
-    /// What a TV sends and accepts: no texts, calls, clipboard, battery, location, photos or screen sharing.
+    /// What a TV sends and accepts: no texts, calls, signal, clipboard, battery, location, photos or screen sharing.
     public static readonly IReadOnlySet<string> Tv = Mvp.Except(
     [
         PacketType.Battery,
@@ -168,6 +172,8 @@ public static class Capabilities
         PacketType.SmsRequestConversations,
         PacketType.SmsRequestConversation,
         PacketType.Telephony,
+        PacketType.ConnectivityReport,
+        PacketType.ConnectivityReportRequest,
         PacketType.CallRequest,
         PacketType.CallAudioRequest,
         PacketType.CallAudio,

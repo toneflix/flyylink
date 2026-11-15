@@ -104,6 +104,10 @@ struct MenuPanel: View {
             } else if device.isPhone {
                 CallAudioRow(audio: model.callAudio)
             }
+            if device.isPhone && model.sharesNotifications && !model.canReadNotifications {
+                NotificationShareCard(device: device, model: model)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
             DropZone(deviceId: device.id, model: model)
         } else {
             SearchingCard(hasNearby: !model.devices.isEmpty)
@@ -130,6 +134,10 @@ private struct PanelHeader: View {
                 Picker("Switch devices with", selection: $model.switcherStyle) {
                     ForEach(PhoneSwitcherStyle.allCases) { Text($0.title).tag($0) }
                 }
+                Toggle("Share this Mac's notifications", isOn: Binding(
+                    get: { model.sharesNotifications },
+                    set: { model.sharesNotifications = $0 }
+                ))
                 Toggle("Let my devices control this Mac", isOn: Binding(
                     get: { model.allowsRemoteInput },
                     set: { model.allowsRemoteInput = $0 }

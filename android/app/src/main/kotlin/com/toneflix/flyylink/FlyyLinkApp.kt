@@ -46,6 +46,12 @@ class FlyyLinkApp : Application() {
             NotificationManager.IMPORTANCE_HIGH,
         )
 
-        getSystemService(NotificationManager::class.java).createNotificationChannels(listOf(channel, find, transfers, screen, hotspot, flyyDrop))
+        val computers = NotificationChannel(
+            ComputerNotificationPlugin.CHANNEL_ID,
+            getString(R.string.channel_computer_notifications),
+            NotificationManager.IMPORTANCE_DEFAULT,
+        )
+
+        getSystemService(NotificationManager::class.java).createNotificationChannels(listOf(channel, find, transfers, screen, hotspot, flyyDrop, computers))
     }
 }

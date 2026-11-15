@@ -176,6 +176,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".ComputerNotificationPlugin$ClearedReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".LinkService$DisconnectReceiver"
             android:exported="false" />
 
