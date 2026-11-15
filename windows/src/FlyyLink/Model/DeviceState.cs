@@ -16,7 +16,8 @@ public sealed record DeviceState(
     PhoneLocation? Location = null,
     bool CanFlyyDrop = false,
     FlyyDropSend? Outgoing = null,
-    CellSignal? Signal = null)
+    CellSignal? Signal = null,
+    PhoneFeatures? Features = null)
 {
     public bool IsPaired => PairState == PairState.Paired;
 
@@ -25,6 +26,9 @@ public sealed record DeviceState(
     public bool IsPhone => Type.IsPhone();
 
     public bool IsTv => Type == DeviceType.Tv;
+
+    /// Phones show only what they have turned on; other devices have everything.
+    public bool Has(PhoneFeature feature) => (Features ?? PhoneFeatures.All).Contains(feature);
 
     private string Other => IsComputer ? "the other computer" : IsTv ? "the TV" : "your phone";
 

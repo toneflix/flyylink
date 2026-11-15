@@ -323,7 +323,17 @@ public sealed partial class PanelWindow : Window
 
     public string NextTitle(DeviceState? next) => next is null ? "" : $"Show {next.Name}";
 
-    public Visibility HasMedia(DeviceState? device) => Shown(device?.Media is not null);
+    public Visibility HasMedia(DeviceState? device) => Shown(device?.Media is not null && device.Has(PhoneFeature.Media));
+
+    public Visibility HasClipboard(DeviceState? device) => Shown(device?.Has(PhoneFeature.Clipboard) == true);
+
+    public Visibility HasNotifications(DeviceState? device) => Shown(device?.Has(PhoneFeature.Notifications) == true);
+
+    public Visibility HasMessages(DeviceState? device) => Shown(device?.Has(PhoneFeature.Messages) == true);
+
+    public Visibility HasMirroring(DeviceState? device) => Shown(device?.Has(PhoneFeature.Mirroring) == true);
+
+    public Visibility HasPhotos(DeviceState? device) => Shown(device?.Has(PhoneFeature.Photos) == true);
 
     public Visibility SharesFiles(DeviceState? device) => Shown(device is not null && Model.SharesFiles(device.Id));
 
@@ -342,7 +352,8 @@ public sealed partial class PanelWindow : Window
 
     public bool CanGoNext(DeviceState? device) => device?.Media?.Player.CanGoNext == true;
 
-    public Visibility IsFinding(string? finding, DeviceState? device) => Shown(finding is not null && finding == device?.Id);
+    public Visibility IsFinding(string? finding, DeviceState? device) =>
+        Shown(finding is not null && device is not null && finding == device.Id && device.Has(PhoneFeature.Location));
 
     public string FindTitle(DeviceState? device) => device is null ? "" : $"Finding {device.Name}";
 
