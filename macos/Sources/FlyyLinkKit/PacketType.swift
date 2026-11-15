@@ -106,6 +106,12 @@ public enum PacketType {
 
     /// The phone's answer to `filesRequest`. Body: {"id", "ok", "error"?, "files"?, "file"?}, with a payload for downloads.
     public static let files = "flyylink.files"
+
+    /// Asks the phone for its contacts. Body: {}.
+    public static let contactsRequest = "flyylink.contacts.request"
+
+    /// The phone's contacts. Body: {"contacts": [{"name", "numbers": [...]}]}; see `PhoneContacts`.
+    public static let contacts = "flyylink.contacts"
 }
 
 public enum Capabilities {
@@ -153,9 +159,11 @@ public enum Capabilities {
         PacketType.remote,
         PacketType.filesRequest,
         PacketType.files,
+        PacketType.contactsRequest,
+        PacketType.contacts,
     ]
 
-    /// What a TV sends and accepts: no texts, calls, signal, clipboard, battery, location, photos, files or screen sharing.
+    /// What a TV sends and accepts: no texts, calls, contacts, signal, clipboard, battery, location, photos, files or screen sharing.
     public static let tv: Set<String> = mvp.subtracting([
         PacketType.battery,
         PacketType.batteryRequest,
@@ -186,6 +194,8 @@ public enum Capabilities {
         PacketType.relay,
         PacketType.filesRequest,
         PacketType.files,
+        PacketType.contactsRequest,
+        PacketType.contacts,
     ])
 
     public static func forType(_ type: DeviceType) -> Set<String> { type == .tv ? tv : mvp }

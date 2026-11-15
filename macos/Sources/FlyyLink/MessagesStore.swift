@@ -33,6 +33,7 @@ final class MessagesStore: ObservableObject {
     @Published private(set) var pending: [PendingText] = []
     @Published private(set) var loading: Set<Int64> = []
     @Published private(set) var hasPhone = false
+    @Published private(set) var contacts: [PhoneContact] = []
     @Published var selected: Int64?
     @Published var showsDialer = false
 
@@ -54,6 +55,7 @@ final class MessagesStore: ObservableObject {
             threads = [:]
             requested = []
             selected = nil
+            contacts = []
         }
 
         hasPhone = true
@@ -67,6 +69,7 @@ final class MessagesStore: ObservableObject {
 
     func refresh() {
         _ = send?(Sms.requestConversations())
+        _ = send?(PhoneContacts.request())
         requested.forEach { _ = send?(Sms.requestConversation($0)) }
     }
 
@@ -85,6 +88,12 @@ final class MessagesStore: ObservableObject {
         pending.removeAll { text in sent.contains { $0.body == text.body } }
 
         conversations.sort { $0.latest.date > $1.latest.date }
+    }
+
+    func ingest(_ contacts: [PhoneContact], from deviceId: String) {
+        guard deviceId == self.deviceId else { return }
+
+        self.contacts = contacts
     }
 
     func open(_ threadId: Int64) {
@@ -165,5 +174,19 @@ final class SmsPlugin: Plugin {
         guard let messages = Sms.messages(packet) else { return }
 
         onMessages?(messages, device.id)
+    }
+}
+
+/// Hands the phone's contacts to the Messages window.
+final class ContactsPlugin: Plugin {
+    let incoming: Set<String> = [PacketType.contacts]
+
+    /// Called on any thread with the contacts and the device they came from.
+    var onContacts: (([PhoneContact], String) -> Void)?
+
+    func onPacket(_ packet: NetworkPacket, from device: Device) {
+        guard let contacts = PhoneContacts.contacts(packet) else { return }
+
+        onContacts?(contacts, device.id)
     }
 }

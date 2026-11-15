@@ -105,6 +105,12 @@ object PacketType {
 
     /** The phone's answer to [FILES_REQUEST]. Body: {"id", "ok", "error"?, "files"?, "file"?}, with a payload for downloads. */
     const val FILES = "flyylink.files"
+
+    /** Asks the phone for its contacts. Body: {}. */
+    const val CONTACTS_REQUEST = "flyylink.contacts.request"
+
+    /** The phone's contacts. Body: {"contacts": [{"name", "numbers": [...]}]}; see [PhoneContacts]. */
+    const val CONTACTS = "flyylink.contacts"
 }
 
 /** What each kind of device sends and accepts. Kept in one place so every app advertises the same set. */
@@ -153,9 +159,11 @@ object Capabilities {
         PacketType.REMOTE,
         PacketType.FILES_REQUEST,
         PacketType.FILES,
+        PacketType.CONTACTS_REQUEST,
+        PacketType.CONTACTS,
     )
 
-    /** What a TV sends and accepts: no texts, calls, signal, clipboard, battery, location, photos, files or screen sharing. */
+    /** What a TV sends and accepts: no texts, calls, contacts, signal, clipboard, battery, location, photos, files or screen sharing. */
     val tv: Set<String> = mvp - setOf(
         PacketType.BATTERY,
         PacketType.BATTERY_REQUEST,
@@ -186,6 +194,8 @@ object Capabilities {
         PacketType.RELAY,
         PacketType.FILES_REQUEST,
         PacketType.FILES,
+        PacketType.CONTACTS_REQUEST,
+        PacketType.CONTACTS,
     )
 
     fun forType(type: DeviceType): Set<String> = if (type == DeviceType.TV) tv else mvp

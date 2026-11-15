@@ -37,7 +37,7 @@ struct MessagesWindow: View {
             }
         }
         .sheet(isPresented: $composing) { NewMessageSheet(store: store) }
-        .sheet(isPresented: $store.showsDialer) { DialSheet(model: model) }
+        .sheet(isPresented: $store.showsDialer) { DialSheet(model: model, store: store) }
         .onAppear { if store.conversations.isEmpty { store.refresh() } }
     }
 
@@ -359,8 +359,7 @@ private struct NewMessageSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("New message").font(.system(size: 16, weight: .bold))
-            TextField("Phone number", text: $number)
-                .textFieldStyle(.roundedBorder)
+            ContactField(contacts: store.contacts, number: $number)
             TextField("Message", text: $text, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .lineLimit(3...6)
@@ -383,17 +382,17 @@ private struct NewMessageSheet: View {
 
 private struct DialSheet: View {
     @ObservedObject var model: AppModel
+    @ObservedObject var store: MessagesStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var number = ""
+    @State private var name: String?
 
     var body: some View {
         VStack(spacing: 14) {
             Text("Call from your phone").font(.system(size: 16, weight: .bold))
-            TextField("Phone number", text: $number)
-                .textFieldStyle(.roundedBorder)
+            ContactField(contacts: store.contacts, number: $number, name: $name, onSubmit: call)
                 .font(.system(size: 18, weight: .medium, design: .rounded))
-                .onSubmit(call)
             HStack {
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -410,8 +409,71 @@ private struct DialSheet: View {
     private func call() {
         guard !number.trimmingCharacters(in: .whitespaces).isEmpty else { return }
 
-        model.dial(number, name: nil)
+        model.dial(number, name: name)
         dismiss()
+    }
+}
+
+/// A number field that suggests the phone's contacts as you type a name or number.
+private struct ContactField: View {
+    let contacts: [PhoneContact]
+    @Binding var number: String
+    var name: Binding<String?> = .constant(nil)
+    var onSubmit: () -> Void = {}
+
+    @State private var picked = ""
+
+    private struct Suggestion: Identifiable {
+        let name: String
+        let number: String
+        var id: String { name + number }
+    }
+
+    private var suggestions: [Suggestion] {
+        let query = number.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty, query != picked else { return [] }
+
+        let matches = PhoneContacts.search(contacts, query).flatMap { contact in
+            contact.numbers.map { Suggestion(name: contact.name, number: $0) }
+        }
+        return Array(matches.prefix(5))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            TextField(contacts.isEmpty ? "Phone number" : "Name or number", text: $number)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit(onSubmit)
+                .onChange(of: number) { if $0 != picked { name.wrappedValue = nil } }
+
+            if let contact = name.wrappedValue {
+                Text(contact)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+            }
+
+            ForEach(suggestions) { suggestion in
+                Button { pick(suggestion) } label: {
+                    HStack {
+                        Text(suggestion.name).font(.system(size: 13, weight: .medium))
+                        Spacer()
+                        Text(suggestion.number)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    .contentShape(Rectangle())
+                    .padding(.vertical, 3)
+                    .padding(.horizontal, 6)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func pick(_ suggestion: Suggestion) {
+        picked = suggestion.number
+        number = suggestion.number
+        name.wrappedValue = suggestion.name
     }
 }
 

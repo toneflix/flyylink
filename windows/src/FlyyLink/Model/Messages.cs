@@ -64,6 +64,7 @@ public sealed class MessagesStore : Observable
     private readonly HashSet<long> loading = [];
     private readonly List<(long ThreadId, string Body, long Date, long Key)> pending = [];
     private IReadOnlyList<Conversation> conversations = [];
+    private IReadOnlyList<PhoneContact> contacts = [];
     private string search = "";
     private long? selected;
     private bool hasPhone;
@@ -105,6 +106,13 @@ public sealed class MessagesStore : Observable
         {
             if (Set(ref search, value ?? "")) Raise(nameof(Shown));
         }
+    }
+
+    /// The phone's contacts, for picking who to text or call.
+    public IReadOnlyList<PhoneContact> Contacts
+    {
+        get => contacts;
+        private set => Set(ref contacts, value);
     }
 
     public bool HasPhone
@@ -161,6 +169,7 @@ public sealed class MessagesStore : Observable
             pending.Clear();
             selected = null;
             Conversations = [];
+            Contacts = [];
             RaiseThread();
         }
 
@@ -176,6 +185,7 @@ public sealed class MessagesStore : Observable
     public void Refresh()
     {
         Send?.Invoke(Sms.RequestConversations());
+        Send?.Invoke(PhoneContacts.RequestPacket());
         foreach (var threadId in requested) Send?.Invoke(Sms.RequestConversation(threadId));
     }
 
@@ -199,6 +209,11 @@ public sealed class MessagesStore : Observable
 
         Conversations = list.OrderByDescending(c => c.Latest.Date).ToList();
         RaiseThread();
+    }
+
+    public void Ingest(IReadOnlyList<PhoneContact> list, string fromDevice)
+    {
+        if (fromDevice == deviceId) Contacts = list;
     }
 
     public void Open(long threadId)

@@ -145,6 +145,7 @@ final class AppModel: ObservableObject {
     private let share = SharePlugin(folder: AppModel.downloads)
     private let mediaPlugin = MediaPlugin()
     private let sms = SmsPlugin()
+    private let contacts = ContactsPlugin()
     private let locations = LocationPlugin()
     private let photosPlugin = PhotosPlugin()
     private let filesPlugin = FilesPlugin()
@@ -217,7 +218,7 @@ final class AppModel: ObservableObject {
         notificationShare = NotificationSharePlugin(devices: connected)
         flyyDropPlugin = FlyyDropPlugin(share: share, devices: connected)
         drives = PhoneDrives(files: filesPlugin, devices: connected)
-        plugins = PluginRouter([notifications, battery, connectivity, clipboard, share, mediaPlugin, sms, calls, callAudioPlugin, locations, photosPlugin, filesPlugin, screenPlugin, find, mediaHost, inputShare, screenHost, relay, flyyDropPlugin, notificationShare])
+        plugins = PluginRouter([notifications, battery, connectivity, clipboard, share, mediaPlugin, sms, contacts, calls, callAudioPlugin, locations, photosPlugin, filesPlugin, screenPlugin, find, mediaHost, inputShare, screenHost, relay, flyyDropPlugin, notificationShare])
         mirrorsNotifications = UserDefaults.standard.object(forKey: "mirrorsNotifications") as? Bool ?? true
         switcherStyle = UserDefaults.standard.string(forKey: "switcherStyle").flatMap(PhoneSwitcherStyle.init(rawValue:)) ?? .carousel
         opensAtLogin = LoginItem.isEnabled
@@ -248,6 +249,7 @@ final class AppModel: ObservableObject {
         mediaPlugin.onChange = { [weak self] in Task { @MainActor in self?.publish() } }
         locations.onChange = { [weak self] in Task { @MainActor in self?.publish() } }
         sms.onMessages = { [weak self] messages, deviceId in Task { @MainActor in self?.messages.ingest(messages, from: deviceId) } }
+        contacts.onContacts = { [weak self] contacts, deviceId in Task { @MainActor in self?.messages.ingest(contacts, from: deviceId) } }
         calls.onState = { [weak self] state, device in
             let deviceId = device.id
             let deviceName = device.name

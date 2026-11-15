@@ -115,6 +115,12 @@ public static class PacketType
 
     /// The phone's answer to "flyylink.files.request". Body: {"id", "ok", "error"?, "files"?, "file"?}, with a payload for downloads.
     public const string Files = "flyylink.files";
+
+    /// Asks the phone for its contacts. Body: {}.
+    public const string ContactsRequest = "flyylink.contacts.request";
+
+    /// The phone's contacts. Body: {"contacts": [{"name", "numbers": [...]}]}; see `PhoneContacts`.
+    public const string Contacts = "flyylink.contacts";
 }
 
 public static class Capabilities
@@ -164,9 +170,11 @@ public static class Capabilities
         PacketType.Remote,
         PacketType.FilesRequest,
         PacketType.Files,
+        PacketType.ContactsRequest,
+        PacketType.Contacts,
     };
 
-    /// What a TV sends and accepts: no texts, calls, signal, clipboard, battery, location, photos, files or screen sharing.
+    /// What a TV sends and accepts: no texts, calls, contacts, signal, clipboard, battery, location, photos, files or screen sharing.
     public static readonly IReadOnlySet<string> Tv = Mvp.Except(
     [
         PacketType.Battery,
@@ -198,6 +206,8 @@ public static class Capabilities
         PacketType.Relay,
         PacketType.FilesRequest,
         PacketType.Files,
+        PacketType.ContactsRequest,
+        PacketType.Contacts,
     ]).ToHashSet();
 
     public static IReadOnlySet<string> ForType(DeviceType type) => type == DeviceType.Tv ? Tv : Mvp;
