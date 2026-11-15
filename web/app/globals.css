@@ -517,6 +517,13 @@ h3 {
   gap: 6px;
 }
 
+.platform .play-badge {
+  height: 62px;
+  width: auto;
+  margin: 2px 0 -10px -10px;
+  align-self: flex-start;
+}
+
 .cta {
   text-align: center;
   padding: 100px 0 120px;
