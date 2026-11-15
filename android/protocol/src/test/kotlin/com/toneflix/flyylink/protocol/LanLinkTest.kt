@@ -20,10 +20,11 @@ class LanLinkTest {
         ports: IntRange,
         udpPort: Int = 41716,
         capabilities: Set<String> = Capabilities.mvp,
+        features: PhoneFeatures = PhoneFeatures.ALL,
     ) {
         val identity = DeviceIdentity(
             DeviceIdentity.newDeviceId(), name, type,
-            incomingCapabilities = capabilities, outgoingCapabilities = capabilities,
+            incomingCapabilities = capabilities, outgoingCapabilities = capabilities, features = features,
         )
         val certificate = DeviceCertificate.generate(identity.deviceId)
         val trust = InMemoryTrustStore()
@@ -135,6 +136,45 @@ class LanLinkTest {
         Device(onMac, mac.certificate, mac.trust).start()
 
         assertFalse(phoneDevice.send(NetworkPacket(PacketType.PING)))
+    }
+
+    @Test fun featuresArriveWithTheIdentityAndWhenTheyChange() {
+        var phoneHas = PhoneFeatures.of(PhoneFeature.CLIPBOARD)
+        phone = Peer("Phone", DeviceType.PHONE, 41731..41764, features = phoneHas)
+        phone.trust.trust(mac.identity.deviceId, mac.certificate.encodedCertificate)
+        mac.trust.trust(phone.identity.deviceId, phone.certificate.encodedCertificate)
+        val (onPhone, onMac) = connect()
+        val onPhoneReceived = LinkedBlockingQueue<NetworkPacket>()
+        val onMacReceived = LinkedBlockingQueue<NetworkPacket>()
+
+        val phoneDevice = Device(onPhone, phone.certificate, phone.trust, ownFeatures = { phoneHas }).apply {
+            listener = object : Device.Listener {
+                override fun onPacket(device: Device, packet: NetworkPacket) = onPhoneReceived.put(packet)
+            }
+            start()
+        }
+        val macDevice = Device(onMac, mac.certificate, mac.trust).apply {
+            listener = object : Device.Listener {
+                override fun onPacket(device: Device, packet: NetworkPacket) = onMacReceived.put(packet)
+            }
+            start()
+        }
+
+        assertEquals(phoneHas, macDevice.features)
+        assertFalse(macDevice.send(PhoneLocation.request()))
+        assertFalse(phoneDevice.send(PhoneLocation(1.0, 2.0, 3.0, 4).toPacket()))
+
+        onMac.send(PhoneLocation.request())
+        assertTrue(macDevice.send(Clipboard.packet("hi")))
+        assertEquals(PacketType.CLIPBOARD, onPhoneReceived.poll(10, TimeUnit.SECONDS)?.type)
+
+        phoneHas = PhoneFeatures.of(PhoneFeature.CLIPBOARD, PhoneFeature.LOCATION)
+        assertTrue(phoneDevice.send(phoneHas.toPacket()))
+        assertEquals(PacketType.FEATURES, onMacReceived.poll(10, TimeUnit.SECONDS)?.type)
+
+        assertEquals(phoneHas, macDevice.features)
+        assertTrue(macDevice.send(PhoneLocation.request()))
+        assertEquals(PacketType.LOCATION_REQUEST, onPhoneReceived.poll(10, TimeUnit.SECONDS)?.type)
     }
 
     @Test fun flyyDropMovesOnlyTheAcceptedFileBetweenUnpairedDevices() {

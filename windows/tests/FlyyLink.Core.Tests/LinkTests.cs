@@ -76,7 +76,7 @@ internal static class Wait
 
 internal sealed class Peer : IDisposable
 {
-    public Peer(string name, DeviceType type, PortRange ports, int udpPort = 41716, IReadOnlySet<string>? capabilities = null)
+    public Peer(string name, DeviceType type, PortRange ports, int udpPort = 41716, IReadOnlySet<string>? capabilities = null, PhoneFeatures? features = null)
     {
         Identity = new DeviceIdentity
         {
@@ -85,6 +85,7 @@ internal sealed class Peer : IDisposable
             DeviceType = type,
             IncomingCapabilities = capabilities ?? Capabilities.Mvp,
             OutgoingCapabilities = capabilities ?? Capabilities.Mvp,
+            Features = features ?? PhoneFeatures.All,
         };
         Certificate = DeviceCertificate.Generate(Identity.DeviceId);
         var identity = Identity;
@@ -104,9 +105,9 @@ internal sealed class Peer : IDisposable
 
     public DeviceIdentity Announced => Identity with { TcpPort = Lan.TcpPort };
 
-    public Device DeviceFor(DeviceLink link, Func<long>? clock = null, IGuestAccess? guests = null)
+    public Device DeviceFor(DeviceLink link, Func<long>? clock = null, IGuestAccess? guests = null, Func<PhoneFeatures>? features = null)
     {
-        var device = new Device(link, Certificate, Trust, clock, guests) { Delegate = Recorder };
+        var device = new Device(link, Certificate, Trust, clock, guests, ownFeatures: features) { Delegate = Recorder };
         device.Start();
 
         return device;
@@ -172,6 +173,36 @@ public sealed class LanLinkTests : IDisposable
         pc.Trust.Trust(phone.Identity.DeviceId, onPc.CertificateDer);
 
         return (phone.DeviceFor(onPhone), pc.DeviceFor(onPc));
+    }
+
+    [Fact]
+    public void FeaturesArriveWithTheIdentityAndWhenTheyChange()
+    {
+        var phoneHas = PhoneFeatures.Of(PhoneFeature.Clipboard);
+        using var featuredPhone = new Peer("Phone", DeviceType.Phone, new PortRange(42781, 42790), features: phoneHas);
+        featuredPhone.Trust.Trust(pc.Identity.DeviceId, pc.Certificate.CertificateDer);
+        pc.Trust.Trust(featuredPhone.Identity.DeviceId, featuredPhone.Certificate.CertificateDer);
+        _ = featuredPhone.Lan.ConnectAsync(pc.Announced, "127.0.0.1");
+        var onPhone = featuredPhone.Recorder.Links.Take() ?? throw new Exception("phone got no link");
+        var onPc = pc.Recorder.Links.Take() ?? throw new Exception("PC got no link");
+        var phoneDevice = featuredPhone.DeviceFor(onPhone, features: () => phoneHas);
+        var pcDevice = pc.DeviceFor(onPc);
+
+        Assert.Equal(phoneHas, pcDevice.Features);
+        Assert.False(pcDevice.Send(PhoneLocation.Request()));
+        Assert.False(phoneDevice.Send(new PhoneLocation(1, 2, 3, 4).ToPacket()));
+
+        onPc.Send(PhoneLocation.Request());
+        Assert.True(pcDevice.Send(Clipboard.Packet("hi")));
+        Assert.Equal(PacketType.Clipboard, featuredPhone.Recorder.Packets.Take()?.Type);
+
+        phoneHas = PhoneFeatures.Of(PhoneFeature.Clipboard, PhoneFeature.Location);
+        Assert.True(phoneDevice.Send(phoneHas.ToPacket()));
+        Assert.Equal(PacketType.Features, pc.Recorder.Packets.Take()?.Type);
+
+        Assert.Equal(phoneHas, pcDevice.Features);
+        Assert.True(pcDevice.Send(PhoneLocation.Request()));
+        Assert.Equal(PacketType.LocationRequest, featuredPhone.Recorder.Packets.Take()?.Type);
     }
 
     [Fact]

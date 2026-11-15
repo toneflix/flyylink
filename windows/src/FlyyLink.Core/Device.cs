@@ -17,6 +17,7 @@ public interface IDeviceDelegate
 /// A connected peer: its encrypted link plus pairing. Packets from a device that is not paired are dropped,
 /// except pairing packets and what `guests` lets through. Mirrors Device.kt and Device.swift.
 /// With `canPair` false the peer stays unpaired, so only `guests` traffic gets through.
+/// Packets of a feature that is off, in `ownFeatures` or the peer's `Features`, go neither way.
 public sealed class Device
 {
     /// A link with no packets for this long is treated as dead.
@@ -28,10 +29,19 @@ public sealed class Device
     private readonly IGuestAccess? guests;
     private readonly PairingStateMachine pairing;
     private readonly PayloadTransfer payloads;
+    private readonly Func<PhoneFeatures> ownFeatures;
     private readonly object gate = new();
     private long lastReceived;
+    private PhoneFeatures peerFeatures;
 
-    public Device(DeviceLink link, DeviceCertificate ownCertificate, ITrustStore trustStore, Func<long>? clock = null, IGuestAccess? guests = null, bool canPair = true)
+    public Device(
+        DeviceLink link,
+        DeviceCertificate ownCertificate,
+        ITrustStore trustStore,
+        Func<long>? clock = null,
+        IGuestAccess? guests = null,
+        bool canPair = true,
+        Func<PhoneFeatures>? ownFeatures = null)
     {
         Link = link;
         CanPair = canPair;
@@ -44,6 +54,8 @@ public sealed class Device
             allowed: canPair);
         payloads = new PayloadTransfer(ownCertificate);
         lastReceived = this.clock();
+        this.ownFeatures = ownFeatures ?? (() => PhoneFeatures.All);
+        peerFeatures = link.Identity.Features;
 
         if (!canPair) trustStore.Forget(link.Identity.DeviceId);
     }
@@ -67,6 +79,15 @@ public sealed class Device
     }
 
     public bool IsPaired => PairState == PairState.Paired;
+
+    /// The features the peer has on: from its identity, then from each "flyylink.features" it sends.
+    public PhoneFeatures Features
+    {
+        get
+        {
+            lock (gate) return peerFeatures;
+        }
+    }
 
     /// The code to show on screen while a pair request is open.
     public string VerificationCode
@@ -190,10 +211,22 @@ public sealed class Device
             return;
         }
 
+        if (packet.Type == PacketType.Features && IsPaired && PhoneFeatures.FromPacket(packet) is { } features)
+        {
+            lock (gate) peerFeatures = features;
+        }
+
+        if (!ownFeatures().Accepts(packet.Type)) return;
+
         if (IsPaired || guests?.AdmitsIncoming(Id, packet) == true) Delegate?.DeviceReceived(this, packet);
     }
 
-    private bool MaySend(NetworkPacket packet) => IsPaired || guests?.AdmitsOutgoing(Id, packet) == true;
+    private bool MaySend(NetworkPacket packet)
+    {
+        if (!ownFeatures().Sends(packet.Type) || !Features.Accepts(packet.Type)) return false;
+
+        return IsPaired || guests?.AdmitsOutgoing(Id, packet) == true;
+    }
 
     private void Run(Func<PairingStateMachine, PairAction> step)
     {

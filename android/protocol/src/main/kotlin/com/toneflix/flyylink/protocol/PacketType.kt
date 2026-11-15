@@ -111,6 +111,9 @@ object PacketType {
 
     /** The phone's contacts. Body: {"contacts": [{"name", "numbers": [...]}]}; see [PhoneContacts]. */
     const val CONTACTS = "flyylink.contacts"
+
+    /** The phone features the user has on, sent when one changes. Body: {"features": [...]}; see [PhoneFeatures]. */
+    const val FEATURES = "flyylink.features"
 }
 
 /** What each kind of device sends and accepts. Kept in one place so every app advertises the same set. */
@@ -161,6 +164,7 @@ object Capabilities {
         PacketType.FILES,
         PacketType.CONTACTS_REQUEST,
         PacketType.CONTACTS,
+        PacketType.FEATURES,
     )
 
     /** What a TV sends and accepts: no texts, calls, contacts, signal, clipboard, battery, location, photos, files or screen sharing. */

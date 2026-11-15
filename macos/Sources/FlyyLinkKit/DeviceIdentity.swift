@@ -20,6 +20,8 @@ public struct DeviceIdentity: Equatable, Sendable {
     public var incomingCapabilities: Set<String>
     public var outgoingCapabilities: Set<String>
     public var tcpPort: UInt16?
+    /// The phone features the user has on. Devices that don't report them get `PhoneFeatures.all`.
+    public var features: PhoneFeatures
 
     public init(
         deviceId: String,
@@ -28,7 +30,8 @@ public struct DeviceIdentity: Equatable, Sendable {
         protocolVersion: Int = FlyyLinkKit.protocolVersion,
         incomingCapabilities: Set<String> = Capabilities.mvp,
         outgoingCapabilities: Set<String> = Capabilities.mvp,
-        tcpPort: UInt16? = nil
+        tcpPort: UInt16? = nil,
+        features: PhoneFeatures = .all
     ) {
         self.deviceId = deviceId
         self.deviceName = deviceName
@@ -37,6 +40,7 @@ public struct DeviceIdentity: Equatable, Sendable {
         self.incomingCapabilities = incomingCapabilities
         self.outgoingCapabilities = outgoingCapabilities
         self.tcpPort = tcpPort
+        self.features = features
     }
 
     public static func newDeviceId() -> String {
@@ -66,6 +70,7 @@ public struct DeviceIdentity: Equatable, Sendable {
             "outgoingCapabilities": .array(outgoingCapabilities.sorted().map { .string($0) }),
         ]
         if let tcpPort { body["tcpPort"] = .int(Int64(tcpPort)) }
+        if let features = features.wire { body[PhoneFeatures.bodyKey] = .array(features.map { .string($0) }) }
         return NetworkPacket(type: PacketType.identity, body: body)
     }
 
@@ -75,6 +80,7 @@ public struct DeviceIdentity: Equatable, Sendable {
         var slim = self
         slim.incomingCapabilities = []
         slim.outgoingCapabilities = []
+        slim.features = .all
 
         return slim.toPacket()
     }
@@ -90,7 +96,8 @@ public struct DeviceIdentity: Equatable, Sendable {
             protocolVersion: Int(packet.int("protocolVersion") ?? 0),
             incomingCapabilities: Set(packet.stringList("incomingCapabilities")),
             outgoingCapabilities: Set(packet.stringList("outgoingCapabilities")),
-            tcpPort: packet.int("tcpPort").flatMap { UInt16(exactly: $0) }
+            tcpPort: packet.int("tcpPort").flatMap { UInt16(exactly: $0) },
+            features: PhoneFeatures(body: packet)
         )
     }
 }
