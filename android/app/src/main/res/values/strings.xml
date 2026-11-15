@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">FlyyLink</string>
     <string name="channel_link">Connection</string>
-    <string name="notification_running">Looking for your computer</string>
+    <string name="notification_running">Looking for your devices</string>
     <string name="notification_connected">Connected to %1$s</string>
     <string name="notification_disconnect">Disconnect</string>
     <string name="notification_stop">Stop</string>
@@ -30,21 +30,21 @@
     <string name="home_connected">Connected</string>
     <string name="home_wifi">Wi-Fi</string>
     <string name="home_flowing">Syncing</string>
-    <string name="home_looking">Looking for your computer</string>
-    <string name="home_looking_hint">Open FlyyLink on your computer, on the same Wi-Fi.</string>
-    <string name="home_pick_mac">Pick your computer to pair</string>
+    <string name="home_looking">Looking for your devices</string>
+    <string name="home_looking_hint">Open FlyyLink on your computer or TV, on the same Wi-Fi.</string>
+    <string name="home_pick_mac">Pick a device to pair</string>
     <string name="home_send_files">Send files</string>
     <string name="home_clipboard">Clipboard</string>
     <string name="home_open_link">Open link</string>
     <string name="home_nearby">Nearby</string>
-    <string name="home_your_macs">Your computers</string>
+    <string name="home_your_macs">Your devices</string>
     <string name="home_macs_connected">%1$d connected</string>
     <string name="home_mac_shown">Shown</string>
     <string name="home_mac_live">Connected</string>
-    <string name="home_switch_carousel">Swipe between computers</string>
+    <string name="home_switch_carousel">Swipe between devices</string>
     <string name="home_switch_row">Device list</string>
     <string name="home_show_mac">Show %1$s</string>
-    <string name="home_flowing_many">Syncing with all your computers</string>
+    <string name="home_flowing_many">Syncing with all your devices</string>
     <string name="home_recent">Recent</string>
     <string name="home_clear">Clear</string>
 
@@ -106,8 +106,8 @@
     <string name="status_paired">Paired</string>
 
     <string name="pair_title">Pair with %1$s?</string>
-    <string name="pair_hint">Same code on your computer?</string>
-    <string name="pair_check_mac">Accept on your computer if the code matches</string>
+    <string name="pair_hint">Same code on both screens?</string>
+    <string name="pair_check_mac">Accept on the other screen if the code matches</string>
 
     <string name="link_title">Open a link on %1$s</string>
 
@@ -123,7 +123,7 @@
     <string name="share_text_summary">Text</string>
     <string name="share_sent_toast">Sent</string>
     <string name="share_send_failed_toast">Some files didn\'t send</string>
-    <string name="share_not_connected">Your computer isn\'t connected</string>
+    <string name="share_not_connected">Not connected</string>
     <string name="share_sending">Sending to %1$s</string>
     <string name="share_resuming">Resuming to %1$s</string>
     <string name="share_sent">Sent to %1$s</string>
@@ -227,7 +227,7 @@
     <string name="tv_on">On</string>
     <string name="tv_off">Off</string>
     <string name="tv_turn_on">Turn on</string>
-    <string name="tv_remote">Phone remote</string>
+    <string name="tv_remote">Remote</string>
     <string name="tv_remote_stopped">Turn off and on again</string>
     <string name="tv_popups">Notification pop-ups</string>
     <string name="tv_over_apps">Open right away</string>
@@ -237,11 +237,11 @@
     <string name="tv_open_flyylink">Open FlyyLink to see it</string>
     <string name="tv_no_app">No app on this TV opens it</string>
 
-    <string name="tv_control_title">Use your phone as a remote</string>
-    <string name="tv_control_intro">FlyyLink uses an accessibility service, "FlyyLink remote", so your paired phone can work this TV.</string>
-    <string name="tv_control_does">Moves around the screen, selects, and presses Back and Home when you do on your phone</string>
+    <string name="tv_control_title">Use your phone or computer as a remote</string>
+    <string name="tv_control_intro">FlyyLink uses an accessibility service, "FlyyLink remote", so your paired phone or computer can work this TV.</string>
+    <string name="tv_control_does">Moves around the screen, selects, and presses Back and Home when you do on your phone or computer</string>
     <string name="tv_control_typing">Types into the text field you selected, reading only that field</string>
-    <string name="tv_control_only">Works only for phones you paired</string>
+    <string name="tv_control_only">Works only for devices you paired</string>
     <string name="tv_control_private">Reads, records and keeps nothing else on your screen</string>
     <string name="tv_control_settings">Next, turn on "FlyyLink remote" in Accessibility settings. You can turn it off there any time.</string>
 </resources>

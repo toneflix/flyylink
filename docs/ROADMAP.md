@@ -32,6 +32,11 @@ These are the reasons someone would pick FlyyLink. Packets for them use the `fly
 - **Universal clipboard with images and files,** not just text.
 - **Auto-unlock:** unlock the Mac when the paired phone is nearby and unlocked.
 
+## TVs
+- FlyyLink on Google TV, Android TV and Fire TV: notifications, photos, videos and music from your devices
+- The phone or computer as the TV remote, with arrows, typing and a touchpad pointer
+- Play on TV: photos, videos and music on any DLNA or Google Cast TV, no TV app needed
+
 ## Later
 - Instant hotspot: turn on the phone's hotspot from the Mac menu bar
 - Find my phone with the last known location

@@ -18,6 +18,8 @@ Texts in the Messages window, calls with a banner to answer, mute and hang up, m
 
 Mirror and control the phone's screen from the panel's Mirror tile. When the phone is off your Wi-Fi but in Bluetooth range, FlyyLink finds it over Bluetooth and can ask it to turn on its hotspot and join it. Windows only shares the Wi-Fi name with apps when location is allowed for apps, so turn that on if FlyyLink doesn't remember the hotspot.
 
+A paired TV gets a Remote tile with arrows, typing and a touchpad that moves the TV's pointer. While a TV is on your network, Play on TV in the panel sends it photos, videos and music.
+
 Your phone's 2,000 most recent photos show in Explorer under `Phone Photos` in your user folder. They take no space until opened, when FlyyLink fetches the original from the phone. Turn it off in the panel's settings menu.
 
 Win+Shift+A opens the panel from anywhere, and Ctrl+Alt+C, F, M and R send the clipboard, send files, mirror and ring the phone (turn them off under Settings, Keyboard shortcuts). Pin FlyyLink to the taskbar for jump list shortcuts to Messages, Photos, mirroring, ringing your phone and sending the clipboard or files.

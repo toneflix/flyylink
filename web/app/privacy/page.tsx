@@ -17,6 +17,8 @@ const permissions = [
   ["Screen capture", "Streams your phone's screen to your paired computer when you start screen mirroring. Android asks for your consent every time."],
   ["Audio recording", "Captures the sound your phone is playing (not the microphone) while you mirror the screen, so you can hear it on your computer."],
   ["Accessibility service (\"FlyyLink computer control\")", "Lets the mouse and keyboard on your paired computer tap, swipe, type and press Back, Home and Recents on your phone, only while you mirror the screen. To type, it reads the text field you have selected on the phone and nothing else on your screen. FlyyLink does not collect, store or share any personal data through it: your clicks and typing travel only between your own paired devices. It is off until you agree to FlyyLink's explanation and turn it on in Android's settings, and it is used for nothing else."],
+  ["Accessibility service on TVs (\"FlyyLink remote\")", "On a TV, lets your paired phone or computer move around the screen, move a pointer, select, press Back and Home, and type into the text field you have selected. It reads nothing else on screen. FlyyLink does not collect, store or share any personal data through it: your presses and typing travel only between your own paired devices. It is off until you agree to FlyyLink's explanation and turn it on in the TV's settings, and it is used for nothing else."],
+  ["Display over other apps (TVs)", "On a TV, shows notifications and things your devices send as small cards in a corner of the screen, and opens them right away if you turn that on."],
   ["Bluetooth", "Finds your paired computer nearby and helps it connect when Wi-Fi is not available."],
   ["Wi-Fi, network and local hotspot", "Finds and connects to your paired devices on your local network, or through a temporary hotspot from your phone."],
   ["Files and clipboard", "Sends files, links and clipboard contents you choose to share to your paired devices, and saves the ones they send you."],
@@ -35,14 +37,14 @@ export default function PrivacyPage() {
       </div>
 
       <p>
-        This policy explains how the FlyyLink apps for Android, macOS and Windows (together, &quot;FlyyLink&quot;) handle
+        This policy explains how the FlyyLink apps for Android (phones, tablets and TVs), macOS and Windows (together, &quot;FlyyLink&quot;) handle
         information. FlyyLink is made by {site.legalEntity} (&quot;we&quot;, &quot;us&quot;). If you have a question,
         write to us at <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.
       </p>
 
       <h2>1. How FlyyLink works</h2>
       <p>
-        You install FlyyLink on your phone and on your computer, and pair them by confirming the same code on both
+        You install FlyyLink on your phone, computer or TV, and pair them by confirming the same code on both
         screens. After that, the paired devices connect to each other directly over your local network, over Bluetooth,
         or through a hotspot from your phone. Every connection is encrypted with TLS, using a certificate each device
         creates for itself. Devices you have not paired cannot read anything FlyyLink sends.
@@ -88,6 +90,10 @@ export default function PrivacyPage() {
         an encrypted connection, so they can show it to you. It is not sent to us, sold, shared with third parties, or
         used for advertising, profiling or any purpose other than the feature you are using. When you FlyyDrop, only the
         files or links you pick go to the one device you choose, after its owner accepts them.
+      </p>
+      <p>
+        With Play on TV, the photo, video or song you pick is streamed from your phone or computer straight to the TV you
+        choose, over your local network. That TV does not need FlyyLink, and nothing else is sent to it.
       </p>
       <p>FlyyLink also speaks the open KDE Connect protocol, so you can pair it with KDE Connect on other devices. Anything you share with a device you pair is handled by the app on that device.</p>
 

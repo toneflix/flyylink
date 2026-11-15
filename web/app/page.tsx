@@ -16,7 +16,7 @@ export default function Home() {
       <section className="hero">
         <div className="container hero-grid">
           <div>
-            <span className="eyebrow">For Android, Mac and Windows</span>
+            <span className="eyebrow">For Android, Mac, Windows and TV</span>
             <h1>
               Android, <em>meet your computer.</em>
             </h1>
@@ -93,6 +93,14 @@ export default function Home() {
           points={["With sound", "Mouse and keyboard"]}
           reverse
           media={<img className="tall" src="/screens/android-home.png" alt="FlyyLink on Android, showing a paired MacBook Pro" />}
+        />
+
+        <Showcase
+          gold
+          eyebrow="TV"
+          title="Your phone is the TV remote."
+          points={["Buttons or touchpad", "Type with your keyboard", "Play photos, videos and music on any smart TV"]}
+          media={<img className="bleed" src="/screens/tv-remote.png" alt="The FlyyLink TV remote on an Android phone, with a song playing on the living room TV" />}
         />
       </section>
 
