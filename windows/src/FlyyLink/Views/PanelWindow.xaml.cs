@@ -325,6 +325,8 @@ public sealed partial class PanelWindow : Window
 
     public Visibility HasMedia(DeviceState? device) => Shown(device?.Media is not null);
 
+    public Visibility SharesFiles(DeviceState? device) => Shown(device is not null && Model.SharesFiles(device.Id));
+
     public Visibility HasLength(DeviceState? device) => Shown(device?.Media?.Player.Length > 0);
 
     public string MediaTitle(DeviceState? device) => device?.Media?.Player.Title ?? "";
@@ -480,6 +482,14 @@ public sealed partial class PanelWindow : Window
     {
         Hide();
         Model.ShowPhotos();
+    }
+
+    private void Files_Click(object sender, RoutedEventArgs e)
+    {
+        if (FocusedId is not string id) return;
+
+        Hide();
+        Model.OpenPhoneFiles(id);
     }
 
     private void JoinHotspot_Click(object sender, RoutedEventArgs e) => Model.JoinPhoneHotspot();
@@ -799,6 +809,10 @@ public sealed partial class PanelWindow : Window
         var photosFolder = new ToggleMenuFlyoutItem { Text = "Show phone photos in Explorer", IsChecked = Model.ShowsPhotosInExplorer };
         photosFolder.Click += (_, _) => Model.ShowsPhotosInExplorer = photosFolder.IsChecked;
         SettingsMenu.Items.Add(photosFolder);
+
+        var phoneFolder = new ToggleMenuFlyoutItem { Text = "Show phone files in Explorer", IsChecked = Model.ShowsPhoneInExplorer };
+        phoneFolder.Click += (_, _) => Model.ShowsPhoneInExplorer = phoneFolder.IsChecked;
+        SettingsMenu.Items.Add(phoneFolder);
 
         var switcher = new MenuFlyoutSubItem { Text = "Switch devices with" };
         foreach (var (style, label) in new[] { (PhoneSwitcherStyle.Carousel, "Card carousel"), (PhoneSwitcherStyle.Menu, "Dropdown") })

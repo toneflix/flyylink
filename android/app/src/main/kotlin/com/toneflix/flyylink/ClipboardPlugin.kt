@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.OpenableColumns
@@ -20,8 +21,9 @@ import java.util.UUID
 import java.util.concurrent.Executors
 
 /**
- * Puts what was copied on the Mac, text, pictures or files, on the phone's clipboard. Android only
- * lets an app read the clipboard while it is in front, so sending the other way goes through [ClipboardActivity].
+ * Puts what was copied on a computer, text, pictures or files, on the phone's clipboard. Since Android 10
+ * only the app in front can read the clipboard, so sending the other way goes through [ClipboardActivity]
+ * and [CopyToComputerActivity]. Older phones send every copy as it happens.
  */
 object ClipboardPlugin : Plugin {
     override val incoming = setOf(PacketType.CLIPBOARD, PacketType.CLIPBOARD_CONNECT, PacketType.CLIPBOARD_FILE)
@@ -30,8 +32,24 @@ object ClipboardPlugin : Plugin {
     private val main = Handler(Looper.getMainLooper())
     private val transfers = Executors.newCachedThreadPool()
 
+    /** The last text a computer put on this clipboard, which must not be sent back. */
+    @Volatile private var received: String? = null
+
     fun start(context: Context) {
-        this.context = context.applicationContext
+        if (this.context != null) return
+
+        val app = context.applicationContext
+        this.context = app
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) main.post { watch(app) }
+    }
+
+    private fun watch(context: Context) {
+        clipboard(context).addPrimaryClipChangedListener {
+            val text = clipboard(context).primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString()
+            if (text.isNullOrEmpty() || text == received) return@addPrimaryClipChangedListener
+
+            sendText(text)
+        }
     }
 
     override fun onPacket(device: Device, packet: NetworkPacket) {
@@ -43,10 +61,11 @@ object ClipboardPlugin : Plugin {
         }
 
         val content = Clipboard.content(packet) ?: return
+        received = content
         main.post { clipboard(context).setPrimaryClip(ClipData.newPlainText(device.name, content)) }
     }
 
-    /** Sends the phone's clipboard to every paired Mac. Call while an activity has focus. */
+    /** Sends the phone's clipboard to every paired computer. Call while an activity has focus. */
     fun send(context: Context): Boolean {
         val clip = clipboard(context).primaryClip?.takeIf { it.itemCount > 0 } ?: return false
         val item = clip.getItemAt(0)
@@ -56,8 +75,17 @@ object ClipboardPlugin : Plugin {
         val text = item.coerceToText(context)?.toString()
         if (text.isNullOrEmpty()) return false
 
-        DeviceStore.sendToPaired(Clipboard.packet(text))
+        sendText(text)
         return true
+    }
+
+    /** Sends text to every paired computer and returns how many got it. */
+    fun sendText(text: String): Int {
+        val packet = Clipboard.packet(text)
+        val targets = DeviceStore.pairedDevices()
+
+        targets.forEach { DeviceStore.send(it, packet) }
+        return targets.size
     }
 
     private fun sendFile(context: Context, uri: Uri): Boolean {

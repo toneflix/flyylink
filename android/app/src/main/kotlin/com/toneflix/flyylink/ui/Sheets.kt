@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.toneflix.flyylink.DeviceState
 import com.toneflix.flyylink.DeviceStore
+import com.toneflix.flyylink.FilesPlugin
 import com.toneflix.flyylink.R
 import com.toneflix.flyylink.ShareSender
 
@@ -210,6 +211,30 @@ fun PhoneDisclosureSheet(onAccept: () -> Unit, onDecline: () -> Unit) {
         }
         DisclosureGroup(stringResource(R.string.control_disclosure_data)) {
             DisclosurePoint(R.drawable.lucide_lock, stringResource(R.string.phone_disclosure_local))
+        }
+    }
+}
+
+/**
+ * Disclosure for All files access (storage permissions before Android 11): explains browsing the phone's files from
+ * a computer before Android's settings or prompt. Only [onAccept] leads there.
+ */
+@Composable
+fun FilesDisclosureSheet(onAccept: () -> Unit, onDecline: () -> Unit) {
+    DisclosureSheet(
+        icon = R.drawable.lucide_folder_open,
+        title = stringResource(R.string.files_disclosure_title),
+        intro = stringResource(R.string.files_disclosure_intro),
+        footnote = stringResource(if (FilesPlugin.needsSettings) R.string.files_disclosure_settings else R.string.files_disclosure_prompt),
+        onAccept = onAccept,
+        onDecline = onDecline,
+    ) {
+        DisclosureGroup(stringResource(R.string.control_disclosure_does)) {
+            DisclosurePoint(R.drawable.lucide_folder_open, stringResource(R.string.files_disclosure_browse))
+            DisclosurePoint(R.drawable.lucide_file_up, stringResource(R.string.files_disclosure_change))
+        }
+        DisclosureGroup(stringResource(R.string.control_disclosure_data)) {
+            DisclosurePoint(R.drawable.lucide_lock, stringResource(R.string.files_disclosure_local))
         }
     }
 }

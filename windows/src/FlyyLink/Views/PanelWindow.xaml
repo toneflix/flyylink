@@ -397,6 +397,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <views:ActionTile Icon="Volume2" Title="Ring phone" Click="Ring_Click" />
                             <views:ActionTile Grid.Column="1" Icon="FileUp" Title="Send file" Click="SendFiles_Click" />
@@ -406,6 +407,7 @@
                             <views:ActionTile Grid.Row="2" Grid.Column="1" Icon="Phone" Title="Call" Click="Call_Click" />
                             <views:ActionTile Grid.Row="3" Icon="Cast" Title="Mirror" Click="Mirror_Click" />
                             <views:ActionTile Grid.Row="3" Grid.Column="1" Icon="Images" Title="Photos" Click="Photos_Click" />
+                            <views:ActionTile Grid.Row="4" Icon="FolderOpen" Title="Files" Subtitle="In Explorer" Click="Files_Click" Visibility="{x:Bind SharesFiles(Model.Focused), Mode=OneWay}" />
                         </Grid>
 
                         <!-- Things to do with a TV -->

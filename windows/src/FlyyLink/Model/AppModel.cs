@@ -31,6 +31,8 @@ public sealed class AppModel : Observable, IDeviceDelegate
     private readonly CallPlugin calls = new();
     private readonly LocationPlugin locations = new();
     private readonly PhotosPlugin photos = new();
+    private readonly FilesPlugin phoneFiles = new();
+    private readonly PhoneDrives drives;
     private readonly ScreenPlugin screen = new();
     private readonly FindPlugin find;
     private readonly MediaHostPlugin mediaHost;
@@ -64,6 +66,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
     private readonly Updater updater;
     private readonly PhoneFolder folder = new(AppPaths.PhonePhotos, AppPaths.PhonePhotosRecord);
     private Device? folderPhone;
+    private DateTimeOffset drivesRefreshed = DateTimeOffset.MinValue;
     private NearbyFinder? nearby;
     private DateTimeOffset lastNearbySearch = DateTimeOffset.MinValue;
     private bool phoneNearby;
@@ -104,6 +107,8 @@ public sealed class AppModel : Observable, IDeviceDelegate
             ui.TryEnqueue(() => Photos.IngestPreview(id, file, deviceId));
         };
         folder.Request = id => folderPhone is Device phone && phone.Send(Core.Photos.DownloadPacket(id, preview: true));
+        drives = new PhoneDrives(phoneFiles, connected, AppPaths.PhoneDrives, Path.Combine(AppPaths.Cache, "Phone files"));
+        drives.Prune(trustStore.TrustedIds);
         Photos.Arrived += arrived =>
         {
             if (!ShowsPhotosInExplorer) return;
@@ -198,7 +203,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
         };
         var (receiving, until) = settings.FlyyDropReceiving;
         flyyDrop.Drop.Restore(receiving, until);
-        plugins = new PluginRouter([notifications, battery, connectivity, clipboard, share, media, sms, contacts, calls, locations, photos, screen, find, mediaHost, notificationShare, inputShare, screenHost, relay, flyyDrop]);
+        plugins = new PluginRouter([notifications, battery, connectivity, clipboard, share, media, sms, contacts, calls, locations, photos, phoneFiles, screen, find, mediaHost, notificationShare, inputShare, screenHost, relay, flyyDrop]);
 
         updater = new Updater(toasts) { OnInstalling = () => ui.TryEnqueue(() => UpdateInstalling?.Invoke()) };
         Licence = new LicenceModel(ui, toasts);
@@ -486,6 +491,33 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
     public string PhonePhotosFolder => folder.Root;
 
+    /// Whether each paired phone's storage shows as a folder in Explorer.
+    public bool ShowsPhoneInExplorer
+    {
+        get => settings.ShowsPhoneInExplorer;
+        set
+        {
+            settings.ShowsPhoneInExplorer = value;
+            Raise();
+
+            if (value) ShowDrives();
+            else Task.Run(drives.ForgetAll);
+        }
+    }
+
+    /// Whether the phone runs a FlyyLink that lets computers browse its storage.
+    public bool SharesFiles(string id) =>
+        connected[id]?.Link.Identity.IncomingCapabilities.Contains(PacketType.FilesRequest) == true;
+
+    /// Opens the phone's storage in Explorer.
+    public void OpenPhoneFiles(string id)
+    {
+        if (!ShowsPhoneInExplorer) ShowsPhoneInExplorer = true;
+        ShowDrives();
+
+        if (drives.RootOf(id) is string root) Explorer.Open(root);
+    }
+
     public bool StartsWithWindows
     {
         get => Shell.Startup.IsEnabled;
@@ -636,6 +668,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
     {
         StopLink();
         folder.Disconnect();
+        drives.Stop();
         Audio.Dispose();
         status.Disconnected().Save();
         toasts.Unregister();
@@ -658,7 +691,11 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
     public void Reject(string id) => connected[id]?.Reject();
 
-    public void Unpair(string id) => connected[id]?.Unpair();
+    public void Unpair(string id)
+    {
+        connected[id]?.Unpair();
+        Task.Run(() => drives.Forget(id));
+    }
 
     /// Shows this phone in the panel when several are paired.
     public void Select(string id)
@@ -1059,6 +1096,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
             SendWaiting();
             SearchNearbyIfLost();
             FillPhoneFolder();
+            RefreshDrives();
             flyyDrop.Tick();
             RaiseFlyyDropReceiving();
             Raise(nameof(ClipboardSubtitle));
@@ -1223,8 +1261,26 @@ public sealed class AppModel : Observable, IDeviceDelegate
         Others = Devices.Where(d => !d.IsPaired && d.Id != Focused?.Id).ToList();
 
         SyncStores(Primary);
+        ShowDrives();
         SendWaiting();
         SaveStatus();
+    }
+
+    private void ShowDrives()
+    {
+        if (!ShowsPhoneInExplorer) return;
+
+        var phones = connected.PairedPhones.Where(phone => SharesFiles(phone.Id)).Select(phone => (phone.Id, phone.Name)).ToList();
+        if (phones.Count > 0) Task.Run(() => drives.Show(phones));
+    }
+
+    /// Checks the phone folders for changes made on the phone, about once a minute.
+    private void RefreshDrives()
+    {
+        if (!ShowsPhoneInExplorer || DateTimeOffset.Now - drivesRefreshed < TimeSpan.FromMinutes(1)) return;
+
+        drivesRefreshed = DateTimeOffset.Now;
+        _ = Task.Run(drives.RefreshAsync);
     }
 
     private void SaveStatus()

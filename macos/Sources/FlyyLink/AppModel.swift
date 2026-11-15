@@ -148,6 +148,9 @@ final class AppModel: ObservableObject {
     private let contacts = ContactsPlugin()
     private let locations = LocationPlugin()
     private let photosPlugin = PhotosPlugin()
+    private let filesPlugin = FilesPlugin()
+    /// Each paired phone's storage in Finder.
+    private let drives: PhoneDrives
     private let calls = CallPlugin()
     private let callAudioPlugin = CallAudioPlugin()
     private let find = FindPlugin()
@@ -214,7 +217,8 @@ final class AppModel: ObservableObject {
         notifications = NotificationPlugin(devices: connected)
         notificationShare = NotificationSharePlugin(devices: connected)
         flyyDropPlugin = FlyyDropPlugin(share: share, devices: connected)
-        plugins = PluginRouter([notifications, battery, connectivity, clipboard, share, mediaPlugin, sms, contacts, calls, callAudioPlugin, locations, photosPlugin, screenPlugin, find, mediaHost, inputShare, screenHost, relay, flyyDropPlugin, notificationShare])
+        drives = PhoneDrives(files: filesPlugin, devices: connected)
+        plugins = PluginRouter([notifications, battery, connectivity, clipboard, share, mediaPlugin, sms, contacts, calls, callAudioPlugin, locations, photosPlugin, filesPlugin, screenPlugin, find, mediaHost, inputShare, screenHost, relay, flyyDropPlugin, notificationShare])
         mirrorsNotifications = UserDefaults.standard.object(forKey: "mirrorsNotifications") as? Bool ?? true
         switcherStyle = UserDefaults.standard.string(forKey: "switcherStyle").flatMap(PhoneSwitcherStyle.init(rawValue:)) ?? .carousel
         opensAtLogin = LoginItem.isEnabled
@@ -308,6 +312,8 @@ final class AppModel: ObservableObject {
         if !licence.isLocked { start() }
         clipboard.startWatching()
         shortcuts.isEnabled = usesShortcuts
+        drives.prune(keeping: Set(trustStore.trustedIds))
+        drives.start()
     }
 
     /// The paired phone after the one shown, wrapping round to the first.
@@ -329,6 +335,7 @@ final class AppModel: ObservableObject {
 
     func unpair(_ id: String) {
         connected[id]?.unpair()
+        drives.forget(id)
         widgetSnapshot.phones.removeAll { $0.id == id }
         try? widgetSnapshot.save()
         WidgetCenter.shared.reloadAllTimelines()
@@ -923,6 +930,16 @@ final class AppModel: ObservableObject {
             .sorted { $0.name < $1.name }
 
         updateWidget()
+        drives.show(pairedPhones.filter(\.sharesFiles).map { (id: $0.id, name: $0.name) })
+    }
+
+    /// Opens the phone's storage in Finder.
+    func openFiles(_ id: String) {
+        drives.open(id)
+    }
+
+    func sharesFiles(_ id: String) -> Bool {
+        connected[id]?.sharesFiles ?? false
     }
 
     /// Saves each paired phone's battery for the widget, and asks it to redraw when that changed.
@@ -1076,4 +1093,9 @@ extension AppModel: DeviceDelegate {
     nonisolated func deviceDisconnected(_ device: Device) {
         Task { @MainActor in self.remove(device) }
     }
+}
+
+private extension Device {
+    /// Runs a FlyyLink that lets computers browse its storage.
+    var sharesFiles: Bool { link.identity.incomingCapabilities.contains(PacketType.filesRequest) }
 }
