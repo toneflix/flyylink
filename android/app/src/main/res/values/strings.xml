@@ -14,6 +14,7 @@
     <string name="clipboard_sent">Clipboard sent</string>
     <string name="clipboard_sent_many">Clipboard sent to %1$d computers</string>
     <string name="clipboard_empty">Clipboard is empty</string>
+    <string name="copy_to_computer">Copy to computer</string>
     <string name="channel_transfers">Files and links</string>
     <string name="share_label">Send to devices</string>
 
