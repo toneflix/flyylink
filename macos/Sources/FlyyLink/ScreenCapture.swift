@@ -6,8 +6,8 @@ import ScreenCaptureKit
 
 /// Records the main display as JPEG pictures, for another computer to view. Needs Screen Recording access.
 final class ScreenCapture: NSObject, SCStreamOutput, SCStreamDelegate {
-    static let framesPerSecond: Int32 = 15
-    static let quality = 0.6
+    static let framesPerSecond: Int32 = 30
+    static let quality = 0.8
 
     /// Called on the capture queue with each new picture, encoded as a JPEG.
     var onPicture: ((Data) -> Void)?
@@ -36,7 +36,8 @@ final class ScreenCapture: NSObject, SCStreamOutput, SCStreamDelegate {
                 return
             }
 
-            let size = Self.size(width: display.width, height: display.height, maxSize: maxSize)
+            let pixels = Self.pixels(of: display)
+            let size = Self.size(width: pixels.width, height: pixels.height, maxSize: maxSize)
             let configuration = SCStreamConfiguration()
             configuration.width = Int(size.width)
             configuration.height = Int(size.height)
@@ -84,6 +85,15 @@ final class ScreenCapture: NSObject, SCStreamOutput, SCStreamDelegate {
     func stream(_ stream: SCStream, didStopWithError error: Error) {
         self.stream = nil
         onStop?(error)
+    }
+
+    /// The display's size in pixels; `SCDisplay` gives it in points, half that on a Retina screen.
+    static func pixels(of display: SCDisplay) -> (width: Int, height: Int) {
+        guard let mode = CGDisplayCopyDisplayMode(display.displayID), mode.pixelWidth > 0, mode.pixelHeight > 0 else {
+            return (display.width, display.height)
+        }
+
+        return (mode.pixelWidth, mode.pixelHeight)
     }
 
     /// The display's size, shrunk to fit `maxSize` and rounded to even numbers.

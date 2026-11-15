@@ -49,8 +49,13 @@ final class RemoteDesktop: ObservableObject {
         case ended
     }
 
-    /// Computers send up to this many pixels on the longer side.
-    static let maxSize: Int64 = 1920
+    /// The longer side of this Mac's screen in pixels, so the picture is never sent larger than it can be shown.
+    static var maxSize: Int64 {
+        guard let screen = NSScreen.main else { return 1920 }
+
+        let side = max(screen.frame.width, screen.frame.height) * screen.backingScaleFactor
+        return min(max(Int64(side), 1280), 3840)
+    }
 
     @Published private(set) var phase = Phase.idle
     @Published private(set) var deviceName = ""

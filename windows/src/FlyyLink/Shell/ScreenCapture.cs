@@ -8,8 +8,8 @@ namespace FlyyLink.Shell;
 /// Records the main screen, pointer included, as JPEG pictures for another computer to view.
 internal sealed class ScreenCapture : IDisposable
 {
-    private const int FramesPerSecond = 12;
-    private const long Quality = 60;
+    private const int FramesPerSecond = 20;
+    private const long Quality = 80;
 
     private static readonly ImageCodecInfo Jpeg = ImageCodecInfo.GetImageEncoders().First(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
 
