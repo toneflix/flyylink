@@ -72,6 +72,12 @@ internal static class WindowsKeys
         Add("AltRight", 0xA5, extended: true);
         Add("MetaLeft", 0x5B, extended: true);
         Add("MetaRight", 0x5C, extended: true);
+        Add("AudioVolumeMute", 0xAD, extended: true);
+        Add("AudioVolumeDown", 0xAE, extended: true);
+        Add("AudioVolumeUp", 0xAF, extended: true);
+        Add("MediaTrackNext", 0xB0, extended: true);
+        Add("MediaTrackPrevious", 0xB1, extended: true);
+        Add("MediaPlayPause", 0xB3, extended: true);
 
         return map;
     }

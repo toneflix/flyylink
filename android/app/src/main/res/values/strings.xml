@@ -172,6 +172,8 @@
     </plurals>
 
     <string name="channel_flyydrop">FlyyDrop requests</string>
+    <string name="channel_computer_notifications">Computer notifications</string>
+    <string name="computer_notification_from">%1$s · %2$s</string>
     <string name="flyydrop">FlyyDrop</string>
     <string name="flyydrop_ask_title">%1$s wants to FlyyDrop</string>
     <string name="flyydrop_accept">Accept</string>
@@ -217,6 +219,25 @@
     <string name="remote_buttons">Buttons</string>
     <string name="remote_touchpad">Touchpad</string>
     <string name="remote_touchpad_hint">Slide to move. Tap to click. Two fingers to scroll.</string>
+    <string name="home_remote_computer">Touchpad, keyboard and slides</string>
+    <string name="computer_remote_title">Computer</string>
+    <string name="computer_remote_keyboard">Keyboard</string>
+    <string name="computer_remote_slides">Slides</string>
+    <string name="computer_remote_touchpad_hint">Two fingers to scroll. Hold to drag.</string>
+    <string name="computer_remote_click">Click</string>
+    <string name="computer_remote_right_click">Right-click</string>
+    <string name="computer_remote_type">Type on computer</string>
+    <string name="computer_remote_backspace">Backspace</string>
+    <string name="computer_remote_previous_track">Previous</string>
+    <string name="computer_remote_next_track">Next</string>
+    <string name="computer_remote_previous_slide">Back</string>
+    <string name="computer_remote_next_slide">Next</string>
+    <string name="computer_remote_start_slides">Start</string>
+    <string name="computer_remote_black_screen">Black</string>
+    <string name="computer_remote_end_slides">End</string>
+    <string name="computer_remote_slides_hint">Volume buttons change slides too.</string>
+    <string name="computer_remote_blocked_mac">On the Mac, allow FlyyLink in Accessibility settings and turn on Let my devices control this Mac.</string>
+    <string name="computer_remote_blocked_pc">On the PC, turn on Let my devices control this PC in FlyyLink.</string>
 
     <string name="tv_ready">Ready</string>
     <string name="tv_connected_to">Connected to %1$s</string>

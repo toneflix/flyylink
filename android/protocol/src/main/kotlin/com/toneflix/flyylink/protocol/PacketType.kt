@@ -34,6 +34,8 @@ object PacketType {
     const val SMS_REQUEST_CONVERSATIONS = "kdeconnect.sms.request_conversations"
     const val SMS_REQUEST_CONVERSATION = "kdeconnect.sms.request_conversation"
     const val TELEPHONY = "kdeconnect.telephony"
+    const val CONNECTIVITY_REPORT = "kdeconnect.connectivity_report"
+    const val CONNECTIVITY_REPORT_REQUEST = "kdeconnect.connectivity_report.request"
 
     /** Asks the sender to send the rest of a file that stopped. Body: {"transferId", "offset"}. */
     const val SHARE_RESUME = "flyylink.share.resume"
@@ -120,6 +122,8 @@ object Capabilities {
         PacketType.SMS_REQUEST_CONVERSATIONS,
         PacketType.SMS_REQUEST_CONVERSATION,
         PacketType.TELEPHONY,
+        PacketType.CONNECTIVITY_REPORT,
+        PacketType.CONNECTIVITY_REPORT_REQUEST,
         PacketType.CALL_REQUEST,
         PacketType.CLIPBOARD_FILE,
         PacketType.LOCATION_REQUEST,
@@ -143,7 +147,7 @@ object Capabilities {
         PacketType.REMOTE,
     )
 
-    /** What a TV sends and accepts: no texts, calls, clipboard, battery, location, photos or screen sharing. */
+    /** What a TV sends and accepts: no texts, calls, signal, clipboard, battery, location, photos or screen sharing. */
     val tv: Set<String> = mvp - setOf(
         PacketType.BATTERY,
         PacketType.BATTERY_REQUEST,
@@ -156,6 +160,8 @@ object Capabilities {
         PacketType.SMS_REQUEST_CONVERSATIONS,
         PacketType.SMS_REQUEST_CONVERSATION,
         PacketType.TELEPHONY,
+        PacketType.CONNECTIVITY_REPORT,
+        PacketType.CONNECTIVITY_REPORT_REQUEST,
         PacketType.CALL_REQUEST,
         PacketType.CALL_AUDIO_REQUEST,
         PacketType.CALL_AUDIO,
