@@ -138,7 +138,7 @@ private struct PanelHeader: View {
                     get: { model.sharesNotifications },
                     set: { model.sharesNotifications = $0 }
                 ))
-                Toggle("Let my computers control this Mac", isOn: Binding(
+                Toggle("Let my devices control this Mac", isOn: Binding(
                     get: { model.allowsRemoteInput },
                     set: { model.allowsRemoteInput = $0 }
                 ))

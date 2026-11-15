@@ -69,18 +69,27 @@ public enum MouseButton
 
 /// Keyboard and mouse shared from one computer to another ("flyylink.input"). The controlling computer sends `Enter`
 /// when its pointer leaves through an edge, then moves, buttons, scrolls and keys. The controlled computer sends
-/// `Leave` when its pointer goes back out through the edge it came in by. Keys use the W3C `code` names, such as
+/// `Leave` when its pointer goes back out through the edge it came in by. A phone sends `Begin` instead and works the
+/// computer with its touchpad and keyboard. Keys use the W3C `code` names, such as
 /// "KeyA" or "ShiftLeft". Mirrors Input.kt and Input.swift.
 public abstract record RemoteInput
 {
     public const string MacOS = "macos";
     public const string Windows = "windows";
+    public const string Android = "android";
 
     /// Larger moves or scrolls than this in one packet are treated as nonsense.
     private const double MaxStep = 10_000;
 
+    /// Longer text than this in one packet is treated as nonsense.
+    public const int MaxText = 1000;
+
     /// The pointer arrives at the receiver's edge, `Position` along it. `Platform` is the sender's.
     public sealed record Enter(ScreenEdge Edge, double Position, string Platform) : RemoteInput;
+
+    /// The sender works the receiver without an edge, as a phone does. The receiver answers with its own `Begin`, so the
+    /// sender learns its `Platform`, and `Ready` is false while it can't play input.
+    public sealed record Begin(string Platform, bool Ready = true) : RemoteInput;
 
     /// The pointer goes back to the sender, leaving the receiver through `Edge` at `Position`.
     public sealed record Leave(ScreenEdge Edge, double Position) : RemoteInput;
@@ -100,11 +109,15 @@ public abstract record RemoteInput
 
     public sealed record Key(string Code, bool Down) : RemoteInput;
 
+    /// Types `Text` as it is, whatever the receiver's keyboard layout.
+    public sealed record Text(string Value) : RemoteInput;
+
     public NetworkPacket ToPacket()
     {
         var body = this switch
         {
             Enter enter => new JsonObject { ["action"] = "enter", ["edge"] = enter.Edge.WireName(), ["position"] = enter.Position, ["platform"] = enter.Platform },
+            Begin begin => new JsonObject { ["action"] = "begin", ["platform"] = begin.Platform, ["ready"] = begin.Ready },
             Leave leave => new JsonObject { ["action"] = "leave", ["edge"] = leave.Edge.WireName(), ["position"] = leave.Position },
             Release => new JsonObject { ["action"] = "release" },
             Move move => new JsonObject { ["action"] = "move", ["dx"] = move.Dx, ["dy"] = move.Dy },
@@ -112,6 +125,7 @@ public abstract record RemoteInput
             Button button => new JsonObject { ["action"] = "button", ["button"] = button.Which.ToString().ToLowerInvariant(), ["down"] = button.Down },
             Scroll scroll => new JsonObject { ["action"] = "scroll", ["dx"] = scroll.Dx, ["dy"] = scroll.Dy },
             Key key => new JsonObject { ["action"] = "key", ["code"] = key.Code, ["down"] = key.Down },
+            Text text => new JsonObject { ["action"] = "text", ["text"] = text.Value },
             _ => throw new InvalidOperationException(),
         };
 
@@ -136,6 +150,7 @@ public abstract record RemoteInput
         {
             "enter" when ScreenEdges.Parse(packet.GetString("edge")) is ScreenEdge edge && Fraction("position") is double position =>
                 new Enter(edge, position, packet.GetString("platform") ?? ""),
+            "begin" => new Begin(packet.GetString("platform") ?? "", packet.GetBool("ready") ?? true),
             "leave" when ScreenEdges.Parse(packet.GetString("edge")) is ScreenEdge edge && Fraction("position") is double position => new Leave(edge, position),
             "release" => new Release(),
             "move" when Step("dx") is double dx && Step("dy") is double dy => new Move(dx, dy),
@@ -143,6 +158,7 @@ public abstract record RemoteInput
             "button" when Which(packet.GetString("button")) is MouseButton which && packet.GetBool("down") is bool down => new Button(which, down),
             "scroll" when Step("dx") is double dx && Step("dy") is double dy => new Scroll(dx, dy),
             "key" when packet.GetString("code") is string code && KeyCodes.All.Contains(code) && packet.GetBool("down") is bool down => new Key(code, down),
+            "text" when packet.GetString("text") is { Length: > 0 and <= MaxText } text => new Text(text),
             _ => null,
         };
     }
@@ -172,7 +188,10 @@ public static class KeyCodes
         "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown", "Delete", "Insert", "ContextMenu",
     ];
 
-    public static readonly IReadOnlySet<string> All = Letters.Concat(Digits).Concat(FunctionKeys).Concat(Numpad).Concat(Others).Concat(Modifiers).ToHashSet();
+    public static readonly IReadOnlyList<string> Media =
+        ["AudioVolumeUp", "AudioVolumeDown", "AudioVolumeMute", "MediaPlayPause", "MediaTrackNext", "MediaTrackPrevious"];
+
+    public static readonly IReadOnlySet<string> All = Letters.Concat(Digits).Concat(FunctionKeys).Concat(Numpad).Concat(Others).Concat(Media).Concat(Modifiers).ToHashSet();
 
     /// Swaps Control and Meta, so Ctrl+C on a PC is Command-C on a Mac and the other way round.
     public static string SwappingControlAndMeta(string code) => code switch

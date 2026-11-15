@@ -22,7 +22,7 @@ enum class AppForm(val deviceType: DeviceType) {
         get() = when (this) {
             PHONE -> listOf(
                 NotificationPlugin, ComputerNotificationPlugin, BatteryPlugin, ConnectivityPlugin, FindMyPhonePlugin, ClipboardPlugin, SharePlugin, MediaPlugin, SmsPlugin,
-                CallPlugin, CallAudioPlugin, LocationPlugin, PhotosPlugin, ScreenPlugin, FlyyDropPlugin, TvMediaPlugin,
+                CallPlugin, CallAudioPlugin, LocationPlugin, PhotosPlugin, ScreenPlugin, FlyyDropPlugin, RemoteMediaPlugin, ComputerRemotePlugin,
             )
             TV -> listOf(TvNotificationPlugin, SharePlugin, MediaPlugin, FlyyDropPlugin, TvRemotePlugin)
         }

@@ -10,6 +10,7 @@ import {
   Laptop,
   MessageSquare,
   MonitorSmartphone,
+  MousePointer2,
   Music,
   Phone,
   Radar,
@@ -74,6 +75,11 @@ export const features: Feature[] = [
     icon: Music,
     title: "Music, battery and signal",
     body: "Play, pause, skip, and check the battery and signal.",
+  },
+  {
+    icon: MousePointer2,
+    title: "Computer remote",
+    body: "Your phone is a touchpad, keyboard and slide clicker.",
   },
   {
     icon: Tv,
