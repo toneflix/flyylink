@@ -13,8 +13,9 @@ object Screen {
     /** The payload size of a live stream: read until the sender closes it. */
     const val STREAM = -1L
 
-    const val MAX_SIZE = 1600
-    const val BITRATE = 8_000_000
+    /** Windows' H.264 decoder takes at most 2304 pixels on a side. */
+    const val MAX_SIZE = 2304
+    const val BITRATE = 20_000_000
     const val AUDIO_RATE = 48_000
     const val AUDIO_CHANNELS = 2
 

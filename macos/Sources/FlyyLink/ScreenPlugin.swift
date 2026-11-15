@@ -118,6 +118,9 @@ final class ScreenMirror: ObservableObject {
 
     private(set) var deviceId: String?
 
+    /// The Mac decodes larger pictures than Windows, so it asks for a full-size phone screen.
+    static let maxSize: Int64 = 2560
+
     init() {
         decoder.onSize = { [weak self] size in Task { @MainActor in self?.videoSize = size } }
         audio.isMuted = isMuted
@@ -130,7 +133,7 @@ final class ScreenMirror: ObservableObject {
         if let old = self.deviceId, old != deviceId { _ = send?(old, Screen.stop()) }
         self.deviceId = deviceId
         deviceName = name
-        phase = send?(deviceId, Screen.start(audio: true)) == true ? .waiting : .ended
+        phase = send?(deviceId, Screen.start(maxSize: Self.maxSize, audio: true)) == true ? .waiting : .ended
     }
 
     func stop() {
