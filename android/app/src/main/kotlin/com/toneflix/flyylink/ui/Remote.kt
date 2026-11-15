@@ -64,7 +64,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.toneflix.flyylink.DeviceStore
 import com.toneflix.flyylink.R
-import com.toneflix.flyylink.TvMediaPlugin
+import com.toneflix.flyylink.RemoteMediaPlugin
 import com.toneflix.flyylink.protocol.MediaAction
 import com.toneflix.flyylink.protocol.MediaPlayer
 import com.toneflix.flyylink.protocol.PairState
@@ -77,7 +77,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun RemoteScreen(deviceId: String, onPress: (TvRemote) -> Unit, onClose: () -> Unit) {
     val devices by DeviceStore.states.collectAsStateWithLifecycle()
-    val playing by TvMediaPlugin.playing.collectAsStateWithLifecycle()
+    val playing by RemoteMediaPlugin.playing.collectAsStateWithLifecycle()
     val tv = devices.firstOrNull { it.id == deviceId && it.pairState == PairState.PAIRED }
     val key = { name: String -> onPress(TvRemote.Key(name)) }
 
@@ -94,27 +94,12 @@ fun RemoteScreen(deviceId: String, onPress: (TvRemote) -> Unit, onClose: () -> U
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
-        Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onClose) {
-                Icon(painterResource(R.drawable.lucide_x), contentDescription = stringResource(R.string.cancel))
-            }
-            Column(Modifier.weight(1f)) {
-                Text(tv?.name ?: stringResource(R.string.remote_title), fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Box(Modifier.size(8.dp).background(if (tv != null) FlyyLink.colors.ok else MaterialTheme.colorScheme.outline, CircleShape))
-                    Text(
-                        stringResource(if (tv != null) R.string.home_connected else R.string.share_not_connected),
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
+        RemoteHeader(tv?.name ?: stringResource(R.string.remote_title), connected = tv != null, onClose = onClose)
 
         playing[deviceId]?.let { NowPlaying(deviceId, it) }
 
         var touchpad by rememberSaveable { mutableStateOf(false) }
-        ModeSwitch(touchpad, onChange = { touchpad = it })
+        ModeSwitch(listOf(false to R.string.remote_buttons, true to R.string.remote_touchpad), touchpad, onChange = { touchpad = it })
 
         if (touchpad) Touchpad(onPress) else DPad(onKey = key)
 
@@ -125,16 +110,42 @@ fun RemoteScreen(deviceId: String, onPress: (TvRemote) -> Unit, onClose: () -> U
         }
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            VolumeBar(onKey = key)
+            VolumeBar(onDown = { key(TvRemote.VOLUME_DOWN) }, onMute = { key(TvRemote.MUTE) }, onUp = { key(TvRemote.VOLUME_UP) })
             RoundKey(R.drawable.lucide_play, stringResource(R.string.remote_play_pause), solid = true) { key(TvRemote.PLAY_PAUSE) }
         }
 
-        TypeOnTv(onPress)
+        LiveTypeField(
+            stringResource(R.string.remote_type),
+            onText = { onPress(TvRemote.Text(it)) },
+            onDelete = { onPress(TvRemote.Key(TvRemote.DELETE)) },
+            onEnter = { onPress(TvRemote.Key(TvRemote.ENTER)) },
+        )
+    }
+}
+
+/** The close button, the device's name and whether it is connected. */
+@Composable
+internal fun RemoteHeader(name: String, connected: Boolean, onClose: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onClose) {
+            Icon(painterResource(R.drawable.lucide_x), contentDescription = stringResource(R.string.cancel))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(name, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Box(Modifier.size(8.dp).background(if (connected) FlyyLink.colors.ok else MaterialTheme.colorScheme.outline, CircleShape))
+                Text(
+                    stringResource(if (connected) R.string.home_connected else R.string.share_not_connected),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun NowPlaying(deviceId: String, player: MediaPlayer) {
+internal fun NowPlaying(deviceId: String, player: MediaPlayer) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -164,9 +175,9 @@ private fun NowPlaying(deviceId: String, player: MediaPlayer) {
             )
         }
         val tint = FlyyLink.colors.onHero
-        if (player.canGoPrevious) MediaButton(R.drawable.lucide_skip_back, tint) { TvMediaPlugin.press(deviceId, MediaAction.PREVIOUS) }
-        MediaButton(if (player.isPlaying) R.drawable.lucide_pause else R.drawable.lucide_play, tint) { TvMediaPlugin.press(deviceId, MediaAction.PLAY_PAUSE) }
-        if (player.canGoNext) MediaButton(R.drawable.lucide_skip_forward, tint) { TvMediaPlugin.press(deviceId, MediaAction.NEXT) }
+        if (player.canGoPrevious) MediaButton(R.drawable.lucide_skip_back, tint) { RemoteMediaPlugin.press(deviceId, MediaAction.PREVIOUS) }
+        MediaButton(if (player.isPlaying) R.drawable.lucide_pause else R.drawable.lucide_play, tint) { RemoteMediaPlugin.press(deviceId, MediaAction.PLAY_PAUSE) }
+        if (player.canGoNext) MediaButton(R.drawable.lucide_skip_forward, tint) { RemoteMediaPlugin.press(deviceId, MediaAction.NEXT) }
     }
 }
 
@@ -177,9 +188,9 @@ private fun MediaButton(@DrawableRes icon: Int, tint: Color, onClick: () -> Unit
     }
 }
 
-/** Picks between the arrows and the touchpad. */
+/** Picks one of the remote's modes, such as the arrows or the touchpad. */
 @Composable
-private fun ModeSwitch(touchpad: Boolean, onChange: (Boolean) -> Unit) {
+internal fun <T> ModeSwitch(modes: List<Pair<T, Int>>, current: T, onChange: (T) -> Unit) {
     val colors = MaterialTheme.colorScheme
 
     Row(
@@ -188,8 +199,8 @@ private fun ModeSwitch(touchpad: Boolean, onChange: (Boolean) -> Unit) {
             .border(1.dp, colors.outlineVariant, CircleShape)
             .padding(4.dp),
     ) {
-        listOf(false to R.string.remote_buttons, true to R.string.remote_touchpad).forEach { (mode, label) ->
-            val selected = mode == touchpad
+        modes.forEach { (mode, label) ->
+            val selected = mode == current
             Text(
                 stringResource(label),
                 fontSize = 14.sp,
@@ -199,7 +210,7 @@ private fun ModeSwitch(touchpad: Boolean, onChange: (Boolean) -> Unit) {
                     .clip(CircleShape)
                     .background(if (selected) colors.primaryContainer else Color.Transparent)
                     .selectable(selected = selected, role = Role.Tab, onClick = { onChange(mode) })
-                    .padding(horizontal = 22.dp, vertical = 10.dp),
+                    .padding(horizontal = if (modes.size > 2) 18.dp else 22.dp, vertical = 10.dp),
             )
         }
     }
@@ -277,12 +288,12 @@ private fun Touchpad(onPress: (TvRemote) -> Unit) {
     }
 }
 
-private const val MOVE_EVERY_MS = 16L
+internal const val MOVE_EVERY_MS = 16L
 private const val SCROLL_EVERY_MS = 100L
-private const val TAP_MS = 300L
+internal const val TAP_MS = 300L
 
 /** A key that presses once on tap and keeps pressing while held, like a real remote. */
-private fun Modifier.repeatingPress(scope: CoroutineScope, onPress: () -> Unit, onDown: (Boolean) -> Unit = {}) =
+internal fun Modifier.repeatingPress(scope: CoroutineScope, onPress: () -> Unit, onDown: (Boolean) -> Unit = {}) =
     pointerInput(Unit) {
         detectTapGestures(onPress = {
             onDown(true)
@@ -370,7 +381,7 @@ private fun ArrowKey(@DrawableRes icon: Int, label: String, modifier: Modifier, 
 }
 
 @Composable
-private fun RoundKey(@DrawableRes icon: Int, label: String, solid: Boolean = false, onPress: () -> Unit) {
+internal fun RoundKey(@DrawableRes icon: Int, label: String, solid: Boolean = false, onPress: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val haptics = LocalHapticFeedback.current
 
@@ -393,7 +404,7 @@ private fun RoundKey(@DrawableRes icon: Int, label: String, solid: Boolean = fal
 
 /** Volume down, mute and up in one pill. */
 @Composable
-private fun VolumeBar(onKey: (String) -> Unit) {
+internal fun VolumeBar(onDown: () -> Unit, onMute: () -> Unit, onUp: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
@@ -407,10 +418,10 @@ private fun VolumeBar(onKey: (String) -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             listOf(
-                Triple(R.drawable.lucide_volume_1, R.string.remote_volume_down, TvRemote.VOLUME_DOWN),
-                Triple(R.drawable.lucide_volume_x, R.string.remote_mute, TvRemote.MUTE),
-                Triple(R.drawable.lucide_volume_2, R.string.remote_volume_up, TvRemote.VOLUME_UP),
-            ).forEach { (icon, label, name) ->
+                Triple(R.drawable.lucide_volume_1, R.string.remote_volume_down, onDown),
+                Triple(R.drawable.lucide_volume_x, R.string.remote_mute, onMute),
+                Triple(R.drawable.lucide_volume_2, R.string.remote_volume_up, onUp),
+            ).forEach { (icon, label, press) ->
                 val description = stringResource(label)
                 Box(
                     Modifier
@@ -419,11 +430,11 @@ private fun VolumeBar(onKey: (String) -> Unit) {
                         .semantics {
                             role = Role.Button
                             contentDescription = description
-                            onClick { onKey(name); true }
+                            onClick { press(); true }
                         }
                         .repeatingPress(scope, onPress = {
                             haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            onKey(name)
+                            press()
                         }),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -435,37 +446,50 @@ private fun VolumeBar(onKey: (String) -> Unit) {
     }
 }
 
-/** Typing here types on the TV as you go: new letters are sent, and deleted ones are deleted there too. */
+/**
+ * Typing here types on the other device as you go: new letters go out as [onText], and each deleted one as [onDelete].
+ * [intercept] may take new letters first, such as a shortcut while a modifier is held, and then the field clears.
+ */
 @Composable
-private fun TypeOnTv(onPress: (TvRemote) -> Unit) {
+internal fun LiveTypeField(
+    placeholder: String,
+    onText: (String) -> Unit,
+    onDelete: () -> Unit,
+    onEnter: () -> Unit,
+    modifier: Modifier = Modifier,
+    intercept: (String) -> Boolean = { false },
+) {
     var typed by remember { mutableStateOf("") }
+    val enter = {
+        onEnter()
+        typed = ""
+    }
 
     OutlinedTextField(
         value = typed,
         onValueChange = { new ->
             val kept = typed.commonPrefixWith(new).length
+            val added = new.substring(kept)
 
-            repeat(typed.length - kept) { onPress(TvRemote.Key(TvRemote.DELETE)) }
-            if (new.length > kept) onPress(TvRemote.Text(new.substring(kept)))
-            typed = new
+            if (added.isNotEmpty() && intercept(added)) {
+                typed = ""
+            } else {
+                repeat(typed.length - kept) { onDelete() }
+                if (added.isNotEmpty()) onText(added)
+                typed = new
+            }
         },
-        placeholder = { Text(stringResource(R.string.remote_type)) },
+        placeholder = { Text(placeholder) },
         leadingIcon = { Icon(painterResource(R.drawable.lucide_keyboard), contentDescription = null) },
         trailingIcon = {
-            IconButton(onClick = {
-                onPress(TvRemote.Key(TvRemote.ENTER))
-                typed = ""
-            }) {
+            IconButton(onClick = enter) {
                 Icon(painterResource(R.drawable.lucide_corner_down_left), contentDescription = stringResource(R.string.remote_enter))
             }
         },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-        keyboardActions = KeyboardActions(onGo = {
-            onPress(TvRemote.Key(TvRemote.ENTER))
-            typed = ""
-        }),
+        keyboardActions = KeyboardActions(onGo = { enter() }),
         shape = RoundedCornerShape(20.dp),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     )
 }

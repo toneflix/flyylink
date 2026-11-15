@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.ConcurrentHashMap
 
-/** What each paired TV is playing, for the phone's remote to show and control. */
-object TvMediaPlugin : Plugin {
+/** What each paired TV or computer is playing, for the phone's remote to show and control. */
+object RemoteMediaPlugin : Plugin {
     override val incoming = setOf(PacketType.MPRIS)
 
     /** Every player on each TV, by device id and then player name. */
@@ -27,11 +27,11 @@ object TvMediaPlugin : Plugin {
     val playing: StateFlow<Map<String, MediaPlayer>> = _playing.asStateFlow()
 
     override fun onPaired(device: Device) {
-        if (device.isTv) DeviceStore.send(device, MediaRequest.playerList().toPacket())
+        if (device.isRemote) DeviceStore.send(device, MediaRequest.playerList().toPacket())
     }
 
     override fun onPacket(device: Device, packet: NetworkPacket) {
-        if (!device.isTv) return
+        if (!device.isRemote) return
 
         Media.playerList(packet)?.let { names ->
             players[device.id] = players[device.id].orEmpty().filterKeys { it in names }
@@ -59,5 +59,6 @@ object TvMediaPlugin : Plugin {
         }.toMap()
     }
 
-    private val Device.isTv: Boolean get() = link.identity.deviceType == DeviceType.TV
+    private val Device.isRemote: Boolean
+        get() = link.identity.deviceType.let { it == DeviceType.TV || it.isComputer }
 }
