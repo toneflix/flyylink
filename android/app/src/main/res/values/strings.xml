@@ -25,7 +25,6 @@
 
     <string name="home_this_phone">This phone: %1$s</string>
     <string name="home_settings">Settings</string>
-    <string name="home_notification_access">Notification access</string>
     <string name="home_unpair">Unpair %1$s</string>
     <string name="home_stop">Stop FlyyLink</string>
     <string name="home_connected">Connected</string>
@@ -49,11 +48,38 @@
     <string name="home_recent">Recent</string>
     <string name="home_clear">Clear</string>
 
-    <string name="setup_notifications">Show notifications on your computer</string>
-    <string name="setup_background">Stay connected in the background</string>
     <string name="setup_allow">Allow</string>
-    <string name="setup_phone">Texts and calls on your computer</string>
-    <string name="setup_location">Find your phone on a map</string>
+
+    <string name="back">Back</string>
+    <string name="feature_screen_title">Features</string>
+    <string name="feature_pick">Pick what to use</string>
+    <string name="feature_count">%1$d on</string>
+    <string name="feature_done">Done</string>
+    <string name="feature_needs_access">Allow again to keep it on</string>
+    <string name="feature_group_devices">With your devices</string>
+    <string name="feature_group_connection">Connection</string>
+    <string name="feature_notifications">Notifications</string>
+    <string name="feature_notifications_hint">See and answer them on your computer</string>
+    <string name="feature_messages">Texts and calls</string>
+    <string name="feature_messages_hint">Text and call from your computer</string>
+    <string name="feature_clipboard">Clipboard</string>
+    <string name="feature_clipboard_hint">Copy on one, paste on the other</string>
+    <string name="feature_media">Media controls</string>
+    <string name="feature_media_hint">Play, pause and skip from your computer</string>
+    <string name="feature_photos">Photos</string>
+    <string name="feature_photos_hint">Browse them on your computer</string>
+    <string name="feature_files">Phone storage</string>
+    <string name="feature_files_hint">Open your files on your computer</string>
+    <string name="feature_mirroring">Screen mirroring</string>
+    <string name="feature_mirroring_hint">Show your phone on your computer</string>
+    <string name="feature_control">Computer control</string>
+    <string name="feature_control_hint">Use your mouse and keyboard on the mirror</string>
+    <string name="feature_location">Location</string>
+    <string name="feature_location_hint">Find your phone on a map</string>
+    <string name="feature_background">Stay connected</string>
+    <string name="feature_background_hint">Keep working when the app is closed</string>
+    <string name="feature_nearby">Bluetooth</string>
+    <string name="feature_nearby_hint">Connect without shared Wi-Fi</string>
     <string name="channel_screen">Screen mirroring</string>
     <string name="screen_ask_title">Mirror your screen to %1$s?</string>
     <string name="screen_ask_text">Tap, then choose "Start now"</string>
@@ -90,16 +116,11 @@
     <string name="phone_disclosure_contacts">Uses your contacts to show names instead of numbers</string>
     <string name="phone_disclosure_local">Texts, calls and contacts go only to your own paired computers, encrypted. They are never sent to us or anyone else</string>
     <string name="phone_disclosure_prompt">Next, Android asks for access to SMS, calls, call logs and contacts.</string>
-    <string name="setup_control">Control your phone from your computer</string>
-    <string name="setup_control_stopped">Computer control stopped working</string>
     <string name="setup_control_stopped_hint">Turn \"FlyyLink computer control\" off and on again</string>
     <string name="home_mirror">Mirror</string>
-    <string name="setup_nearby">Connect without shared Wi-Fi</string>
     <string name="channel_hotspot">Hotspot requests</string>
     <string name="hotspot_ask_title">Your computer wants to use your hotspot</string>
     <string name="hotspot_ask_text">Tap to turn it on</string>
-    <string name="setup_photos">Browse photos from your computer</string>
-    <string name="setup_files">Open your phone\'s files on your computer</string>
 
     <string name="files_disclosure_title">Your files on your computer</string>
     <string name="files_disclosure_intro">FlyyLink uses All files access so your paired Mac or PC can open this phone\'s storage like a drive.</string>
@@ -108,7 +129,6 @@
     <string name="files_disclosure_local">Files go only to your own paired computers, encrypted. They are never sent to us or anyone else</string>
     <string name="files_disclosure_settings">Next, turn on \"Allow access to manage all files\" for FlyyLink.</string>
     <string name="files_disclosure_prompt">Next, Android asks for access to your files.</string>
-    <string name="setup_location_hint">Choose \"Allow all the time\"</string>
 
     <string name="status_not_paired">Not paired</string>
     <string name="status_waiting">Waiting…</string>

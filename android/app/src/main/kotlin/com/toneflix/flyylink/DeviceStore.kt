@@ -12,6 +12,7 @@ import com.toneflix.flyylink.protocol.DeviceType
 import com.toneflix.flyylink.protocol.NetworkPacket
 import com.toneflix.flyylink.protocol.PacketType
 import com.toneflix.flyylink.protocol.PairState
+import com.toneflix.flyylink.protocol.PhoneFeatures
 import com.toneflix.flyylink.protocol.PluginRouter
 import com.toneflix.flyylink.protocol.TrustStore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,6 +106,7 @@ object DeviceStore {
             deviceType = form.deviceType,
             incomingCapabilities = form.capabilities,
             outgoingCapabilities = form.capabilities,
+            features = if (form == AppForm.PHONE) Features.current.value else PhoneFeatures.ALL,
         )
     }
 

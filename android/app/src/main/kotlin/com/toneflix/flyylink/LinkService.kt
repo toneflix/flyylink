@@ -18,8 +18,11 @@ import android.provider.Settings
 import com.toneflix.flyylink.protocol.Device
 import com.toneflix.flyylink.protocol.LanLink
 import com.toneflix.flyylink.protocol.PairState
+import com.toneflix.flyylink.protocol.PhoneFeature
+import com.toneflix.flyylink.protocol.PhoneFeatures
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -74,6 +77,7 @@ class LinkService : Service() {
 
     private fun startLink() {
         DeviceStore.restorePreferences(this)
+        if (form == AppForm.PHONE) Features.refresh(this)
         form.startPlugins(this)
 
         val wifi = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
@@ -103,7 +107,8 @@ class LinkService : Service() {
                 trustStore = trustStore,
                 onLink = {
                     val canPair = own.deviceType.pairsWith(it.identity.deviceType)
-                    DeviceStore.add(Device(it, certificate, trustStore, guests = FlyyDropPlugin.drop, canPair = canPair), own.deviceId)
+                    val device = Device(it, certificate, trustStore, guests = FlyyDropPlugin.drop, canPair = canPair, ownFeatures = ::ownFeatures)
+                    DeviceStore.add(device, own.deviceId)
                 },
                 isConnected = { DeviceStore.find(it)?.link?.isOpen == true },
             )
@@ -115,11 +120,15 @@ class LinkService : Service() {
         startBeacon()
 
         exec.scheduleWithFixedDelay({
+            // Access given or taken back in system settings reaches computers within a few seconds.
+            if (form == AppForm.PHONE) runCatching { Features.refresh(this) }
             runCatching { link?.broadcastIdentity() }
             DeviceStore.tickAll()
             FlyyDropPlugin.tick()
         }, 1, 5, TimeUnit.SECONDS)
     }
+
+    private fun ownFeatures(): PhoneFeatures = if (form == AppForm.PHONE) Features.current.value else PhoneFeatures.ALL
 
     /** Lets a paired Mac find the phone over Bluetooth. Safe to call again once the permission is granted. */
     private fun startBeacon() {
@@ -134,7 +143,7 @@ class LinkService : Service() {
         val manager = getSystemService(NotificationManager::class.java)
 
         scope.launch {
-            DeviceStore.states.collect { states ->
+            DeviceStore.states.combine(Features.current) { states, _ -> states }.collect { states ->
                 val names = states.filter { it.pairState == PairState.PAIRED }.map { it.name }
                 val text = if (names.isEmpty()) {
                     getString(R.string.notification_running)
@@ -165,7 +174,11 @@ class LinkService : Service() {
             .setSmallIcon(R.drawable.ic_stat_flyylink)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .addAction(Notification.Action.Builder(null, getString(R.string.clipboard_send), sendClipboard).build())
+            .apply {
+                if (form != AppForm.PHONE || Features.isOn(PhoneFeature.CLIPBOARD)) {
+                    addAction(Notification.Action.Builder(null, getString(R.string.clipboard_send), sendClipboard).build())
+                }
+            }
             .addAction(Notification.Action.Builder(null, getString(stopLabel), disconnect).build())
             .build()
     }

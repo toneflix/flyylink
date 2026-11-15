@@ -9,7 +9,6 @@ import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -79,22 +78,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.toneflix.flyylink.DeviceState
 import com.toneflix.flyylink.DeviceStore
-import com.toneflix.flyylink.CallPlugin
+import com.toneflix.flyylink.Feature
+import com.toneflix.flyylink.Features
 import com.toneflix.flyylink.ClipboardPlugin
-import com.toneflix.flyylink.SmsPlugin
 import com.toneflix.flyylink.LinkService
-import com.toneflix.flyylink.LocationPlugin
-import com.toneflix.flyylink.NearbyBeacon
-import com.toneflix.flyylink.PhotosPlugin
-import com.toneflix.flyylink.FilesPlugin
-import com.toneflix.flyylink.ScreenControlService
 import com.toneflix.flyylink.ScreenPlugin
-import com.toneflix.flyylink.NotificationPlugin
 import com.toneflix.flyylink.R
 import com.toneflix.flyylink.Recent
 import com.toneflix.flyylink.RecentItem
@@ -106,6 +97,7 @@ import com.toneflix.flyylink.ComputerRemotePlugin
 import com.toneflix.flyylink.RemoteActivity
 import com.toneflix.flyylink.protocol.DeviceType
 import com.toneflix.flyylink.protocol.PairState
+import com.toneflix.flyylink.protocol.PhoneFeature
 import kotlinx.coroutines.launch
 import kotlin.concurrent.thread
 
@@ -115,7 +107,7 @@ fun withDevice(id: String, action: (com.toneflix.flyylink.protocol.Device) -> Un
 }
 
 @Composable
-fun HomeScreen(phoneName: String) {
+fun HomeScreen(phoneName: String, onOpenFeatures: () -> Unit) {
     val devices by DeviceStore.states.collectAsStateWithLifecycle()
     val focusId by DeviceStore.focusId.collectAsStateWithLifecycle()
     val style by DeviceStore.switcherStyle.collectAsStateWithLifecycle()
@@ -136,7 +128,7 @@ fun HomeScreen(phoneName: String) {
                 .animateContentSize(),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Header(macs, style)
+            Header(macs, style, onOpenFeatures)
 
             val carousel = macs.size > 1 && style == SwitcherStyle.CAROUSEL
             if (macs.size > 1 && !carousel) MacSwitcher(macs, mac?.id)
@@ -148,7 +140,7 @@ fun HomeScreen(phoneName: String) {
                 SearchingHero(hasNearby = others.any { it.canPair })
             }
 
-            SetupCards()
+            SetupCards(onOpenFeatures)
 
             FlyyDropCard()
 
@@ -172,7 +164,7 @@ fun HomeScreen(phoneName: String) {
 }
 
 @Composable
-private fun Header(macs: List<DeviceState>, style: SwitcherStyle) {
+private fun Header(macs: List<DeviceState>, style: SwitcherStyle, onOpenFeatures: () -> Unit) {
     val context = LocalContext.current
     var menu by remember { mutableStateOf(false) }
 
@@ -186,10 +178,10 @@ private fun Header(macs: List<DeviceState>, style: SwitcherStyle) {
             }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.home_notification_access)) },
+                    text = { Text(stringResource(R.string.feature_screen_title)) },
                     onClick = {
                         menu = false
-                        context.startActivity(NotificationPlugin.accessSettingsIntent())
+                        onOpenFeatures()
                     },
                 )
                 if (macs.size > 1) {
@@ -441,6 +433,7 @@ private fun SearchingHero(hasNearby: Boolean) {
 @Composable
 private fun QuickTiles(mac: DeviceState, macCount: Int) {
     val context = LocalContext.current
+    val features by Features.current.collectAsStateWithLifecycle()
     var linkDialog by remember { mutableStateOf(false) }
     val pick = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
         if (uris.isNotEmpty()) context.startActivity(ShareActivity.sendFilesIntent(context, uris))
@@ -457,16 +450,20 @@ private fun QuickTiles(mac: DeviceState, macCount: Int) {
     } else {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Tile(R.drawable.lucide_file_up, stringResource(R.string.home_send_files), Modifier.weight(1f)) { pick.launch("*/*") }
-            Tile(R.drawable.lucide_clipboard, stringResource(R.string.home_clipboard), Modifier.weight(1f)) {
-                val message = when {
-                    !ClipboardPlugin.send(context) -> context.getString(R.string.clipboard_empty)
-                    macCount > 1 -> context.getString(R.string.clipboard_sent_many, macCount)
-                    else -> context.getString(R.string.clipboard_sent)
+            if (PhoneFeature.CLIPBOARD in features) {
+                Tile(R.drawable.lucide_clipboard, stringResource(R.string.home_clipboard), Modifier.weight(1f)) {
+                    val message = when {
+                        !ClipboardPlugin.send(context) -> context.getString(R.string.clipboard_empty)
+                        macCount > 1 -> context.getString(R.string.clipboard_sent_many, macCount)
+                        else -> context.getString(R.string.clipboard_sent)
+                    }
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 }
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
             Tile(R.drawable.lucide_link, stringResource(R.string.home_open_link), Modifier.weight(1f)) { linkDialog = true }
-            Tile(R.drawable.lucide_cast, stringResource(R.string.home_mirror), Modifier.weight(1f)) { ScreenPlugin.mirror(context, mac.id) }
+            if (PhoneFeature.MIRRORING in features) {
+                Tile(R.drawable.lucide_cast, stringResource(R.string.home_mirror), Modifier.weight(1f)) { ScreenPlugin.mirror(context, mac.id) }
+            }
         }
         if (mac.type.isComputer && ComputerRemotePlugin.canControl(mac.id)) {
             RemoteTile { context.startActivity(RemoteActivity.intent(context, mac.id)) }
@@ -526,160 +523,55 @@ private fun Tile(@DrawableRes icon: Int, label: String, modifier: Modifier, onCl
     }
 }
 
-/** Cyan cards for the permissions FlyyLink still needs. Each disappears once granted. */
+/** Cyan cards for features that were on until Android took back their access, then the way into Features. */
 @Composable
-private fun SetupCards() {
+private fun SetupCards(onOpenFeatures: () -> Unit) {
     val context = LocalContext.current
-    var notifications by remember { mutableStateOf(NotificationPlugin.hasAccess(context)) }
-    var background by remember { mutableStateOf(LinkService.isUnrestricted(context)) }
-    var phone by remember { mutableStateOf(CallPlugin.hasPermissions(context)) }
-    var phoneDisclosure by remember { mutableStateOf(false) }
-    val askPhone = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        phone = CallPlugin.hasPermissions(context)
-        SmsPlugin.start(context)
-        CallPlugin.start(context)
-    }
+    val requester = rememberFeatureRequester()
+    val choices by Features.choices.collectAsStateWithLifecycle()
+    val working by Features.current.collectAsStateWithLifecycle()
+    val version = requester.version
+    val lost = remember(version, choices) { Feature.phoneFeatures.filter { it in choices && !it.access.isGranted(context) } }
 
-    var location by remember { mutableStateOf(LocationPlugin.hasPermission(context) && LocationPlugin.hasBackgroundPermission(context)) }
-    var locationDisclosure by remember { mutableStateOf(false) }
-    // Android asks for "all the time" location separately, after the normal location permission.
-    val askBackgroundLocation = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        location = LocationPlugin.hasPermission(context) && LocationPlugin.hasBackgroundPermission(context)
-    }
-    val askLocation = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        if (LocationPlugin.hasPermission(context) && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            askBackgroundLocation.launch(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+    lost.forEach { feature ->
+        key(feature) {
+            SetupCard(feature.icon, stringResource(feature.title), stringResource(R.string.feature_needs_access)) { requester.turnOn(feature) }
         }
     }
 
-    var photos by remember { mutableStateOf(PhotosPlugin.hasPermission(context)) }
-    val askPhotos = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        photos = PhotosPlugin.hasPermission(context)
-    }
+    FeaturesCard(working.reported?.size ?: 0, onOpenFeatures)
+}
 
-    var files by remember { mutableStateOf(FilesPlugin.hasAccess(context)) }
-    var filesDisclosure by remember { mutableStateOf(false) }
-    val askFiles = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        files = FilesPlugin.hasAccess(context)
-    }
+/** Opens the Features screen, with how many are on. */
+@Composable
+private fun FeaturesCard(count: Int, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
 
-    var control by remember { mutableStateOf(ScreenControlService.status(context)) }
-    var controlDisclosure by remember { mutableStateOf(false) }
-    var nearby by remember { mutableStateOf(NearbyBeacon.hasPermission(context)) }
-    val askNearby = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        nearby = NearbyBeacon.hasPermission(context)
-        if (nearby) LinkService.start(context)
-    }
-
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        control = ScreenControlService.status(context)
-        nearby = NearbyBeacon.hasPermission(context)
-        photos = PhotosPlugin.hasPermission(context)
-        files = FilesPlugin.hasAccess(context)
-        location = LocationPlugin.hasPermission(context) && LocationPlugin.hasBackgroundPermission(context)
-        notifications = NotificationPlugin.hasAccess(context)
-        background = LinkService.isUnrestricted(context)
-        phone = CallPlugin.hasPermissions(context)
-    }
-
-    AnimatedVisibility(!notifications) {
-        SetupCard(
-            R.drawable.lucide_bell,
-            stringResource(R.string.setup_notifications),
-        ) { context.startActivity(NotificationPlugin.accessSettingsIntent()) }
-    }
-    AnimatedVisibility(!background) {
-        SetupCard(
-            R.drawable.lucide_battery_charging,
-            stringResource(R.string.setup_background),
-        ) { context.startActivity(LinkService.unrestrictIntent(context)) }
-    }
-    AnimatedVisibility(!phone) {
-        SetupCard(
-            R.drawable.lucide_message_square,
-            stringResource(R.string.setup_phone),
-        ) { phoneDisclosure = true }
-    }
-    AnimatedVisibility(!location) {
-        SetupCard(
-            R.drawable.lucide_map_pin,
-            stringResource(R.string.setup_location),
-            stringResource(R.string.setup_location_hint),
-        ) { locationDisclosure = true }
-    }
-    AnimatedVisibility(!photos) {
-        SetupCard(
-            R.drawable.lucide_image,
-            stringResource(R.string.setup_photos),
-        ) { askPhotos.launch(PhotosPlugin.permissions) }
-    }
-    AnimatedVisibility(!files) {
-        SetupCard(
-            R.drawable.lucide_folder_open,
-            stringResource(R.string.setup_files),
-        ) { filesDisclosure = true }
-    }
-    AnimatedVisibility(!nearby) {
-        SetupCard(
-            R.drawable.lucide_bluetooth,
-            stringResource(R.string.setup_nearby),
-        ) { askNearby.launch(NearbyBeacon.permissions) }
-    }
-    AnimatedVisibility(control != ScreenControlService.Status.ON) {
-        val stopped = control == ScreenControlService.Status.STOPPED
-        SetupCard(
-            R.drawable.lucide_pointer,
-            stringResource(if (stopped) R.string.setup_control_stopped else R.string.setup_control),
-            if (stopped) stringResource(R.string.setup_control_stopped_hint) else null,
-        ) { controlDisclosure = true }
-    }
-
-    if (phoneDisclosure) {
-        PhoneDisclosureSheet(
-            onAccept = {
-                phoneDisclosure = false
-                askPhone.launch(CallPlugin.permissions)
-            },
-            onDecline = { phoneDisclosure = false },
-        )
-    }
-
-    if (locationDisclosure) {
-        LocationDisclosureSheet(
-            onAccept = {
-                locationDisclosure = false
-                if (LocationPlugin.hasPermission(context) && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    askBackgroundLocation.launch(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                } else {
-                    askLocation.launch(LocationPlugin.permissions)
-                }
-            },
-            onDecline = { locationDisclosure = false },
-        )
-    }
-
-    if (filesDisclosure) {
-        FilesDisclosureSheet(
-            onAccept = {
-                filesDisclosure = false
-                if (FilesPlugin.needsSettings) {
-                    context.startActivity(FilesPlugin.accessSettingsIntent(context))
-                } else {
-                    askFiles.launch(FilesPlugin.legacyPermissions)
-                }
-            },
-            onDecline = { filesDisclosure = false },
-        )
-    }
-
-    if (controlDisclosure) {
-        ControlDisclosureSheet(
-            onAccept = {
-                controlDisclosure = false
-                ScreenControlService.openSettings(context)
-            },
-            onDecline = { controlDisclosure = false },
-        )
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(colors.surface, MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(48.dp).background(colors.primaryContainer, RoundedCornerShape(16.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(painterResource(R.drawable.lucide_circle_check), contentDescription = null, tint = colors.onPrimaryContainer)
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(R.string.feature_screen_title), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                if (count == 0) stringResource(R.string.feature_pick) else stringResource(R.string.feature_count, count),
+                fontSize = 13.sp,
+                color = colors.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+        Icon(painterResource(R.drawable.lucide_chevron_right), contentDescription = null, tint = colors.onSurfaceVariant)
     }
 }
 
