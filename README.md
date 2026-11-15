@@ -20,6 +20,7 @@
 - **FlyyDrop.** Send to anyone nearby.
 - **Screen mirroring.** Use your phone from your computer.
 - **Photos.** Your latest shots, on your computer.
+- **Phone storage.** Every folder, in Finder or File Explorer.
 - **Clipboard.** Copy on one, paste on the other.
 - **Find your phone.** Ring it, even on silent.
 - **Media and battery.** Play, pause, skip, and check the battery.
