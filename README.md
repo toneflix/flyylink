@@ -14,7 +14,7 @@
 
 ## What it does
 
-- **Notifications.** Reply from your keyboard.
+- **Notifications.** Reply from your keyboard. Your computer's show on your phone.
 - **Texts and calls.** Read, reply, answer.
 - **Files.** Any size, from any app.
 - **FlyyDrop.** Send to anyone nearby.

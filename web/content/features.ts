@@ -28,7 +28,7 @@ export const features: Feature[] = [
   {
     icon: Bell,
     title: "Notifications",
-    body: "Reply from your keyboard.",
+    body: "Reply from your keyboard. Your computer's show on your phone.",
   },
   {
     icon: MessageSquare,

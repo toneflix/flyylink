@@ -141,6 +141,7 @@ final class AppModel: ObservableObject {
     private let connectivity = ConnectivityPlugin()
     private let clipboard: ClipboardPlugin
     private let notifications: NotificationPlugin
+    private let notificationShare: NotificationSharePlugin
     private let share = SharePlugin(folder: AppModel.downloads)
     private let mediaPlugin = MediaPlugin()
     private let sms = SmsPlugin()
@@ -210,8 +211,9 @@ final class AppModel: ObservableObject {
         screenWindow = ScreenWindowController(mirror: screen)
         desktopWindow = RemoteDesktopWindowController(desktop: desktop)
         notifications = NotificationPlugin(devices: connected)
+        notificationShare = NotificationSharePlugin(devices: connected)
         flyyDropPlugin = FlyyDropPlugin(share: share, devices: connected)
-        plugins = PluginRouter([notifications, battery, connectivity, clipboard, share, mediaPlugin, sms, calls, callAudioPlugin, locations, photosPlugin, screenPlugin, find, mediaHost, inputShare, screenHost, relay, flyyDropPlugin])
+        plugins = PluginRouter([notifications, battery, connectivity, clipboard, share, mediaPlugin, sms, calls, callAudioPlugin, locations, photosPlugin, screenPlugin, find, mediaHost, inputShare, screenHost, relay, flyyDropPlugin, notificationShare])
         mirrorsNotifications = UserDefaults.standard.object(forKey: "mirrorsNotifications") as? Bool ?? true
         switcherStyle = UserDefaults.standard.string(forKey: "switcherStyle").flatMap(PhoneSwitcherStyle.init(rawValue:)) ?? .carousel
         opensAtLogin = LoginItem.isEnabled
@@ -220,6 +222,8 @@ final class AppModel: ObservableObject {
 
         battery.onChange = { [weak self] in Task { @MainActor in self?.publish() } }
         connectivity.onChange = { [weak self] in Task { @MainActor in self?.publish() } }
+        notificationShare.onAccessChange = { [weak self] readable in Task { @MainActor in self?.canReadNotifications = readable } }
+        notificationShare.start()
         inputShare.onChange = { [weak self] in Task { @MainActor in self?.inputChanged() } }
         let inputShare = inputShare
         screenHost.allows = { [weak inputShare] in inputShare?.allowsControl ?? false }
@@ -468,7 +472,19 @@ final class AppModel: ObservableObject {
         return relay.send(packet, toPhone: id)
     }
 
-    /// Whether this Mac passes its phones' notifications and calls to its other computers, and shows theirs.
+    /// Whether this Mac's own notifications go to its phones and computers.
+    var sharesNotifications: Bool {
+        get { notificationShare.isEnabled }
+        set {
+            notificationShare.isEnabled = newValue
+            objectWillChange.send()
+        }
+    }
+
+    /// False until FlyyLink has Full Disk Access, which reading Notification Center needs.
+    @Published private(set) var canReadNotifications = false
+
+        /// Whether this Mac passes its phones' notifications and calls to its other computers, and shows theirs.
     var relaysPhones: Bool {
         get { relay.isEnabled }
         set {
