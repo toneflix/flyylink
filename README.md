@@ -14,7 +14,7 @@
 
 ## What it does
 
-- **Notifications.** Reply from your keyboard.
+- **Notifications.** Reply from your keyboard. Your computer's show on your phone.
 - **Texts and calls.** Read, reply, answer.
 - **Files.** Any size, from any app.
 - **FlyyDrop.** Send to anyone nearby.
@@ -23,7 +23,8 @@
 - **Phone storage.** Every folder, in Finder or File Explorer.
 - **Clipboard.** Copy on one, paste on the other.
 - **Find your phone.** Ring it, even on silent.
-- **Media and battery.** Play, pause, skip, and check the battery.
+- **Media, battery and signal.** Play, pause, skip, and check the battery and signal.
+- **Computer remote.** Your phone is a touchpad, keyboard and slide clicker.
 - **TV remote.** Your phone or computer is the remote. Type and point, too.
 - **Play on TV.** Photos, videos and music on your smart TV.
 - **Several devices.** Pair as many phones and computers as you like.

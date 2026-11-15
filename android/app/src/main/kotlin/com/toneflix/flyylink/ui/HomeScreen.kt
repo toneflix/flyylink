@@ -102,6 +102,7 @@ import com.toneflix.flyylink.TransferText
 import com.toneflix.flyylink.ShareActivity
 import com.toneflix.flyylink.SwitcherStyle
 import com.toneflix.flyylink.openIntent
+import com.toneflix.flyylink.ComputerRemotePlugin
 import com.toneflix.flyylink.RemoteActivity
 import com.toneflix.flyylink.protocol.DeviceType
 import com.toneflix.flyylink.protocol.PairState
@@ -467,10 +468,41 @@ private fun QuickTiles(mac: DeviceState, macCount: Int) {
             Tile(R.drawable.lucide_link, stringResource(R.string.home_open_link), Modifier.weight(1f)) { linkDialog = true }
             Tile(R.drawable.lucide_cast, stringResource(R.string.home_mirror), Modifier.weight(1f)) { ScreenPlugin.mirror(context, mac.id) }
         }
+        if (mac.type.isComputer && ComputerRemotePlugin.canControl(mac.id)) {
+            RemoteTile { context.startActivity(RemoteActivity.intent(context, mac.id)) }
+        }
     }
 
     if (linkDialog) {
         LinkDialog(mac, initial = clipboardText(context), onDismiss = { linkDialog = false })
+    }
+}
+
+/** A wide tile that opens the computer remote, drawn as a touchpad with its two buttons. */
+@Composable
+private fun RemoteTile(onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(colors.surface, MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(48.dp).background(colors.primaryContainer, RoundedCornerShape(16.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(painterResource(R.drawable.lucide_mouse_pointer_2), contentDescription = null, tint = colors.onPrimaryContainer)
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(R.string.home_remote), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.home_remote_computer), fontSize = 13.sp, color = colors.onSurfaceVariant, maxLines = 1)
+        }
+        Icon(painterResource(R.drawable.lucide_chevron_right), contentDescription = null, tint = colors.onSurfaceVariant)
     }
 }
 

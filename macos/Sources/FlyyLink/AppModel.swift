@@ -15,6 +15,8 @@ struct DeviceState: Identifiable, Equatable {
     let pairState: PairState
     let code: String?
     let battery: BatteryStatus?
+    /// The phone's mobile signal, when it has a SIM.
+    let signal: CellSignal?
     let media: NowPlaying?
     let location: PhoneLocation?
     /// Runs FlyyLink with FlyyDrop, so files can go to it without pairing.
@@ -136,8 +138,10 @@ final class AppModel: ObservableObject {
     private let connected = DeviceRegistry()
     private let plugins: PluginRouter
     private let battery: BatteryPlugin
+    private let connectivity = ConnectivityPlugin()
     private let clipboard: ClipboardPlugin
     private let notifications: NotificationPlugin
+    private let notificationShare: NotificationSharePlugin
     private let share = SharePlugin(folder: AppModel.downloads)
     private let mediaPlugin = MediaPlugin()
     private let sms = SmsPlugin()
@@ -210,9 +214,10 @@ final class AppModel: ObservableObject {
         screenWindow = ScreenWindowController(mirror: screen)
         desktopWindow = RemoteDesktopWindowController(desktop: desktop)
         notifications = NotificationPlugin(devices: connected)
+        notificationShare = NotificationSharePlugin(devices: connected)
         flyyDropPlugin = FlyyDropPlugin(share: share, devices: connected)
         drives = PhoneDrives(files: filesPlugin, devices: connected)
-        plugins = PluginRouter([notifications, battery, clipboard, share, mediaPlugin, sms, calls, callAudioPlugin, locations, photosPlugin, filesPlugin, screenPlugin, find, mediaHost, inputShare, screenHost, relay, flyyDropPlugin])
+        plugins = PluginRouter([notifications, battery, connectivity, clipboard, share, mediaPlugin, sms, calls, callAudioPlugin, locations, photosPlugin, filesPlugin, screenPlugin, find, mediaHost, inputShare, screenHost, relay, flyyDropPlugin, notificationShare])
         mirrorsNotifications = UserDefaults.standard.object(forKey: "mirrorsNotifications") as? Bool ?? true
         switcherStyle = UserDefaults.standard.string(forKey: "switcherStyle").flatMap(PhoneSwitcherStyle.init(rawValue:)) ?? .carousel
         opensAtLogin = LoginItem.isEnabled
@@ -220,6 +225,9 @@ final class AppModel: ObservableObject {
         notifications.isEnabled = mirrorsNotifications
 
         battery.onChange = { [weak self] in Task { @MainActor in self?.publish() } }
+        connectivity.onChange = { [weak self] in Task { @MainActor in self?.publish() } }
+        notificationShare.onAccessChange = { [weak self] readable in Task { @MainActor in self?.canReadNotifications = readable } }
+        notificationShare.start()
         inputShare.onChange = { [weak self] in Task { @MainActor in self?.inputChanged() } }
         let inputShare = inputShare
         screenHost.allows = { [weak inputShare] in inputShare?.allowsControl ?? false }
@@ -471,7 +479,19 @@ final class AppModel: ObservableObject {
         return relay.send(packet, toPhone: id)
     }
 
-    /// Whether this Mac passes its phones' notifications and calls to its other computers, and shows theirs.
+    /// Whether this Mac's own notifications go to its phones and computers.
+    var sharesNotifications: Bool {
+        get { notificationShare.isEnabled }
+        set {
+            notificationShare.isEnabled = newValue
+            objectWillChange.send()
+        }
+    }
+
+    /// False until FlyyLink has Full Disk Access, which reading Notification Center needs.
+    @Published private(set) var canReadNotifications = false
+
+        /// Whether this Mac passes its phones' notifications and calls to its other computers, and shows theirs.
     var relaysPhones: Bool {
         get { relay.isEnabled }
         set {
@@ -899,6 +919,7 @@ final class AppModel: ObservableObject {
                     pairState: state,
                     code: showsCode ? device.verificationCode : nil,
                     battery: battery.status(for: device.id),
+                    signal: connectivity.signal(for: device.id),
                     media: mediaPlugin.nowPlaying(for: device.id),
                     location: locations.location(for: device.id),
                     canFlyyDrop: device.link.identity.incomingCapabilities.contains(PacketType.flyyDropRequest)

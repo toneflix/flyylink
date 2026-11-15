@@ -21,6 +21,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
     private readonly ToastCenter toasts = new();
     private readonly PluginRouter plugins;
     private readonly BatteryPlugin battery;
+    private readonly ConnectivityPlugin connectivity = new();
     private readonly ClipboardPlugin clipboard;
     private readonly NotificationPlugin notifications;
     private readonly SharePlugin share;
@@ -82,6 +83,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
         };
 
         battery = new BatteryPlugin(toasts, connected) { OnChange = () => ui.TryEnqueue(Publish) };
+        connectivity.OnChange = () => ui.TryEnqueue(Publish);
         clipboard = new ClipboardPlugin(connected, ui) { OnSync = () => ClipboardSyncedAt = DateTimeOffset.Now };
         notifications = new NotificationPlugin(toasts, connected) { IsEnabled = settings.MirrorsNotifications };
         notifications.OnShown = () => ui.TryEnqueue(CountNotification);
@@ -199,7 +201,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
         };
         var (receiving, until) = settings.FlyyDropReceiving;
         flyyDrop.Drop.Restore(receiving, until);
-        plugins = new PluginRouter([notifications, battery, clipboard, share, media, sms, calls, locations, photos, phoneFiles, screen, find, mediaHost, notificationShare, inputShare, screenHost, relay, flyyDrop]);
+        plugins = new PluginRouter([notifications, battery, connectivity, clipboard, share, media, sms, calls, locations, photos, phoneFiles, screen, find, mediaHost, notificationShare, inputShare, screenHost, relay, flyyDrop]);
 
         updater = new Updater(toasts) { OnInstalling = () => ui.TryEnqueue(() => UpdateInstalling?.Invoke()) };
         Licence = new LicenceModel(ui, toasts);
@@ -1245,7 +1247,8 @@ public sealed class AppModel : Observable, IDeviceDelegate
                     media.NowPlaying(device.Id),
                     locations.Location(device.Id),
                     device.Link.Identity.IncomingCapabilities.Contains(PacketType.FlyyDropRequest),
-                    flyyDropSends.GetValueOrDefault(device.Id));
+                    flyyDropSends.GetValueOrDefault(device.Id),
+                    connectivity.Signal(device.Id));
             })
             .OrderBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();

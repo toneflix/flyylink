@@ -29,7 +29,7 @@ internal sealed class Settings
         public bool ShowsPhotosInExplorer { get; set; } = true;
         public bool ShowsPhoneInExplorer { get; set; } = true;
         public bool MirrorMuted { get; set; }
-        public bool SharesNotifications { get; set; } = true;
+        public bool SharesOwnNotifications { get; set; }
         public Dictionary<string, string> InputEdges { get; set; } = new();
         public bool AllowsRemoteInput { get; set; } = true;
         public bool RelaysPhones { get; set; } = true;
@@ -154,10 +154,10 @@ internal sealed class Settings
 
     public bool SharesNotifications
     {
-        get => values.SharesNotifications;
+        get => values.SharesOwnNotifications;
         set
         {
-            values.SharesNotifications = value;
+            values.SharesOwnNotifications = value;
             Save();
         }
     }

@@ -19,6 +19,10 @@ public class InputTests
             new RemoteInput.Scroll(0, -40),
             new RemoteInput.Key("KeyA", false),
             new RemoteInput.Key("MetaLeft", true),
+            new RemoteInput.Key("AudioVolumeUp", true),
+            new RemoteInput.Begin(RemoteInput.Android),
+            new RemoteInput.Begin(RemoteInput.MacOS, Ready: false),
+            new RemoteInput.Text("Héllo 👋"),
         ];
 
         foreach (var input in inputs)
@@ -37,7 +41,17 @@ public class InputTests
         Assert.Null(RemoteInput.FromPacket(Packet(new JsonObject { ["action"] = "move", ["dx"] = 50_000, ["dy"] = 0 })));
         Assert.Null(RemoteInput.FromPacket(Packet(new JsonObject { ["action"] = "key", ["code"] = "Hyper", ["down"] = true })));
         Assert.Null(RemoteInput.FromPacket(Packet(new JsonObject { ["action"] = "button", ["button"] = "left" })));
+        Assert.Null(RemoteInput.FromPacket(Packet(new JsonObject { ["action"] = "text", ["text"] = "" })));
+        Assert.Null(RemoteInput.FromPacket(Packet(new JsonObject { ["action"] = "text", ["text"] = new string('a', RemoteInput.MaxText + 1) })));
         Assert.Null(RemoteInput.FromPacket(Packet(new JsonObject { ["action"] = "dance" })));
+    }
+
+    [Fact]
+    public void BeginWithoutReadyMeansReady()
+    {
+        var packet = new NetworkPacket(PacketType.Input, new JsonObject { ["action"] = "begin", ["platform"] = RemoteInput.Windows });
+
+        Assert.Equal(new RemoteInput.Begin(RemoteInput.Windows, true), RemoteInput.FromPacket(packet));
     }
 
     [Fact]
@@ -61,6 +75,7 @@ public class InputTests
         Assert.Contains("Digit0", KeyCodes.All);
         Assert.Contains("F12", KeyCodes.All);
         Assert.Contains("NumpadEnter", KeyCodes.All);
+        Assert.Contains("MediaPlayPause", KeyCodes.All);
         Assert.Equal("MetaLeft", KeyCodes.SwappingControlAndMeta("ControlLeft"));
         Assert.Equal("KeyC", KeyCodes.SwappingControlAndMeta("KeyC"));
     }

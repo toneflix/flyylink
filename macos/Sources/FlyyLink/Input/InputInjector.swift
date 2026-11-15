@@ -1,7 +1,7 @@
 import AppKit
 import FlyyLinkKit
 
-/// Plays keyboard and mouse input from another computer on this Mac. Runs on the main thread. Needs Accessibility access.
+/// Plays keyboard and mouse input from another computer or a phone on this Mac. Runs on the main thread. Needs Accessibility access.
 final class InputInjector {
     /// Sends to a device; false when it isn't connected.
     var send: (String, RemoteInput) -> Bool = { _, _ in false }
@@ -26,6 +26,8 @@ final class InputInjector {
         case .enter(let edge, let position, let platform):
             begin(deviceId, entry: edge, platform: platform)
             moveCursor(to: DesktopBounds.current().point(on: edge, at: position, inset: 6))
+        case .begin(let platform, _):
+            begin(deviceId, entry: nil, platform: platform)
         case .moveTo(let x, let y):
             if controllerId != deviceId { begin(deviceId, entry: nil, platform: "") }
             let main = DesktopBounds.main()
@@ -48,6 +50,9 @@ final class InputInjector {
         case .key(let code, let down):
             guard controllerId == deviceId else { return }
             key(swapsControlAndMeta ? KeyCodes.swappingControlAndMeta(code) : code, down: down)
+        case .text(let text):
+            guard controllerId == deviceId else { return }
+            type(text)
         }
     }
 
@@ -163,6 +168,10 @@ final class InputInjector {
     }
 
     private func key(_ code: String, down: Bool) {
+        if let media = MacKeys.mediaKey(code) {
+            postMedia(media, down: down)
+            return
+        }
         guard let keyCode = MacKeys.keyCode(code) else { return }
 
         if let flag = MacKeys.flag(for: code), code != "CapsLock" {
@@ -173,5 +182,41 @@ final class InputInjector {
         let event = CGEvent(keyboardEventSource: source, virtualKey: keyCode, keyDown: down)
         event?.flags = flags
         event?.post(tap: .cghidEventTap)
+    }
+
+    /// Volume and media keys are system events on a Mac, not key codes.
+    private func postMedia(_ media: Int, down: Bool) {
+        let state = down ? 0xA : 0xB
+        let event = NSEvent.otherEvent(
+            with: .systemDefined,
+            location: .zero,
+            modifierFlags: NSEvent.ModifierFlags(rawValue: UInt(state << 8)),
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            subtype: 8,
+            data1: (media << 16) | (state << 8),
+            data2: -1
+        )
+        event?.cgEvent?.post(tap: .cghidEventTap)
+    }
+
+    /// Types each character as itself, so text arrives right whatever the keyboard layout. New lines press Return.
+    private func type(_ text: String) {
+        for character in text {
+            if character.isNewline {
+                key("Enter", down: true)
+                key("Enter", down: false)
+                continue
+            }
+
+            let units = Array(String(character).utf16)
+            for down in [true, false] {
+                let event = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: down)
+                event?.flags = []
+                event?.keyboardSetUnicodeString(stringLength: units.count, unicodeString: units)
+                event?.post(tap: .cghidEventTap)
+            }
+        }
     }
 }

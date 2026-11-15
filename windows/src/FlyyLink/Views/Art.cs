@@ -339,3 +339,63 @@ public sealed class BatteryRing : UserControl
         return new PathGeometry { Figures = { figure } };
     }
 }
+
+/// Mobile signal as four rising bars, with the network type beside them, as a phone's status bar shows it.
+public sealed class SignalBars : UserControl
+{
+    public static readonly DependencyProperty StrengthProperty =
+        DependencyProperty.Register(nameof(Strength), typeof(int), typeof(SignalBars), new PropertyMetadata(0, (d, _) => ((SignalBars)d).Draw()));
+
+    public static readonly DependencyProperty GenerationProperty =
+        DependencyProperty.Register(nameof(Generation), typeof(string), typeof(SignalBars), new PropertyMetadata("", (d, _) => ((SignalBars)d).Draw()));
+
+    private const double BarHeight = 11;
+    private static readonly SolidColorBrush On = new(Geometries.Argb(0xCC1B1B1F));
+    private static readonly SolidColorBrush Off = new(Geometries.Argb(0x2E1B1B1F));
+
+    private readonly Rectangle[] bars = new Rectangle[Core.CellSignal.MaxStrength];
+    private readonly TextBlock label = new() { FontSize = 10, FontWeight = Microsoft.UI.Text.FontWeights.Bold, Foreground = new SolidColorBrush(Geometries.Argb(0xBF1B1B1F)), VerticalAlignment = VerticalAlignment.Center };
+
+    public SignalBars()
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 1.5, VerticalAlignment = VerticalAlignment.Bottom, Height = BarHeight };
+        for (var i = 0; i < bars.Length; i++)
+        {
+            bars[i] = new Rectangle { Width = 3, Height = BarHeight * (i + 1) / bars.Length, RadiusX = 1, RadiusY = 1, VerticalAlignment = VerticalAlignment.Bottom };
+            row.Children.Add(bars[i]);
+        }
+
+        Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Children = { row, label } };
+
+        Draw();
+    }
+
+    public int Strength
+    {
+        get => (int)GetValue(StrengthProperty);
+        set => SetValue(StrengthProperty, value);
+    }
+
+    public string Generation
+    {
+        get => (string)GetValue(GenerationProperty);
+        set => SetValue(GenerationProperty, value);
+    }
+
+    public static string Label(int strength, string generation)
+    {
+        if (strength <= 0) return "No signal";
+
+        var count = $"{strength} of {Core.CellSignal.MaxStrength} bars";
+        return string.IsNullOrEmpty(generation) ? count : $"{generation}, {count}";
+    }
+
+    private void Draw()
+    {
+        for (var i = 0; i < bars.Length; i++) bars[i].Fill = i < Strength ? On : Off;
+
+        label.Text = Generation ?? "";
+        label.Visibility = string.IsNullOrEmpty(Generation) ? Visibility.Collapsed : Visibility.Visible;
+        AutomationProperties.SetName(this, Label(Strength, Generation ?? ""));
+    }
+}

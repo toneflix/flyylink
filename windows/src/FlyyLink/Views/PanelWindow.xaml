@@ -283,13 +283,19 @@
                                             <MenuFlyout x:Name="PhoneMenu" Opening="PhoneMenu_Opening" />
                                         </Button.Flyout>
                                     </Button>
-                                    <Border Background="{ThemeResource FlyyLinkOkTintBrush}" CornerRadius="10" Padding="9,4" HorizontalAlignment="Left" ToolTipService.ToolTip="Connected over Wi-Fi">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <Ellipse Width="7" Height="7" Fill="{ThemeResource FlyyLinkOkBrush}" VerticalAlignment="Center" />
-                                            <TextBlock Text="Connected" FontSize="11" FontWeight="SemiBold" Foreground="{ThemeResource FlyyLinkOkBrush}" />
-                                            <views:LucideIcon Icon="Wifi" Size="11" Foreground="{ThemeResource FlyyLinkOkBrush}" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Border>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Border Background="{ThemeResource FlyyLinkOkTintBrush}" CornerRadius="10" Padding="9,4" HorizontalAlignment="Left" ToolTipService.ToolTip="Connected over Wi-Fi">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <Ellipse Width="7" Height="7" Fill="{ThemeResource FlyyLinkOkBrush}" VerticalAlignment="Center" />
+                                                <TextBlock Text="Connected" FontSize="11" FontWeight="SemiBold" Foreground="{ThemeResource FlyyLinkOkBrush}" />
+                                                <views:LucideIcon Icon="Wifi" Size="11" Foreground="{ThemeResource FlyyLinkOkBrush}" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Background="#14000000" CornerRadius="10" Padding="9,5" VerticalAlignment="Center" Visibility="{x:Bind ShowsSignal(Model.Focused), Mode=OneWay}"
+                                                ToolTipService.ToolTip="{x:Bind SignalHint(Model.Focused), Mode=OneWay}">
+                                            <views:SignalBars Strength="{x:Bind Model.Focused.SignalStrength, Mode=OneWay, FallbackValue=0}" Generation="{x:Bind Model.Focused.SignalGeneration, Mode=OneWay, FallbackValue=''}" />
+                                        </Border>
+                                    </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <Button Width="24" Height="24" Padding="0" CornerRadius="12" Style="{StaticResource FlyyLinkPlainButton}" Background="{x:Bind StatusBackground(Model.MirrorsNotifications), Mode=OneWay}" Click="Notifications_Click"
                                                 ToolTipService.ToolTip="{x:Bind NotificationsHint(Model.MirrorsNotifications), Mode=OneWay}" AutomationProperties.Name="{x:Bind NotificationsHint(Model.MirrorsNotifications), Mode=OneWay}">

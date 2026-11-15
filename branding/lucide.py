@@ -33,6 +33,7 @@ ANDROID = [
     "tv", "music", "house", "arrow-left", "chevron-up", "chevron-down", "chevron-left", "chevron-right", "ellipsis",
     "play", "pause", "skip-back", "skip-forward", "volume-1", "volume-2", "volume-x", "delete", "corner-down-left", "film",
     "folder-open",
+    "mouse-pointer-2", "presentation", "monitor-off",
 ]
 
 WINDOWS = [

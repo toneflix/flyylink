@@ -4,7 +4,7 @@ using static FlyyLink.Shell.NativeMethods;
 
 namespace FlyyLink.Shell;
 
-/// Plays keyboard and mouse input from another computer on this PC. Safe to call from any thread.
+/// Plays keyboard and mouse input from another computer or a phone on this PC. Safe to call from any thread.
 internal sealed class InputInjector
 {
     private readonly object gate = new();
@@ -44,6 +44,9 @@ internal sealed class InputInjector
                     var (ex, ey) = enter.Edge.Point(enter.Position, bounds.MinX, bounds.MinY, bounds.MaxX, bounds.MaxY, inset: 6);
                     MoveCursor(ex, ey);
                     break;
+                case RemoteInput.Begin begin:
+                    Begin(deviceId, null, begin.Platform);
+                    break;
                 case RemoteInput.MoveTo to:
                     if (controllerId != deviceId) Begin(deviceId, null, "");
                     var main = DesktopBounds.Primary();
@@ -63,6 +66,9 @@ internal sealed class InputInjector
                     break;
                 case RemoteInput.Key key when controllerId == deviceId:
                     Key(swapsControlAndMeta ? KeyCodes.SwappingControlAndMeta(key.Code) : key.Code, key.Down);
+                    break;
+                case RemoteInput.Text text when controllerId == deviceId:
+                    Type(text.Value);
                     break;
             }
         }
@@ -175,6 +181,26 @@ internal sealed class InputInjector
 
         var flags = (key.Extended ? KEYEVENTF_EXTENDEDKEY : 0) | (down ? 0 : KEYEVENTF_KEYUP);
         Post(new INPUT { type = INPUT_KEYBOARD, u = new INPUTUNION { ki = new KEYBDINPUT { wVk = key.Vk, dwFlags = flags } } });
+    }
+
+    /// Types each character as itself, so text arrives right whatever the keyboard layout. New lines press Enter.
+    private void Type(string text)
+    {
+        foreach (var unit in text.Replace("\r\n", "\n"))
+        {
+            if (unit == '\n')
+            {
+                Key("Enter", true);
+                Key("Enter", false);
+                continue;
+            }
+
+            foreach (var up in new[] { false, true })
+            {
+                var flags = KEYEVENTF_UNICODE | (up ? KEYEVENTF_KEYUP : 0);
+                Post(new INPUT { type = INPUT_KEYBOARD, u = new INPUTUNION { ki = new KEYBDINPUT { wScan = unit, dwFlags = flags } } });
+            }
+        }
     }
 
     private static INPUT Mouse(MOUSEINPUT mouse) => new() { type = INPUT_MOUSE, u = new INPUTUNION { mi = mouse } };
