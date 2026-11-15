@@ -21,7 +21,7 @@ enum class AppForm(val deviceType: DeviceType) {
     val plugins: List<Plugin>
         get() = when (this) {
             PHONE -> listOf(
-                NotificationPlugin, BatteryPlugin, FindMyPhonePlugin, ClipboardPlugin, SharePlugin, MediaPlugin, SmsPlugin,
+                NotificationPlugin, BatteryPlugin, ConnectivityPlugin, FindMyPhonePlugin, ClipboardPlugin, SharePlugin, MediaPlugin, SmsPlugin,
                 CallPlugin, CallAudioPlugin, LocationPlugin, PhotosPlugin, ScreenPlugin, FlyyDropPlugin, TvMediaPlugin,
             )
             TV -> listOf(TvNotificationPlugin, SharePlugin, MediaPlugin, FlyyDropPlugin, TvRemotePlugin)
@@ -35,6 +35,7 @@ enum class AppForm(val deviceType: DeviceType) {
         when (this) {
             PHONE -> {
                 BatteryPlugin.start(context)
+                ConnectivityPlugin.start(context)
                 FindMyPhonePlugin.start(context)
                 ClipboardPlugin.start(context)
                 SmsPlugin.start(context)

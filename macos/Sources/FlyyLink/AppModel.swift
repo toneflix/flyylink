@@ -15,6 +15,8 @@ struct DeviceState: Identifiable, Equatable {
     let pairState: PairState
     let code: String?
     let battery: BatteryStatus?
+    /// The phone's mobile signal, when it has a SIM.
+    let signal: CellSignal?
     let media: NowPlaying?
     let location: PhoneLocation?
     /// Runs FlyyLink with FlyyDrop, so files can go to it without pairing.
@@ -136,6 +138,7 @@ final class AppModel: ObservableObject {
     private let connected = DeviceRegistry()
     private let plugins: PluginRouter
     private let battery: BatteryPlugin
+    private let connectivity = ConnectivityPlugin()
     private let clipboard: ClipboardPlugin
     private let notifications: NotificationPlugin
     private let share = SharePlugin(folder: AppModel.downloads)
@@ -208,7 +211,7 @@ final class AppModel: ObservableObject {
         desktopWindow = RemoteDesktopWindowController(desktop: desktop)
         notifications = NotificationPlugin(devices: connected)
         flyyDropPlugin = FlyyDropPlugin(share: share, devices: connected)
-        plugins = PluginRouter([notifications, battery, clipboard, share, mediaPlugin, sms, calls, callAudioPlugin, locations, photosPlugin, screenPlugin, find, mediaHost, inputShare, screenHost, relay, flyyDropPlugin])
+        plugins = PluginRouter([notifications, battery, connectivity, clipboard, share, mediaPlugin, sms, calls, callAudioPlugin, locations, photosPlugin, screenPlugin, find, mediaHost, inputShare, screenHost, relay, flyyDropPlugin])
         mirrorsNotifications = UserDefaults.standard.object(forKey: "mirrorsNotifications") as? Bool ?? true
         switcherStyle = UserDefaults.standard.string(forKey: "switcherStyle").flatMap(PhoneSwitcherStyle.init(rawValue:)) ?? .carousel
         opensAtLogin = LoginItem.isEnabled
@@ -216,6 +219,7 @@ final class AppModel: ObservableObject {
         notifications.isEnabled = mirrorsNotifications
 
         battery.onChange = { [weak self] in Task { @MainActor in self?.publish() } }
+        connectivity.onChange = { [weak self] in Task { @MainActor in self?.publish() } }
         inputShare.onChange = { [weak self] in Task { @MainActor in self?.inputChanged() } }
         let inputShare = inputShare
         screenHost.allows = { [weak inputShare] in inputShare?.allowsControl ?? false }
@@ -892,6 +896,7 @@ final class AppModel: ObservableObject {
                     pairState: state,
                     code: showsCode ? device.verificationCode : nil,
                     battery: battery.status(for: device.id),
+                    signal: connectivity.signal(for: device.id),
                     media: mediaPlugin.nowPlaying(for: device.id),
                     location: locations.location(for: device.id),
                     canFlyyDrop: device.link.identity.incomingCapabilities.contains(PacketType.flyyDropRequest)

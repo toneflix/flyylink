@@ -143,3 +143,38 @@ struct BatteryRing: View {
         .accessibilityLabel(charge.map { "Battery \($0) percent\(isCharging ? ", charging" : "")" } ?? "Battery unknown")
     }
 }
+
+/// Mobile signal as four rising bars, with the network type beside them, as a phone's status bar shows it.
+struct SignalBars: View {
+    let signal: CellSignal
+    var height: CGFloat = 11
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 4) {
+            HStack(alignment: .bottom, spacing: 1.5) {
+                ForEach(1...CellSignal.maxStrength, id: \.self) { bar in
+                    RoundedRectangle(cornerRadius: 1, style: .continuous)
+                        .fill(bar <= signal.strength ? Color.primary.opacity(0.8) : Color.primary.opacity(0.18))
+                        .frame(width: 3, height: height * CGFloat(bar) / CGFloat(CellSignal.maxStrength))
+                }
+            }
+            .animation(.easeInOut(duration: 0.3), value: signal.strength)
+
+            if !signal.generation.isEmpty {
+                Text(signal.generation)
+                    .font(.system(size: 10, weight: .bold).monospacedDigit())
+                    .foregroundStyle(Color.primary.opacity(0.75))
+            }
+        }
+        .frame(height: height)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(SignalBars.label(signal))
+    }
+
+    static func label(_ signal: CellSignal) -> String {
+        guard signal.strength > 0 else { return "No signal" }
+
+        let bars = "\(signal.strength) of \(CellSignal.maxStrength) bars"
+        return signal.generation.isEmpty ? bars : "\(signal.generation), \(bars)"
+    }
+}

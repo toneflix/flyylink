@@ -72,8 +72,8 @@ export const features: Feature[] = [
   },
   {
     icon: Music,
-    title: "Music and battery",
-    body: "Play, pause, skip, and check the battery.",
+    title: "Music, battery and signal",
+    body: "Play, pause, skip, and check the battery and signal.",
   },
   {
     icon: Tv,

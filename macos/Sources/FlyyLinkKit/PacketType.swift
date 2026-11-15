@@ -35,6 +35,8 @@ public enum PacketType {
     public static let smsRequestConversations = "kdeconnect.sms.request_conversations"
     public static let smsRequestConversation = "kdeconnect.sms.request_conversation"
     public static let telephony = "kdeconnect.telephony"
+    public static let connectivityReport = "kdeconnect.connectivity_report"
+    public static let connectivityReportRequest = "kdeconnect.connectivity_report.request"
 
     /// Asks the sender to send the rest of a file that stopped. Body: {"transferId", "offset"}.
     public static let shareResume = "flyylink.share.resume"
@@ -120,6 +122,8 @@ public enum Capabilities {
         PacketType.smsRequestConversations,
         PacketType.smsRequestConversation,
         PacketType.telephony,
+        PacketType.connectivityReport,
+        PacketType.connectivityReportRequest,
         PacketType.callRequest,
         PacketType.clipboardFile,
         PacketType.locationRequest,
@@ -143,7 +147,7 @@ public enum Capabilities {
         PacketType.remote,
     ]
 
-    /// What a TV sends and accepts: no texts, calls, clipboard, battery, location, photos or screen sharing.
+    /// What a TV sends and accepts: no texts, calls, signal, clipboard, battery, location, photos or screen sharing.
     public static let tv: Set<String> = mvp.subtracting([
         PacketType.battery,
         PacketType.batteryRequest,
@@ -156,6 +160,8 @@ public enum Capabilities {
         PacketType.smsRequestConversations,
         PacketType.smsRequestConversation,
         PacketType.telephony,
+        PacketType.connectivityReport,
+        PacketType.connectivityReportRequest,
         PacketType.callRequest,
         PacketType.callAudioRequest,
         PacketType.callAudio,

@@ -11,7 +11,7 @@ const permissions = [
   ["Notifications (notification access)", "Reads notifications on your phone so they can be shown, replied to, acted on or dismissed on your paired computer."],
   ["SMS (read and send)", "Shows your text conversations on your paired computer and sends the replies you write there."],
   ["Contacts", "Shows names instead of numbers for texts and calls on your paired computer."],
-  ["Phone, call log and answering calls", "Tells your computer who is calling, lets you answer, decline or start calls from it, and shows recent callers."],
+  ["Phone, call log and answering calls", "Tells your computer who is calling, lets you answer, decline or start calls from it, shows recent callers, and shows the network type (such as 4G) next to the signal."],
   ["Location, including in the background", "Used only for Find my phone. When you ask a paired computer to find your phone, the phone sends its current location to that computer so it can be shown on a map. This works even when FlyyLink is closed or not in use. FlyyLink does not track you, keep a location history, or send your location to us or anyone else, and it is never used for advertising. FlyyLink explains this and asks for your agreement before Android asks for location access."],
   ["Photos and videos", "Lets you browse recent photos and screenshots from your computer and copy the ones you pick."],
   ["Screen capture", "Streams your phone's screen to your paired computer when you start screen mirroring. Android asks for your consent every time."],

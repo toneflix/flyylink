@@ -22,7 +22,7 @@
 - **Photos.** Your latest shots, on your computer.
 - **Clipboard.** Copy on one, paste on the other.
 - **Find your phone.** Ring it, even on silent.
-- **Media and battery.** Play, pause, skip, and check the battery.
+- **Media, battery and signal.** Play, pause, skip, and check the battery and signal.
 - **TV remote.** Your phone or computer is the remote. Type and point, too.
 - **Play on TV.** Photos, videos and music on your smart TV.
 - **Several devices.** Pair as many phones and computers as you like.
