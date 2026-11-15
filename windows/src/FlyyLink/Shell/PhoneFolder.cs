@@ -16,21 +16,17 @@ internal sealed class PhoneFolder
     /// Like Phone Link, only the most recent photos show.
     public const int Limit = 2000;
 
-    private const int ChunkSize = 1024 * 1024;
     private static readonly Guid ProviderId = new("6F0C2C31-8B0B-4C8B-9E9F-2B7A3F0E5D11");
-    private static readonly NTStatus Unsuccessful = unchecked((NTStatus)0xC0000001);
 
     private readonly string root;
     private readonly string recordPath;
     private readonly Record record;
     private readonly object gate = new();
-    private readonly ConcurrentDictionary<long, List<Fetch>> waiting = new();
+    private readonly ConcurrentDictionary<long, List<CloudFetch>> waiting = new();
     private readonly CF_CALLBACK fetchData;
     private readonly CF_CALLBACK cancelFetch;
     private CF_CONNECTION_KEY connection;
     private bool connected;
-
-    private sealed record Fetch(CF_CONNECTION_KEY Connection, CF_TRANSFER_KEY Transfer, long Offset, long Length);
 
     /// Which phone the placeholders are from, and which photos already got one,
     /// so photos the user deleted from the folder don't come back.
@@ -248,17 +244,16 @@ internal sealed class PhoneFolder
 
         lock (fetches)
         {
-            foreach (var fetch in fetches) _ = Task.Run(() => Transfer(fetch, file));
+            foreach (var fetch in fetches) _ = Task.Run(() => fetch.Deliver(file));
         }
     }
 
     private void FetchData(in CF_CALLBACK_INFO info, in CF_CALLBACK_PARAMETERS parameters)
     {
-        var data = parameters.FetchData;
-        var fetch = new Fetch(info.ConnectionKey, info.TransferKey, data.RequiredFileOffset, data.RequiredLength);
+        var fetch = CloudFetch.Of(info, parameters);
         if (info.FileIdentityLength < sizeof(long) || info.FileIdentity == IntPtr.Zero)
         {
-            Fail(fetch);
+            fetch.Fail();
             return;
         }
 
@@ -283,67 +278,6 @@ internal sealed class PhoneFolder
 
         var transfer = info.TransferKey;
         lock (fetches) fetches.RemoveAll(f => f.Transfer.Equals(transfer));
-    }
-
-    /// Hands Windows the bytes it asked for, a chunk at a time.
-    private static void Transfer(Fetch fetch, string? file)
-    {
-        if (file is null)
-        {
-            Fail(fetch);
-            return;
-        }
-
-        try
-        {
-            using var stream = File.OpenRead(file);
-            var end = Math.Min(stream.Length, fetch.Offset + fetch.Length);
-            var buffer = new byte[ChunkSize];
-            var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-            try
-            {
-                stream.Position = fetch.Offset;
-                for (var offset = fetch.Offset; offset < end;)
-                {
-                    var read = stream.Read(buffer, 0, (int)Math.Min(ChunkSize, end - offset));
-                    if (read <= 0) break;
-
-                    Send(fetch, NTStatus.STATUS_SUCCESS, handle.AddrOfPinnedObject(), offset, read);
-                    offset += read;
-                }
-            }
-            finally
-            {
-                handle.Free();
-            }
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or COMException)
-        {
-            System.Diagnostics.Debug.WriteLine($"Could not hand over a phone photo: {e.Message}");
-            Fail(fetch);
-        }
-    }
-
-    private static void Fail(Fetch fetch) => Send(fetch, Unsuccessful, IntPtr.Zero, fetch.Offset, fetch.Length);
-
-    private static void Send(Fetch fetch, NTStatus status, IntPtr buffer, long offset, long length)
-    {
-        var operation = new CF_OPERATION_INFO
-        {
-            StructSize = (uint)Marshal.SizeOf<CF_OPERATION_INFO>(),
-            Type = CF_OPERATION_TYPE.CF_OPERATION_TYPE_TRANSFER_DATA,
-            ConnectionKey = fetch.Connection,
-            TransferKey = fetch.Transfer,
-        };
-        var parameters = CF_OPERATION_PARAMETERS.Create(new CF_OPERATION_PARAMETERS.TRANSFERDATA
-        {
-            CompletionStatus = status,
-            Buffer = buffer,
-            Offset = offset,
-            Length = length,
-        });
-
-        CfExecute(operation, ref parameters);
     }
 
     private void FailAll()

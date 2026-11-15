@@ -37,6 +37,9 @@ internal static class AppPaths
 
     public static string PhonePhotosRecord => Path.Combine(Data, "phone-photos.json");
 
+    /// Which folder in Explorer each phone's storage shows in.
+    public static string PhoneDrives => Path.Combine(Data, "phone-drives.json");
+
     public static string AppIcon => Path.Combine(AppContext.BaseDirectory, "Assets", "FlyyLink.png");
 
     public static string WindowIcon => Path.Combine(AppContext.BaseDirectory, "Assets", "FlyyLink.ico");

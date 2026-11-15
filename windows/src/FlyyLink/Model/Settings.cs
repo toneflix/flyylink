@@ -27,6 +27,7 @@ internal sealed class Settings
         public Dictionary<string, string> PhoneHotspots { get; set; } = new();
         public bool UsesShortcuts { get; set; } = true;
         public bool ShowsPhotosInExplorer { get; set; } = true;
+        public bool ShowsPhoneInExplorer { get; set; } = true;
         public bool MirrorMuted { get; set; }
         public bool SharesNotifications { get; set; } = true;
         public Dictionary<string, string> InputEdges { get; set; } = new();
@@ -113,6 +114,17 @@ internal sealed class Settings
         set
         {
             values.ShowsPhotosInExplorer = value;
+            Save();
+        }
+    }
+
+    /// Whether each phone's storage shows as a folder in Explorer.
+    public bool ShowsPhoneInExplorer
+    {
+        get => values.ShowsPhoneInExplorer;
+        set
+        {
+            values.ShowsPhoneInExplorer = value;
             Save();
         }
     }
