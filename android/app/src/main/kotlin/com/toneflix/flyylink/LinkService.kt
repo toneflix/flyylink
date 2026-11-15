@@ -57,6 +57,7 @@ class LinkService : Service() {
     override fun onDestroy() {
         scope.cancel()
         BatteryPlugin.stop(this)
+        ConnectivityPlugin.stop()
         SmsPlugin.stop(this)
         CallAudioPlugin.stop(this)
         beacon?.stop()
