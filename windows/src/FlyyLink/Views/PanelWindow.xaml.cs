@@ -775,80 +775,9 @@ public sealed partial class PanelWindow : Window
     {
         SettingsMenu.Items.Clear();
 
-        var mirror = new ToggleMenuFlyoutItem { Text = "Show phone notifications", IsChecked = Model.MirrorsNotifications };
-        mirror.Click += (_, _) => Model.MirrorsNotifications = mirror.IsChecked;
-        SettingsMenu.Items.Add(mirror);
-
-        if (Model.CanShareNotifications)
-        {
-            var share = new ToggleMenuFlyoutItem { Text = "Share this PC's notifications", IsChecked = Model.SharesNotifications };
-            share.Click += (_, _) => Model.SharesNotifications = share.IsChecked;
-            SettingsMenu.Items.Add(share);
-        }
-
-        var remote = new ToggleMenuFlyoutItem { Text = "Let my devices control this PC", IsChecked = Model.AllowsRemoteInput };
-        remote.Click += (_, _) => Model.AllowsRemoteInput = remote.IsChecked;
-        SettingsMenu.Items.Add(remote);
-
-        var relay = new ToggleMenuFlyoutItem { Text = "Share phone notifications and calls with my computers", IsChecked = Model.RelaysPhones };
-        relay.Click += (_, _) => Model.RelaysPhones = relay.IsChecked;
-        SettingsMenu.Items.Add(relay);
-
-        var startup = new ToggleMenuFlyoutItem { Text = "Start with Windows", IsChecked = Model.StartsWithWindows };
-        startup.Click += (_, _) => Model.StartsWithWindows = startup.IsChecked;
-        SettingsMenu.Items.Add(startup);
-
-        var shortcuts = new MenuFlyoutSubItem { Text = "Keyboard shortcuts" };
-        var useShortcuts = new ToggleMenuFlyoutItem { Text = "Use shortcuts", IsChecked = Model.UsesShortcuts };
-        useShortcuts.Click += (_, _) => Model.UsesShortcuts = useShortcuts.IsChecked;
-        shortcuts.Items.Add(useShortcuts);
-        shortcuts.Items.Add(new MenuFlyoutSeparator());
-        foreach (var shortcut in GlobalShortcuts.All) shortcuts.Items.Add(new MenuFlyoutItem { Text = $"{shortcut.Name}   {shortcut.Title}", IsEnabled = false });
-        SettingsMenu.Items.Add(shortcuts);
-
-        var photosFolder = new ToggleMenuFlyoutItem { Text = "Show phone photos in Explorer", IsChecked = Model.ShowsPhotosInExplorer };
-        photosFolder.Click += (_, _) => Model.ShowsPhotosInExplorer = photosFolder.IsChecked;
-        SettingsMenu.Items.Add(photosFolder);
-
-        var phoneFolder = new ToggleMenuFlyoutItem { Text = "Show phone files in Explorer", IsChecked = Model.ShowsPhoneInExplorer };
-        phoneFolder.Click += (_, _) => Model.ShowsPhoneInExplorer = phoneFolder.IsChecked;
-        SettingsMenu.Items.Add(phoneFolder);
-
-        var switcher = new MenuFlyoutSubItem { Text = "Switch devices with" };
-        foreach (var (style, label) in new[] { (PhoneSwitcherStyle.Carousel, "Card carousel"), (PhoneSwitcherStyle.Menu, "Dropdown") })
-        {
-            var item = new ToggleMenuFlyoutItem { Text = label, IsChecked = Model.SwitcherStyle == style };
-            item.Click += (_, _) => Model.SwitcherStyle = style;
-            switcher.Items.Add(item);
-        }
-        SettingsMenu.Items.Add(switcher);
-
-        var flyyDrop = new MenuFlyoutSubItem { Text = "Who can FlyyDrop to this PC" };
-        foreach (var (mode, label) in new[]
-        {
-            (Core.FlyyDrop.Receiving.Off, "Paired devices only"),
-            (Core.FlyyDrop.Receiving.EveryoneFor10Minutes, "Everyone for 10 minutes"),
-            (Core.FlyyDrop.Receiving.Everyone, "Everyone"),
-        })
-        {
-            var item = new ToggleMenuFlyoutItem { Text = label, IsChecked = Model.FlyyDropReceiving == mode };
-            item.Click += (_, _) => Model.FlyyDropReceiving = mode;
-            flyyDrop.Items.Add(item);
-        }
-        SettingsMenu.Items.Add(flyyDrop);
-
-        if (Model.Licence.LicensedTo is string owner)
-        {
-            var account = new MenuFlyoutItem { Text = $"Licensed to {owner}" };
-            account.Click += (_, _) => LicenceModel.ManageComputers();
-            SettingsMenu.Items.Add(account);
-        }
-        else if (Model.Licence.CanSignIn)
-        {
-            var signIn = new MenuFlyoutItem { Text = "Sign in to your licence" };
-            signIn.Click += (_, _) => Model.Licence.OpenCard();
-            SettingsMenu.Items.Add(signIn);
-        }
+        var settings = new MenuFlyoutItem { Text = "Settings" };
+        settings.Click += (_, _) => Model.ShowSettings();
+        SettingsMenu.Items.Add(settings);
 
         var updates = new MenuFlyoutItem { Text = $"Check for updates (you have {Model.VersionText})" };
         updates.Click += (_, _) => Model.CheckForUpdates();
@@ -857,18 +786,6 @@ public sealed partial class PanelWindow : Window
         var downloads = new MenuFlyoutItem { Text = "Open Downloads" };
         downloads.Click += (_, _) => Explorer.Open(AppPaths.Downloads);
         SettingsMenu.Items.Add(downloads);
-
-        var paired = Model.Devices.Where(d => d.IsPaired).ToList();
-        if (paired.Count > 0)
-        {
-            SettingsMenu.Items.Add(new MenuFlyoutSeparator());
-            foreach (var device in paired)
-            {
-                var unpair = new MenuFlyoutItem { Text = $"Unpair {device.Name}" };
-                unpair.Click += (_, _) => Model.Unpair(device.Id);
-                SettingsMenu.Items.Add(unpair);
-            }
-        }
 
         SettingsMenu.Items.Add(new MenuFlyoutSeparator());
         var quit = new MenuFlyoutItem { Text = "Quit FlyyLink" };

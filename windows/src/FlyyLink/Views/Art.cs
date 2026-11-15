@@ -79,10 +79,12 @@ public sealed class LucideIcon : UserControl
 /// The app icon in miniature: the logo mark on its gold tile.
 public sealed class AppGlyph : UserControl
 {
-    public AppGlyph()
+    public AppGlyph() : this(26)
     {
-        const double size = 26;
+    }
 
+    public AppGlyph(double size)
+    {
         var mark = new Microsoft.UI.Xaml.Shapes.Path
         {
             Data = Geometries.Parse(FlyyLinkMark.Data),

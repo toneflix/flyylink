@@ -20,6 +20,7 @@ public partial class App : Application
     private ScreenWindow? screen;
     private RemoteDesktopWindow? desktop;
     private TvRemoteWindow? remote;
+    private SettingsWindow? settings;
 
     public App()
     {
@@ -74,6 +75,15 @@ public partial class App : Application
             screen.Present();
         };
         model.PhotosRequested += () => (photos ??= new PhotosWindow(model.Photos)).Present();
+        model.SettingsRequested += () =>
+        {
+            if (settings is null)
+            {
+                settings = new SettingsWindow(model);
+                settings.PanelRequested += () => panel.ShowNear(tray.Bounds);
+            }
+            settings.Present();
+        };
 
         // A second launch, such as from the Start menu, Explorer's "Send to phone" or a tel: link, comes here.
         AppInstance.GetCurrent().Activated += (_, activation) =>
@@ -163,7 +173,7 @@ public partial class App : Application
 
     private void ShowTrayMenu()
     {
-        switch (tray!.ShowMenu(["Open FlyyLink", "Messages", "Photos", "Phone Photos folder", "Open Downloads", null, "Quit FlyyLink"]))
+        switch (tray!.ShowMenu(["Open FlyyLink", "Messages", "Photos", "Phone Photos folder", "Open Downloads", "Settings", null, "Quit FlyyLink"]))
         {
             case 0:
                 panel!.ShowNear(tray.Bounds);
@@ -180,7 +190,10 @@ public partial class App : Application
             case 4:
                 Explorer.Open(AppPaths.Downloads);
                 break;
-            case 6:
+            case 5:
+                model!.ShowSettings();
+                break;
+            case 7:
                 Quit();
                 break;
         }
@@ -195,6 +208,7 @@ public partial class App : Application
         messages?.Close();
         photos?.Close();
         screen?.Close();
+        settings?.Close();
         Exit();
     }
 }

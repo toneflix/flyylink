@@ -122,6 +122,7 @@ struct MenuPanel: View {
 
 private struct PanelHeader: View {
     @ObservedObject var model: AppModel
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         HStack(spacing: 10) {
@@ -130,48 +131,11 @@ private struct PanelHeader: View {
                 .font(.system(size: 15, weight: .bold))
             Spacer()
             Menu {
-                Toggle("Show phone notifications", isOn: $model.mirrorsNotifications)
-                Picker("Switch devices with", selection: $model.switcherStyle) {
-                    ForEach(PhoneSwitcherStyle.allCases) { Text($0.title).tag($0) }
-                }
-                Toggle("Share this Mac's notifications", isOn: Binding(
-                    get: { model.sharesNotifications },
-                    set: { model.sharesNotifications = $0 }
-                ))
-                Toggle("Let my devices control this Mac", isOn: Binding(
-                    get: { model.allowsRemoteInput },
-                    set: { model.allowsRemoteInput = $0 }
-                ))
-                Toggle("Share phone notifications and calls with my computers", isOn: Binding(
-                    get: { model.relaysPhones },
-                    set: { model.relaysPhones = $0 }
-                ))
-                FlyyDropReceivingMenu(model: model)
-                Toggle("Open at login", isOn: $model.opensAtLogin)
-                Menu("Keyboard shortcuts") {
-                    Toggle("Use shortcuts", isOn: $model.usesShortcuts)
-                    Divider()
-                    ForEach(model.shortcuts.shortcuts, id: \.symbol) { shortcut in
-                        Text("\(shortcut.symbol)   \(shortcut.title)")
-                    }
-                }
-                if let owner = model.licence.licensedTo {
-                    Button("Licensed to \(owner)") { LicenceModel.manageComputers() }
-                } else if model.licence.canSignIn {
-                    Button("Sign in to your licence") { model.licence.openCard() }
-                }
+                Button("Settings…", action: showSettings)
                 Button("Open Downloads") { NSWorkspace.shared.open(AppModel.downloads) }
                 if model.updater.isAvailable {
                     Button("Check for updates…") { model.updater.check() }
                         .disabled(!model.updater.canCheck)
-                }
-
-                let paired = model.devices.filter { $0.pairState == .paired }
-                if !paired.isEmpty {
-                    Divider()
-                    ForEach(paired) { device in
-                        Button("Unpair \(device.name)") { model.unpair(device.id) }
-                    }
                 }
 
                 Divider()
@@ -187,6 +151,11 @@ private struct PanelHeader: View {
             .help("Settings")
         }
         .padding(.horizontal, 2)
+    }
+
+    private func showSettings() {
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        openWindow(id: FlyyLinkApp.settingsWindow)
     }
 }
 
