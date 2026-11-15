@@ -39,6 +39,11 @@ struct QuickActions: View {
             NSApplication.shared.activate(ignoringOtherApps: true)
             openWindow(id: FlyyLinkApp.photosWindow)
         }
+        if model.sharesFiles(device.id) {
+            ActionTile(icon: .folderOpen, title: "Files", subtitle: "In Finder") {
+                model.openFiles(device.id)
+            }
+        }
     }
 
     @ViewBuilder private var computerTiles: some View {

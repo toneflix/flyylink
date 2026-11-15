@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds FlyyLink.app, with its Share extension and battery widget, in macos/build. Notification Center and the
+# Builds FlyyLink.app, with its Share extension, battery widget and Finder extension, in macos/build. Notification Center and the
 # Share menu only work for a bundled app, so use this instead of `swift run` to try them.
 #
 # Without settings it signs ad hoc for this Mac. The release workflow sets:
@@ -15,6 +15,7 @@ CONFIG="${1:-debug}"
 APP="build/FlyyLink.app"
 SHARE="$APP/Contents/PlugIns/FlyyLinkShare.appex"
 WIDGET="$APP/Contents/PlugIns/FlyyLinkWidget.appex"
+FILES="$APP/Contents/PlugIns/FlyyLinkFiles.appex"
 
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
 
@@ -24,7 +25,8 @@ BIN="$BIN_DIR/FlyyLink"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks" \
-    "$SHARE/Contents/MacOS" "$SHARE/Contents/Resources" "$WIDGET/Contents/MacOS"
+    "$SHARE/Contents/MacOS" "$SHARE/Contents/Resources" "$WIDGET/Contents/MacOS" \
+    "$FILES/Contents/MacOS" "$FILES/Contents/Resources"
 cp Bundle/Info.plist "$APP/Contents/Info.plist"
 cp Bundle/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp "$BIN" "$APP/Contents/MacOS/FlyyLink"
@@ -54,6 +56,18 @@ xcrun swiftc $OPTIMIZE \
     -target "$(uname -m)-apple-macos13.0" \
     Widget/*.swift Sources/FlyyLink/WidgetSnapshot.swift Sources/FlyyLink/FlyyLinkMark.swift \
     -o "$WIDGET/Contents/MacOS/FlyyLinkWidget"
+
+# The Finder extension that shows each phone's storage, compiled the same way.
+cp Files/Info.plist "$FILES/Contents/Info.plist"
+cp Bundle/AppIcon.icns "$FILES/Contents/Resources/AppIcon.icns"
+xcrun swiftc $OPTIMIZE \
+    -parse-as-library \
+    -application-extension \
+    -module-name FlyyLinkFiles \
+    -target "$(uname -m)-apple-macos13.0" \
+    -Xlinker -e -Xlinker _NSExtensionMain \
+    Files/*.swift Sources/FlyyLink/PhoneDriveMessage.swift \
+    -o "$FILES/Contents/MacOS/FlyyLinkFiles"
 
 # Shortcuts finds the app's actions through metadata Xcode normally writes. SwiftPM doesn't, so ask the
 # same tool for it. If this Xcode's tool wants something else, the app still works, just without the actions.
@@ -91,8 +105,8 @@ else
     echo "Shortcuts actions: skipped (the metadata tool failed)"
 fi
 
-# Versions and update settings, in the app and both extensions.
-for PLIST in "$APP/Contents/Info.plist" "$SHARE/Contents/Info.plist" "$WIDGET/Contents/Info.plist"; do
+# Versions and update settings, in the app and its extensions.
+for PLIST in "$APP/Contents/Info.plist" "$SHARE/Contents/Info.plist" "$WIDGET/Contents/Info.plist" "$FILES/Contents/Info.plist"; do
     if [ -n "${VERSION:-}" ]; then
         /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$PLIST"
     fi
@@ -127,11 +141,13 @@ sign "$SPARKLE/Updater.app"
 sign "$APP/Contents/Frameworks/Sparkle.framework"
 sign --entitlements Share/Share.entitlements "$SHARE"
 sign --entitlements Widget/Widget.entitlements "$WIDGET"
+sign --entitlements Files/Files.entitlements "$FILES"
 sign --entitlements Bundle/FlyyLink.entitlements "$APP"
 codesign --verify --deep --strict "$APP"
 
-# Tells the Share menu and the widget gallery about the extensions without waiting for macOS to find them.
+# Tells the Share menu, the widget gallery and Finder about the extensions without waiting for macOS to find them.
 pluginkit -a "$SHARE" 2>/dev/null || true
 pluginkit -a "$WIDGET" 2>/dev/null || true
+pluginkit -a "$FILES" 2>/dev/null || true
 
 echo "Built $APP. Open it with: open $APP"
