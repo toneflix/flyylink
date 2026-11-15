@@ -1384,6 +1384,10 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
     public void ShowPhotos() => PhotosRequested?.Invoke();
 
+    public event Action? SettingsRequested;
+
+    public void ShowSettings() => SettingsRequested?.Invoke();
+
     public void ShowDialer() => DialerRequested?.Invoke();
 
     /// Asks the phone or computer to share its screen and opens the window that shows it.
