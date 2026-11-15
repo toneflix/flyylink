@@ -772,7 +772,7 @@ public sealed partial class PanelWindow : Window
             SettingsMenu.Items.Add(share);
         }
 
-        var remote = new ToggleMenuFlyoutItem { Text = "Let my computers control this PC", IsChecked = Model.AllowsRemoteInput };
+        var remote = new ToggleMenuFlyoutItem { Text = "Let my devices control this PC", IsChecked = Model.AllowsRemoteInput };
         remote.Click += (_, _) => Model.AllowsRemoteInput = remote.IsChecked;
         SettingsMenu.Items.Add(remote);
 

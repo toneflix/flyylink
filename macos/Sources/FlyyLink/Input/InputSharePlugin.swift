@@ -1,7 +1,7 @@
 import Foundation
 import FlyyLinkKit
 
-/// Shares this Mac's keyboard and mouse with paired computers, and lets them share theirs ("flyylink.input").
+/// Shares this Mac's keyboard and mouse with paired computers, and lets them and paired phones work it ("flyylink.input").
 final class InputSharePlugin: Plugin {
     let incoming: Set<String> = [PacketType.input]
 
@@ -34,7 +34,7 @@ final class InputSharePlugin: Plugin {
         if !edges.isEmpty { capture.start() }
     }
 
-    /// Whether paired computers may work this Mac.
+    /// Whether paired computers and phones may work this Mac.
     var allowsControl: Bool {
         get { defaults.object(forKey: Self.allowsKey) as? Bool ?? true }
         set {
@@ -81,11 +81,19 @@ final class InputSharePlugin: Plugin {
                 capture.resume(from: deviceId, edge: edge, position: position)
                 return
             }
+            if case .begin = input {
+                _ = device.send(RemoteInput.begin(platform: RemoteInput.macOS, ready: allowsControl && hasAccess).toPacket())
+            }
             guard allowsControl else { return }
 
-            if case .enter(let edge, _, _) = input {
+            switch input {
+            case .enter(let edge, _, _):
                 learn(edge, for: deviceId)
                 if !hasAccess { _ = InputCapture.hasAccess(prompting: true) }
+            case .begin:
+                if !hasAccess { _ = InputCapture.hasAccess(prompting: true) }
+            default:
+                break
             }
             injector.handle(input, from: deviceId)
         }

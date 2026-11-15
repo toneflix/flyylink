@@ -36,6 +36,19 @@ enum MacKeys {
 
     static let names: [Int: String] = Dictionary(codes.map { ($0.value, $0.key) }, uniquingKeysWith: { first, _ in first })
 
+    /// The NX_KEYTYPE of a volume or media key.
+    static func mediaKey(_ name: String) -> Int? {
+        switch name {
+        case "AudioVolumeUp": return 0
+        case "AudioVolumeDown": return 1
+        case "AudioVolumeMute": return 7
+        case "MediaPlayPause": return 16
+        case "MediaTrackNext": return 17
+        case "MediaTrackPrevious": return 18
+        default: return nil
+        }
+    }
+
     static func keyCode(_ name: String) -> CGKeyCode? { codes[name].map { CGKeyCode($0) } }
 
     static func name(_ keyCode: Int64) -> String? { names[Int(keyCode)] }

@@ -47,11 +47,15 @@ public enum ScreenEdge: String, Sendable, CaseIterable {
 
 /// Keyboard and mouse shared from one computer to another ("flyylink.input"). The controlling computer sends `enter`
 /// when its pointer leaves through an edge, then moves, buttons, scrolls and keys. The controlled computer sends
-/// `leave` when its pointer goes back out through the edge it came in by. Keys use the W3C `code` names, such as
+/// `leave` when its pointer goes back out through the edge it came in by. A phone sends `begin` instead and works the
+/// computer with its touchpad and keyboard. Keys use the W3C `code` names, such as
 /// "KeyA" or "ShiftLeft", so each platform maps them to its own key codes. Mirrors Input.kt and Input.cs.
 public enum RemoteInput: Equatable, Sendable {
     /// The pointer arrives at the receiver's `edge`, `position` along it. `platform` is the sender's ("macos" or "windows").
     case enter(edge: ScreenEdge, position: Double, platform: String)
+    /// The sender works the receiver without an edge, as a phone does. The receiver answers with its own `begin`, so the
+    /// sender learns its `platform`, and `ready` is false while it can't play input.
+    case begin(platform: String, ready: Bool)
     /// The pointer goes back to the sender, leaving the receiver through `edge` at `position`.
     case leave(edge: ScreenEdge, position: Double)
     /// The sender stopped controlling; let go of anything still held.
@@ -64,6 +68,8 @@ public enum RemoteInput: Equatable, Sendable {
     /// Scrolls by this many points; positive `dy` scrolls up and positive `dx` right.
     case scroll(dx: Double, dy: Double)
     case key(code: String, down: Bool)
+    /// Types `text` as it is, whatever the receiver's keyboard layout.
+    case text(String)
 
     public enum MouseButton: String, Sendable {
         case left, right, middle
@@ -71,15 +77,21 @@ public enum RemoteInput: Equatable, Sendable {
 
     public static let macOS = "macos"
     public static let windows = "windows"
+    public static let android = "android"
 
     /// Larger moves or scrolls than this in one packet are treated as nonsense.
     private static let maxStep = 10_000.0
+
+    /// Longer text than this in one packet is treated as nonsense.
+    public static let maxText = 1000
 
     public func toPacket() -> NetworkPacket {
         let body: [String: JSONValue]
         switch self {
         case .enter(let edge, let position, let platform):
             body = ["action": "enter", "edge": .string(edge.rawValue), "position": .double(position), "platform": .string(platform)]
+        case .begin(let platform, let ready):
+            body = ["action": "begin", "platform": .string(platform), "ready": .bool(ready)]
         case .leave(let edge, let position):
             body = ["action": "leave", "edge": .string(edge.rawValue), "position": .double(position)]
         case .release:
@@ -94,6 +106,8 @@ public enum RemoteInput: Equatable, Sendable {
             body = ["action": "scroll", "dx": .double(dx), "dy": .double(dy)]
         case .key(let code, let down):
             body = ["action": "key", "code": .string(code), "down": .bool(down)]
+        case .text(let text):
+            body = ["action": "text", "text": .string(text)]
         }
         return NetworkPacket(type: PacketType.input, body: body)
     }
@@ -112,6 +126,8 @@ public enum RemoteInput: Equatable, Sendable {
         case "enter":
             guard let edge = packet.string("edge").flatMap(ScreenEdge.init(rawValue:)), let position = fraction("position") else { return nil }
             self = .enter(edge: edge, position: position, platform: packet.string("platform") ?? "")
+        case "begin":
+            self = .begin(platform: packet.string("platform") ?? "", ready: packet.bool("ready") ?? true)
         case "leave":
             guard let edge = packet.string("edge").flatMap(ScreenEdge.init(rawValue:)), let position = fraction("position") else { return nil }
             self = .leave(edge: edge, position: position)
@@ -132,6 +148,10 @@ public enum RemoteInput: Equatable, Sendable {
         case "key":
             guard let code = packet.string("code"), KeyCodes.all.contains(code), let down = packet.bool("down") else { return nil }
             self = .key(code: code, down: down)
+        case "text":
+            // Counted like Kotlin and C# strings, in UTF-16 units.
+            guard let text = packet.string("text"), !text.isEmpty, text.utf16.count <= Self.maxText else { return nil }
+            self = .text(text)
         default:
             return nil
         }
@@ -150,8 +170,9 @@ public enum KeyCodes {
         "Semicolon", "Quote", "Backquote", "Comma", "Period", "Slash", "IntlBackslash", "CapsLock",
         "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown", "Delete", "Insert", "ContextMenu",
     ]
+    public static let media = ["AudioVolumeUp", "AudioVolumeDown", "AudioVolumeMute", "MediaPlayPause", "MediaTrackNext", "MediaTrackPrevious"]
 
-    public static let all: Set<String> = Set(letters + digits + functionKeys + numpad + others).union(modifiers)
+    public static let all: Set<String> = Set(letters + digits + functionKeys + numpad + others + media).union(modifiers)
 
     /// Swaps Control and Meta, so Ctrl+C on a PC is Command-C on a Mac and the other way round.
     public static func swappingControlAndMeta(_ code: String) -> String {

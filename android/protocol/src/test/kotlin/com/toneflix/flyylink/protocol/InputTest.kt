@@ -18,6 +18,10 @@ class InputTest {
             RemoteInput.Scroll(0.0, -40.0),
             RemoteInput.Key("KeyA", false),
             RemoteInput.Key("MetaLeft", true),
+            RemoteInput.Key("AudioVolumeUp", true),
+            RemoteInput.Begin(RemoteInput.ANDROID),
+            RemoteInput.Begin(RemoteInput.MACOS, ready = false),
+            RemoteInput.Text("Héllo 👋"),
         )
 
         for (input in inputs) {
@@ -33,7 +37,15 @@ class InputTest {
         assertNull(RemoteInput.fromPacket(packet("action" to "move", "dx" to 50_000, "dy" to 0)))
         assertNull(RemoteInput.fromPacket(packet("action" to "key", "code" to "Hyper", "down" to true)))
         assertNull(RemoteInput.fromPacket(packet("action" to "button", "button" to "left")))
+        assertNull(RemoteInput.fromPacket(packet("action" to "text", "text" to "")))
+        assertNull(RemoteInput.fromPacket(packet("action" to "text", "text" to "a".repeat(RemoteInput.MAX_TEXT + 1))))
         assertNull(RemoteInput.fromPacket(packet("action" to "dance")))
+    }
+
+    @Test fun beginWithoutReadyMeansReady() {
+        val packet = NetworkPacket(PacketType.INPUT, NetworkPacket.body("action" to "begin", "platform" to RemoteInput.WINDOWS))
+
+        assertEquals(RemoteInput.Begin(RemoteInput.WINDOWS, ready = true), RemoteInput.fromPacket(packet))
     }
 
     @Test fun edgesMapPointsBothWays() {
@@ -53,6 +65,7 @@ class InputTest {
         assertTrue("Digit0" in KeyCodes.all)
         assertTrue("F12" in KeyCodes.all)
         assertTrue("NumpadEnter" in KeyCodes.all)
+        assertTrue("MediaPlayPause" in KeyCodes.all)
         assertEquals("MetaLeft", KeyCodes.swappingControlAndMeta("ControlLeft"))
         assertEquals("KeyC", KeyCodes.swappingControlAndMeta("KeyC"))
     }
