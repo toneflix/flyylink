@@ -8,8 +8,9 @@ public enum Screen {
     /// The payload size of a live stream: read until the sender closes it.
     public static let stream: Int64 = -1
 
-    public static let maxSize: Int64 = 1600
-    public static let bitrate: Int64 = 8_000_000
+    /// Windows' H.264 decoder takes at most 2304 pixels on a side.
+    public static let maxSize: Int64 = 2304
+    public static let bitrate: Int64 = 20_000_000
     public static let audioRate: Int64 = 48_000
     public static let audioChannels: Int64 = 2
 

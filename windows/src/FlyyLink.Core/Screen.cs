@@ -12,8 +12,9 @@ public static class Screen
     /// The payload size of a live stream: read until the sender closes it.
     public const long Stream = -1;
 
-    public const long MaxSize = 1600;
-    public const long Bitrate = 8_000_000;
+    /// Windows' H.264 decoder takes at most 2304 pixels on a side.
+    public const long MaxSize = 2304;
+    public const long Bitrate = 20_000_000;
     public const long AudioRate = 48_000;
     public const long AudioChannels = 2;
 

@@ -18,6 +18,7 @@ import android.media.AudioPlaybackCaptureConfiguration
 import android.media.AudioRecord
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
+import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
@@ -53,6 +54,7 @@ class ScreenService : Service() {
     private var request: ScreenPlugin.Pending? = null
     private var orientation = Configuration.ORIENTATION_UNDEFINED
     private val main = Handler(Looper.getMainLooper())
+    private val abilities by lazy { EncoderAbilities.find() }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -192,8 +194,14 @@ class ScreenService : Service() {
         val request = request ?: return
 
         val previous = encoder
-        val next = runCatching { Encoder(width, height, request.bitrate, queue) }.getOrElse {
-            Log.w(TAG, "Could not start the encoder", it)
+        val start = previous?.bitrate ?: request.bitrate
+        val sizes = listOf(width to height, abilities.fit(width, height, SAFE_SIZE)).distinct()
+        val next = sizes.firstNotNullOfOrNull { (w, h) ->
+            runCatching { Encoder(abilities, w, h, request.bitrate, start, queue) }
+                .onFailure { Log.w(TAG, "Could not start the encoder at ${w}x$h", it) }
+                .getOrNull()
+        }
+        if (next == null) {
             stopSelf()
             return
         }
@@ -205,8 +213,8 @@ class ScreenService : Service() {
             display = runCatching {
                 projection.createVirtualDisplay(
                     "FlyyLink",
-                    width,
-                    height,
+                    next.width,
+                    next.height,
                     density,
                     DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                     next.surface,
@@ -219,7 +227,7 @@ class ScreenService : Service() {
                 return
             }
         } else {
-            current.resize(width, height, density)
+            current.resize(next.width, next.height, density)
             current.surface = next.surface
         }
 
@@ -227,7 +235,7 @@ class ScreenService : Service() {
         previous?.stop()
     }
 
-    /** The screen's size scaled so its long side fits [maxSize], in multiples of 16 as encoders like. */
+    /** The screen's size, shrunk only as far as [maxSize] and the phone's encoder need. */
     private fun videoSize(maxSize: Int): Pair<Int, Int> {
         val windows = getSystemService(WindowManager::class.java)
         val (realWidth, realHeight) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -239,10 +247,7 @@ class ScreenService : Service() {
             metrics.widthPixels to metrics.heightPixels
         }
 
-        val scale = minOf(1.0, maxSize.toDouble() / maxOf(realWidth, realHeight))
-        fun fit(side: Int) = ((side * scale / 16).roundToInt() * 16).coerceAtLeast(16)
-
-        return fit(realWidth) to fit(realHeight)
+        return abilities.fit(realWidth, realHeight, maxSize)
     }
 
     private fun notification(macName: String): Notification {
@@ -267,19 +272,117 @@ class ScreenService : Service() {
             getParcelableExtra(EXTRA_DATA)
         }
 
-    /** One H.264 encoder fed by a surface, with a thread that moves its output into the stream. */
-    private class Encoder(width: Int, height: Int, bitrate: Int, private val queue: FrameQueue) {
-        private val codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+    /**
+     * The phone's H.264 encoder and what it can do, so the stream uses the sharpest size, best profile and
+     * rate control it supports.
+     */
+    private class EncoderAbilities(private val name: String?, private val capabilities: MediaCodecInfo.CodecCapabilities?) {
+        private val video: MediaCodecInfo.VideoCapabilities? get() = capabilities?.videoCapabilities
+
+        val variableBitrate: Boolean
+            get() = capabilities?.encoderCapabilities?.isBitrateModeSupported(MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR) == true
+
+        /** High profile when the phone can encode it without B-frames, which a live stream can't wait for. */
+        val profile: Pair<Int, Int>?
+            get() {
+                val levels = capabilities?.profileLevels ?: return null
+                val wanted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    listOf(MediaCodecInfo.CodecProfileLevel.AVCProfileHigh, MediaCodecInfo.CodecProfileLevel.AVCProfileMain, MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline)
+                } else {
+                    listOf(MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline)
+                }
+
+                return wanted.firstNotNullOfOrNull { profile ->
+                    levels.filter { it.profile == profile }.maxOfOrNull { it.level }?.let { profile to it }
+                }
+            }
+
+        fun create(): MediaCodec =
+            name?.let { runCatching { MediaCodec.createByCodecName(it) }.getOrNull() }
+                ?: MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+
+        fun bitrate(requested: Int): Int = video?.bitrateRange?.clamp(requested) ?: requested
+
+        /** [width] by [height] shrunk so the long side is at most [maxSize] and the encoder can take it at full frame rate. */
+        fun fit(width: Int, height: Int, maxSize: Int): Pair<Int, Int> {
+            val longSide = maxOf(width, height)
+            var limit = minOf(maxSize, longSide)
+
+            while (true) {
+                val scale = limit.toDouble() / longSide
+                val size = align(width * scale, video?.widthAlignment) to align(height * scale, video?.heightAlignment)
+                if (limit <= MIN_SIDE || supports(size)) return size
+
+                limit -= STEP
+            }
+        }
+
+        private fun supports(size: Pair<Int, Int>): Boolean {
+            val video = video ?: return true
+
+            return runCatching { video.areSizeAndRateSupported(size.first, size.second, FRAME_RATE.toDouble()) }.getOrDefault(false)
+        }
+
+        private fun align(side: Double, alignment: Int?): Int {
+            val step = maxOf(ALIGNMENT, alignment ?: 1)
+
+            return ((side / step).roundToInt() * step).coerceAtLeast(step)
+        }
+
+        companion object {
+            /** Multiples of 8 keep most phone screens at their exact size, so nothing is resampled. */
+            private const val ALIGNMENT = 8
+            private const val MIN_SIDE = 960
+            private const val STEP = 160
+
+            /** The first hardware H.264 encoder, or any H.264 encoder when there is none. */
+            fun find(): EncoderAbilities {
+                val encoders = runCatching {
+                    MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.filter { info ->
+                        info.isEncoder && info.supportedTypes.any { it.equals(MediaFormat.MIMETYPE_VIDEO_AVC, ignoreCase = true) }
+                    }
+                }.getOrDefault(emptyList())
+                val info = encoders.firstOrNull { it.isHardware() } ?: encoders.firstOrNull()
+                val capabilities = info?.let { runCatching { it.getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_AVC) }.getOrNull() }
+
+                return EncoderAbilities(info?.name, capabilities)
+            }
+
+            private fun MediaCodecInfo.isHardware(): Boolean =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    isHardwareAccelerated
+                } else {
+                    !name.startsWith("OMX.google.") && !name.startsWith("c2.android.")
+                }
+        }
+    }
+
+    /**
+     * One H.264 encoder fed by a surface, with a thread that moves its output into the stream. It lowers the
+     * bitrate while the Wi-Fi falls behind and raises it again once it keeps up.
+     */
+    private class Encoder(
+        abilities: EncoderAbilities,
+        val width: Int,
+        val height: Int,
+        target: Int,
+        start: Int,
+        private val queue: FrameQueue,
+    ) {
+        private val codec = abilities.create()
+        private val control = BitrateControl(abilities.bitrate(target), abilities.bitrate(start))
         val surface: Surface
         @Volatile private var running = true
         private var skipping = false
 
+        val bitrate: Int get() = control.current
+
         init {
-            // Some encoders reject an explicit profile or level, so fall back to their defaults.
-            runCatching { codec.configure(format(width, height, bitrate, tuned = true), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE) }
+            // Some encoders reject the tuned settings, so fall back to their defaults.
+            runCatching { codec.configure(format(abilities, tuned = true), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE) }
                 .onFailure {
                     codec.reset()
-                    codec.configure(format(width, height, bitrate, tuned = false), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+                    codec.configure(format(abilities, tuned = false), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
                 }
             surface = codec.createInputSurface()
             codec.start()
@@ -287,18 +390,22 @@ class ScreenService : Service() {
             thread(name = "flyylink-screen", isDaemon = true) { drain() }
         }
 
-        private fun format(width: Int, height: Int, bitrate: Int, tuned: Boolean) =
+        private fun format(abilities: EncoderAbilities, tuned: Boolean) =
             MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height).apply {
                 setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-                setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
-                setInteger(MediaFormat.KEY_FRAME_RATE, 60)
-                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2)
+                setInteger(MediaFormat.KEY_BIT_RATE, control.current)
+                setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
+                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, KEY_FRAME_SECONDS)
                 // A still screen makes no new frames; repeat the last one so the Mac never waits long.
                 setLong(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 100_000)
                 setInteger(MediaFormat.KEY_PRIORITY, 0)
                 if (tuned) {
-                    setInteger(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline)
-                    setInteger(MediaFormat.KEY_LEVEL, MediaCodecInfo.CodecProfileLevel.AVCLevel41)
+                    abilities.profile?.let { (profile, level) ->
+                        setInteger(MediaFormat.KEY_PROFILE, profile)
+                        setInteger(MediaFormat.KEY_LEVEL, level)
+                    }
+                    if (abilities.variableBitrate) setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) setInteger(MediaFormat.KEY_MAX_B_FRAMES, 0)
                 }
             }
 
@@ -329,8 +436,13 @@ class ScreenService : Service() {
             if (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0) flags = flags or ScreenFrame.CONFIG
             if (info.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME != 0) flags = flags or ScreenFrame.KEY
             val frame = ScreenFrame(bytes, info.presentationTimeUs, flags)
+            val backlog = queue.backlog
 
-            if (!frame.isConfig && queue.backlog > MAX_BACKLOG && !skipping) {
+            control.adjust(backlog)?.let { bitrate ->
+                runCatching { codec.setParameters(Bundle().apply { putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, bitrate) }) }
+            }
+
+            if (!frame.isConfig && backlog > MAX_BACKLOG && !skipping) {
                 skipping = true
                 runCatching { codec.setParameters(Bundle().apply { putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0) }) }
             }
@@ -349,6 +461,43 @@ class ScreenService : Service() {
 
         private companion object {
             const val MAX_BACKLOG = 20
+
+            /** Key frames are only needed to recover from dropped frames, which ask for one anyway. */
+            const val KEY_FRAME_SECONDS = 10
+        }
+    }
+
+    /** Picks the bitrate from how much of the stream is waiting to go out, between a floor and [target]. */
+    private class BitrateControl(private val target: Int, start: Int) {
+        var current = start.coerceIn(minOf(FLOOR, target), target)
+            private set
+        private var changedAt = SystemClock.elapsedRealtime()
+        private var busyAt = changedAt
+
+        /** The bitrate to switch to, or null to keep the current one. */
+        fun adjust(backlog: Int): Int? {
+            val now = SystemClock.elapsedRealtime()
+            if (backlog > CLEAR_BACKLOG) busyAt = now
+
+            val next = when {
+                backlog >= SLOW_BACKLOG && now - changedAt >= DOWN_WAIT_MS -> maxOf(minOf(FLOOR, target), (current * 0.7).toInt())
+                current < target && now - busyAt >= UP_WAIT_MS && now - changedAt >= UP_WAIT_MS -> minOf(target, (current * 1.2).toInt())
+                else -> return null
+            }
+            if (next == current) return null
+
+            current = next
+            changedAt = now
+
+            return next
+        }
+
+        private companion object {
+            const val FLOOR = 2_000_000
+            const val CLEAR_BACKLOG = 2
+            const val SLOW_BACKLOG = 8
+            const val DOWN_WAIT_MS = 1_000L
+            const val UP_WAIT_MS = 4_000L
         }
     }
 
@@ -464,6 +613,10 @@ class ScreenService : Service() {
         private const val ACTION_STOP = "com.toneflix.flyylink.screen.STOP"
         private const val EXTRA_RESULT = "result"
         private const val EXTRA_DATA = "data"
+        private const val FRAME_RATE = 60
+
+        /** A size nearly every encoder takes, tried when it turns down the sharper one. */
+        private const val SAFE_SIZE = 1600
 
         @Volatile var isRunning = false
             private set
