@@ -91,6 +91,7 @@ import com.toneflix.flyylink.LinkService
 import com.toneflix.flyylink.LocationPlugin
 import com.toneflix.flyylink.NearbyBeacon
 import com.toneflix.flyylink.PhotosPlugin
+import com.toneflix.flyylink.FilesPlugin
 import com.toneflix.flyylink.ScreenControlService
 import com.toneflix.flyylink.ScreenPlugin
 import com.toneflix.flyylink.NotificationPlugin
@@ -524,6 +525,12 @@ private fun SetupCards() {
         photos = PhotosPlugin.hasPermission(context)
     }
 
+    var files by remember { mutableStateOf(FilesPlugin.hasAccess(context)) }
+    var filesDisclosure by remember { mutableStateOf(false) }
+    val askFiles = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        files = FilesPlugin.hasAccess(context)
+    }
+
     var control by remember { mutableStateOf(ScreenControlService.status(context)) }
     var controlDisclosure by remember { mutableStateOf(false) }
     var nearby by remember { mutableStateOf(NearbyBeacon.hasPermission(context)) }
@@ -536,6 +543,7 @@ private fun SetupCards() {
         control = ScreenControlService.status(context)
         nearby = NearbyBeacon.hasPermission(context)
         photos = PhotosPlugin.hasPermission(context)
+        files = FilesPlugin.hasAccess(context)
         location = LocationPlugin.hasPermission(context) && LocationPlugin.hasBackgroundPermission(context)
         notifications = NotificationPlugin.hasAccess(context)
         background = LinkService.isUnrestricted(context)
@@ -573,6 +581,12 @@ private fun SetupCards() {
             stringResource(R.string.setup_photos),
         ) { askPhotos.launch(PhotosPlugin.permissions) }
     }
+    AnimatedVisibility(!files) {
+        SetupCard(
+            R.drawable.lucide_folder_open,
+            stringResource(R.string.setup_files),
+        ) { filesDisclosure = true }
+    }
     AnimatedVisibility(!nearby) {
         SetupCard(
             R.drawable.lucide_bluetooth,
@@ -609,6 +623,20 @@ private fun SetupCards() {
                 }
             },
             onDecline = { locationDisclosure = false },
+        )
+    }
+
+    if (filesDisclosure) {
+        FilesDisclosureSheet(
+            onAccept = {
+                filesDisclosure = false
+                if (FilesPlugin.needsSettings) {
+                    context.startActivity(FilesPlugin.accessSettingsIntent(context))
+                } else {
+                    askFiles.launch(FilesPlugin.legacyPermissions)
+                }
+            },
+            onDecline = { filesDisclosure = false },
         )
     }
 
