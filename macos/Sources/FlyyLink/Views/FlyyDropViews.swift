@@ -186,23 +186,15 @@ private struct ProgressRing: View {
     }
 }
 
-/// The settings menu entry for who may FlyyDrop to this Mac.
-struct FlyyDropReceivingMenu: View {
-    @ObservedObject var model: AppModel
-
-    var body: some View {
-        Picker("Who can FlyyDrop to this Mac", selection: Binding(
-            get: { model.flyyDropReceiving },
-            set: { model.setFlyyDropReceiving($0) }
-        )) {
-            Text("Paired devices only").tag(FlyyDrop.Receiving.off)
-            Text("Everyone for 10 minutes").tag(FlyyDrop.Receiving.everyoneFor10Minutes)
-            Text("Everyone").tag(FlyyDrop.Receiving.everyone)
+extension FlyyDrop.Receiving {
+    var title: String {
+        switch self {
+        case .off: return "Paired devices only"
+        case .everyoneFor10Minutes: return "Everyone for 10 minutes"
+        case .everyone: return "Everyone"
         }
     }
-}
 
-extension FlyyDrop.Receiving {
     /// A short line for the panel, with the minutes left for the timed setting.
     func caption(until: Date?) -> String {
         switch self {

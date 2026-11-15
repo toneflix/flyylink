@@ -26,6 +26,12 @@ struct FlyyLinkApp: App {
         .defaultSize(width: 860, height: 640)
         .handlesExternalEvents(matching: [])
 
+        Window("Settings", id: FlyyLinkApp.settingsWindow) {
+            SettingsWindow(model: model)
+        }
+        .windowResizability(.contentSize)
+        .handlesExternalEvents(matching: [])
+
         Window("Call Audio", id: FlyyLinkApp.callAudioWindow) {
             CallAudioWindow(audio: model.callAudio)
         }
@@ -36,6 +42,7 @@ struct FlyyLinkApp: App {
     static let messagesWindow = "messages"
     static let photosWindow = "photos"
     static let callAudioWindow = "callAudio"
+    static let settingsWindow = "settings"
 }
 
 /// Opens links handed to the app: flyylink://share from the Share menu, flyylink://open from the widget,
