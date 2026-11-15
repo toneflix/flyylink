@@ -35,12 +35,12 @@ Nothing goes through us, and no tracking. Your devices talk to each other direct
 
 ## Get it
 
-Get the phone app on [Google Play](https://play.google.com/store/apps/details?id=com.toneflix.flyylink) and the computer apps from [flyylink.toneflix.net](https://flyylink.toneflix.net/#download). [Buy a lifetime licence](https://flyylink.toneflix.net/buy) for your computers.
+Get the phone app on [Google Play](https://play.google.com/store/apps/details?id=com.toneflix.flyylink) (Fire TV and Fire tablets: [Amazon Appstore](https://www.amazon.com/gp/mas/dl/android?p=com.toneflix.flyylink)) and the computer apps from [flyylink.toneflix.net](https://flyylink.toneflix.net/#download). [Buy a lifetime licence](https://flyylink.toneflix.net/buy) for your computers.
 
 |             | Needs                      | How it installs              |
 | ----------- | -------------------------- | ---------------------------- |
 | **Android** | Android 8.0 or later       | Google Play                  |
-| **TV**      | Google TV or Fire TV       | Google Play                  |
+| **TV**      | Google TV or Fire TV       | Google Play, Amazon Appstore |
 | **Mac**     | macOS 13 Ventura or later  | Signed app, updates itself   |
 | **Windows** | Windows 10 (1809) or later | Installer, updates itself    |
 
