@@ -210,12 +210,7 @@ public sealed class SettingsWindow : Window
     private IEnumerable<UIElement> Sharing()
     {
         var choices = new StackPanel();
-        foreach (var (mode, label) in new[]
-        {
-            (Core.FlyyDrop.Receiving.Off, "Paired devices only"),
-            (Core.FlyyDrop.Receiving.EveryoneFor10Minutes, "Everyone for 10 minutes"),
-            (Core.FlyyDrop.Receiving.Everyone, "Everyone"),
-        })
+        foreach (var (mode, label) in AppModel.FlyyDropChoices)
         {
             choices.Children.Add(ChoiceRow(label, model.FlyyDropReceiving == mode, () =>
             {

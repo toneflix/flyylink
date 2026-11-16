@@ -790,6 +790,15 @@ public sealed partial class PanelWindow : Window
         settings.Click += (_, _) => Model.ShowSettings();
         SettingsMenu.Items.Add(settings);
 
+        var flyyDrop = new MenuFlyoutSubItem { Text = "Who can FlyyDrop to this PC" };
+        foreach (var (mode, label) in AppModel.FlyyDropChoices)
+        {
+            var item = new ToggleMenuFlyoutItem { Text = label, IsChecked = Model.FlyyDropReceiving == mode };
+            item.Click += (_, _) => Model.FlyyDropReceiving = mode;
+            flyyDrop.Items.Add(item);
+        }
+        SettingsMenu.Items.Add(flyyDrop);
+
         var updates = new MenuFlyoutItem { Text = $"Check for updates (you have {Model.VersionText})" };
         updates.Click += (_, _) => Model.CheckForUpdates();
         SettingsMenu.Items.Add(updates);

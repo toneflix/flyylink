@@ -132,6 +132,7 @@ private struct PanelHeader: View {
             Spacer()
             Menu {
                 Button("Settings…", action: showSettings)
+                FlyyDropReceivingMenu(model: model)
                 Button("Open Downloads") { NSWorkspace.shared.open(AppModel.downloads) }
                 if model.updater.isAvailable {
                     Button("Check for updates…") { model.updater.check() }
