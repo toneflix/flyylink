@@ -13,6 +13,9 @@ name: Release
 # Android secrets: ANDROID_KEYSTORE (base64 .jks), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
 # and ANDROID_KEY_PASSWORD when the key has its own password.
 #
+# Google Play: secret PLAY_SERVICE_ACCOUNT_JSON (the service account's JSON key). Variable PLAY_TRACK picks the
+# track (production, beta, alpha or internal; production when unset). Without the secret, Play is skipped.
+#
 # Mac secrets: MACOS_CERT_P12 (base64 Developer ID Application .p12), MACOS_CERT_PASSWORD,
 # NOTARY_KEY (App Store Connect API .p8 contents), NOTARY_KEY_ID, NOTARY_ISSUER_ID, SPARKLE_PRIVATE_KEY.
 # Mac variable: SPARKLE_PUBLIC_KEY. Without the Sparkle key and variable, the release works but can't auto-update.
@@ -349,3 +352,37 @@ jobs:
             put updates/appcast.xml dist/appcast.xml
           fi
           put latest.json latest.json
+
+  # Runs after the GitHub release, so Play only gets builds that shipped everywhere else.
+  play:
+    needs: [android, publish]
+    if: ${{ !cancelled() && needs.android.result == 'success' && needs.publish.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - name: Check for the Play key
+        id: key
+        run: |
+          if [ -z "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::warning::No PLAY_SERVICE_ACCOUNT_JSON secret, so the app wasn't sent to Google Play."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/download-artifact@v8
+        if: steps.key.outputs.ready == 'true'
+        with:
+          name: android
+          path: dist
+
+      - name: Upload to Google Play
+        if: steps.key.outputs.ready == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.toneflix.flyylink
+          releaseFiles: dist/FlyyLink-*.aab
+          track: ${{ vars.PLAY_TRACK || 'production' }}
+          status: completed

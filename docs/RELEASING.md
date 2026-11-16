@@ -10,6 +10,18 @@ Push a tag like `1.2.3` to release all three apps, or `android-1.2.3`, `macos-1.
 
 The Android build number is the base in `version.json` plus the workflow's run number.
 
+## Google Play
+
+After the GitHub release is published, the Android bundle is uploaded to Google Play and sent for review on the `production` track. Set the `PLAY_TRACK` variable to `beta`, `alpha` or `internal` to use another track. Without the `PLAY_SERVICE_ACCOUNT_JSON` secret, this step is skipped with a warning.
+
+One-time setup:
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), pick or create a project, enable the **Google Play Android Developer API**, then under IAM & Admin > Service accounts create a service account and add a JSON key. Save the downloaded file.
+2. In [Play Console](https://play.google.com/console/), go to Users and permissions, invite the service account's email, and give it access to FlyyLink with **Release to production, exclude devices, and use Play App Signing** and **Release apps to testing tracks**.
+3. In GitHub, add the JSON file's contents as the `PLAY_SERVICE_ACCOUNT_JSON` secret.
+
+The bundle must be signed with the upload key Play expects, which is the `ANDROID_KEYSTORE` key. Play rejects a build number it has already seen, so a re-run of an old release fails the Play step only.
+
 ## Admin CLI
 
 `flyylink-cli` is released on its own, to npm as `@toneflix/flyylink-cli`. Push a tag like `cli-1.2.3` (a pre-release such as `cli-1.3.0-beta.1` goes out under the `next` tag), or run the **Publish flyylink-cli** workflow by hand with a version. `.github/workflows/publish-cli.yml` type-checks and tests the CLI against the worker, sets the version from the tag and publishes. App release tags don't publish it. Install and use are in [ADMIN.md](ADMIN.md).
@@ -27,6 +39,7 @@ Set these under GitHub > Settings > Secrets and variables > Actions. `.github/wo
 | App             | Secrets                                                                                                                                                                     | Variables            |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | Android         | `ANDROID_KEYSTORE` (base64 `.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` if the key has its own                                         |                      |
+| Google Play     | `PLAY_SERVICE_ACCOUNT_JSON` (service account JSON key)                                                                                                                      | `PLAY_TRACK`         |
 | Mac             | `MACOS_CERT_P12` (base64 Developer ID Application `.p12`), `MACOS_CERT_PASSWORD`, `NOTARY_KEY` (`.p8` contents), `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`, `SPARKLE_PRIVATE_KEY` | `SPARKLE_PUBLIC_KEY` |
 | Mac and Windows |                                                                                                                                                                             | `LICENCE_PUBLIC_KEY` |
 | Website upload  | `CLOUDFLARE_API_TOKEN` (Workers R2 Storage edit), `CLOUDFLARE_ACCOUNT_ID`                                                                                                   |                      |
