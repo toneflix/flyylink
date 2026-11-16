@@ -13,6 +13,11 @@ name: Release
 # Android secrets: ANDROID_KEYSTORE (base64 .jks), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
 # and ANDROID_KEY_PASSWORD when the key has its own password.
 #
+# Google Play: secret PLAY_SERVICE_ACCOUNT_JSON (the service account's JSON key). Without it, Play is skipped.
+# The version picks the Play track: 1.2.3 production, 1.2.3-beta.1 or -rc.1 beta, -alpha.1 alpha, -internal.1 internal.
+# A build also goes to every testing track below its own, so production reaches beta, alpha and internal too.
+# A version with a suffix is a GitHub pre-release and isn't put on the website or in the update feeds.
+#
 # Mac secrets: MACOS_CERT_P12 (base64 Developer ID Application .p12), MACOS_CERT_PASSWORD,
 # NOTARY_KEY (App Store Connect API .p8 contents), NOTARY_KEY_ID, NOTARY_ISSUER_ID, SPARKLE_PRIVATE_KEY.
 # Mac variable: SPARKLE_PUBLIC_KEY. Without the Sparkle key and variable, the release works but can't auto-update.
@@ -43,6 +48,8 @@ jobs:
   android:
     if: ${{ !startsWith(github.ref_name, 'macos-') && !startsWith(github.ref_name, 'windows-') }}
     runs-on: ubuntu-latest
+    outputs:
+      tracks: ${{ steps.version.outputs.tracks }}
     defaults:
       run:
         working-directory: android
@@ -59,7 +66,21 @@ jobs:
         id: version
         run: |
           tag="${GITHUB_REF_NAME#android-}"
-          echo "number=${tag#v}" >> "$GITHUB_OUTPUT"
+          number="${tag#v}"
+
+          case "$number" in
+            *-internal*) tracks=internal ;;
+            *-alpha*) tracks=alpha,internal ;;
+            *-beta* | *-rc*) tracks=beta,alpha,internal ;;
+            *-*)
+              echo "::error::Use -beta, -rc, -alpha or -internal after the version, or no suffix for production."
+              exit 1
+              ;;
+            *) tracks=production,beta,alpha,internal ;;
+          esac
+
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "tracks=$tracks" >> "$GITHUB_OUTPUT"
 
       - name: Load the signing key
         env:
@@ -271,6 +292,11 @@ jobs:
           echo "title=FlyyLink$app ${tag#v}" >> "$GITHUB_OUTPUT"
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
 
+          case "$tag" in
+            *-*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
       # A release made on GitHub already has its notes, so only a bare tag gets them generated here.
       - name: Check for existing notes
         id: notes
@@ -294,6 +320,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           name: ${{ steps.name.outputs.title }}
+          prerelease: ${{ steps.name.outputs.prerelease == 'true' }}
           files: |
             dist/FlyyLink-*.apk
             dist/FlyyLink-*.aab
@@ -304,7 +331,7 @@ jobs:
 
       # One fixed release holds the Mac feed, so the app's feed address never changes.
       - name: Publish Mac update feed
-        if: hashFiles('dist/appcast.xml') != ''
+        if: steps.name.outputs.prerelease == 'false' && hashFiles('dist/appcast.xml') != ''
         uses: softprops/action-gh-release@v3
         with:
           tag_name: macos-appcast
@@ -314,6 +341,7 @@ jobs:
           files: dist/appcast.xml
 
       - name: Publish downloads to the website
+        if: steps.name.outputs.prerelease == 'false'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -349,3 +377,37 @@ jobs:
             put updates/appcast.xml dist/appcast.xml
           fi
           put latest.json latest.json
+
+  # Runs after the GitHub release, so Play only gets builds that shipped everywhere else.
+  play:
+    needs: [android, publish]
+    if: ${{ !cancelled() && needs.android.result == 'success' && needs.publish.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - name: Check for the Play key
+        id: key
+        run: |
+          if [ -z "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::warning::No PLAY_SERVICE_ACCOUNT_JSON secret, so the app wasn't sent to Google Play."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/download-artifact@v8
+        if: steps.key.outputs.ready == 'true'
+        with:
+          name: android
+          path: dist
+
+      - name: Upload to Google Play
+        if: steps.key.outputs.ready == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.toneflix.flyylink
+          releaseFiles: dist/FlyyLink-*.aab
+          tracks: ${{ needs.android.outputs.tracks }}
+          status: completed

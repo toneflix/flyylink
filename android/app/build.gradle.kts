@@ -26,8 +26,8 @@ class AppVersion(baseFile: File, buildNumber: String?, name: String?) {
     }
 
     private fun compare(a: String, b: String): Int {
-        val left = a.split('.').map { it.toIntOrNull() ?: 0 }
-        val right = b.split('.').map { it.toIntOrNull() ?: 0 }
+        val left = a.substringBefore('-').split('.').map { it.toIntOrNull() ?: 0 }
+        val right = b.substringBefore('-').split('.').map { it.toIntOrNull() ?: 0 }
 
         return (0 until maxOf(left.size, right.size))
             .map { (left.getOrNull(it) ?: 0).compareTo(right.getOrNull(it) ?: 0) }
