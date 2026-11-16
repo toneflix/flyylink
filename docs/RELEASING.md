@@ -12,7 +12,18 @@ The Android build number is the base in `version.json` plus the workflow's run n
 
 ## Google Play
 
-After the GitHub release is published, the Android bundle is uploaded to Google Play and sent for review on the `production` track. Set the `PLAY_TRACK` variable to `beta`, `alpha` or `internal` to use another track. Without the `PLAY_SERVICE_ACCOUNT_JSON` secret, this step is skipped with a warning.
+After the GitHub release is published, the Android bundle is uploaded to Google Play and sent for review. The version picks the track:
+
+| Version                        | Play track                    |
+| ------------------------------ | ----------------------------- |
+| `1.2.3`                        | `production`                  |
+| `1.2.3-beta.1` or `1.2.3-rc.1` | `beta` (open testing)         |
+| `1.2.3-alpha.1`                | `alpha` (closed testing)      |
+| `1.2.3-internal.1`             | `internal` (internal testing) |
+
+Any other suffix stops the release. A version with a suffix is marked as a pre-release on GitHub and isn't put on the website or in the Mac and Windows update feeds. Use `android-1.2.3-beta.1` to send a test build of the Android app alone.
+
+Without the `PLAY_SERVICE_ACCOUNT_JSON` secret, the Play step is skipped with a warning.
 
 One-time setup:
 
@@ -39,7 +50,7 @@ Set these under GitHub > Settings > Secrets and variables > Actions. `.github/wo
 | App             | Secrets                                                                                                                                                                     | Variables            |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | Android         | `ANDROID_KEYSTORE` (base64 `.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` if the key has its own                                         |                      |
-| Google Play     | `PLAY_SERVICE_ACCOUNT_JSON` (service account JSON key)                                                                                                                      | `PLAY_TRACK`         |
+| Google Play     | `PLAY_SERVICE_ACCOUNT_JSON` (service account JSON key)                                                                                                                      |                      |
 | Mac             | `MACOS_CERT_P12` (base64 Developer ID Application `.p12`), `MACOS_CERT_PASSWORD`, `NOTARY_KEY` (`.p8` contents), `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`, `SPARKLE_PRIVATE_KEY` | `SPARKLE_PUBLIC_KEY` |
 | Mac and Windows |                                                                                                                                                                             | `LICENCE_PUBLIC_KEY` |
 | Website upload  | `CLOUDFLARE_API_TOKEN` (Workers R2 Storage edit), `CLOUDFLARE_ACCOUNT_ID`                                                                                                   |                      |
