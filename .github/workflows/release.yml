@@ -18,6 +18,9 @@ name: Release
 # A build also goes to every testing track below its own, so production reaches beta, alpha and internal too.
 # A version with a suffix is a GitHub pre-release and isn't put on the website or in the update feeds.
 #
+# Amazon Appstore: secrets AMAZON_CLIENT_ID and AMAZON_CLIENT_SECRET (an App Submission API security profile) and
+# variable AMAZON_APP_ID. Only versions without a suffix go to Amazon, as a new APK sent for review. Without them, Amazon is skipped.
+#
 # Mac secrets: MACOS_CERT_P12 (base64 Developer ID Application .p12), MACOS_CERT_PASSWORD,
 # NOTARY_KEY (App Store Connect API .p8 contents), NOTARY_KEY_ID, NOTARY_ISSUER_ID, SPARKLE_PRIVATE_KEY.
 # Mac variable: SPARKLE_PUBLIC_KEY. Without the Sparkle key and variable, the release works but can't auto-update.
@@ -411,3 +414,38 @@ jobs:
           releaseFiles: dist/FlyyLink-*.aab
           tracks: ${{ needs.android.outputs.tracks }}
           status: completed
+
+  # Amazon has no testing tracks here, so only production versions go to it.
+  amazon:
+    needs: [android, publish]
+    if: ${{ !cancelled() && needs.android.result == 'success' && needs.publish.result == 'success' && startsWith(needs.android.outputs.tracks, 'production') }}
+    runs-on: ubuntu-latest
+    env:
+      AMAZON_CLIENT_ID: ${{ secrets.AMAZON_CLIENT_ID }}
+      AMAZON_CLIENT_SECRET: ${{ secrets.AMAZON_CLIENT_SECRET }}
+      AMAZON_APP_ID: ${{ vars.AMAZON_APP_ID }}
+    steps:
+      - name: Check for the Amazon keys
+        id: key
+        run: |
+          if [ -z "$AMAZON_CLIENT_ID" ] || [ -z "$AMAZON_CLIENT_SECRET" ] || [ -z "$AMAZON_APP_ID" ]; then
+            echo "::warning::No AMAZON_CLIENT_ID, AMAZON_CLIENT_SECRET or AMAZON_APP_ID, so the app wasn't sent to the Amazon Appstore."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.key.outputs.ready == 'true'
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/download-artifact@v8
+        if: steps.key.outputs.ready == 'true'
+        with:
+          name: android
+          path: dist
+
+      - name: Submit to the Amazon Appstore
+        if: steps.key.outputs.ready == 'true'
+        run: python3 .github/scripts/amazon_appstore.py "$AMAZON_APP_ID" dist/FlyyLink-*.apk

@@ -35,6 +35,18 @@ One-time setup:
 
 The bundle must be signed with the upload key Play expects, which is the `ANDROID_KEYSTORE` key. Play rejects a build number it has already seen, so a re-run of an old release fails the Play step only.
 
+## Amazon Appstore
+
+Versions without a suffix, such as `1.2.3`, also replace the APK on the Amazon Appstore and send it for review. The same APK runs on Fire tablets and Fire TV, and Amazon keeps the device targeting. Versions with a suffix aren't sent to Amazon. Without the Amazon secrets and variable, this step is skipped with a warning.
+
+If an edit is already open in the Amazon Developer Console, the release uses it, so anything else in that edit is submitted too. While Amazon is reviewing an earlier version, the step fails and the rest of the release is unaffected.
+
+One-time setup:
+
+1. In the [Amazon Developer Console](https://developer.amazon.com/), go to My Settings > API Access, pick **App Submission API**, create a security profile and attach it to the API. On its Web Settings tab, copy the client ID and client secret.
+2. Open FlyyLink in the console and copy its App ID (it starts with `amzn1.devportal.mobileapp.`), shown under Additional information.
+3. In GitHub, add `AMAZON_CLIENT_ID` and `AMAZON_CLIENT_SECRET` as secrets and `AMAZON_APP_ID` as a variable.
+
 ## Admin CLI
 
 `flyylink-cli` is released on its own, to npm as `@toneflix/flyylink-cli`. Push a tag like `cli-1.2.3` (a pre-release such as `cli-1.3.0-beta.1` goes out under the `next` tag), or run the **Publish flyylink-cli** workflow by hand with a version. `.github/workflows/publish-cli.yml` type-checks and tests the CLI against the worker, sets the version from the tag and publishes. App release tags don't publish it. Install and use are in [ADMIN.md](ADMIN.md).
@@ -53,6 +65,7 @@ Set these under GitHub > Settings > Secrets and variables > Actions. `.github/wo
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | Android         | `ANDROID_KEYSTORE` (base64 `.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` if the key has its own                                         |                      |
 | Google Play     | `PLAY_SERVICE_ACCOUNT_JSON` (service account JSON key)                                                                                                                      |                      |
+| Amazon Appstore | `AMAZON_CLIENT_ID`, `AMAZON_CLIENT_SECRET`                                                                                                                                  | `AMAZON_APP_ID`      |
 | Mac             | `MACOS_CERT_P12` (base64 Developer ID Application `.p12`), `MACOS_CERT_PASSWORD`, `NOTARY_KEY` (`.p8` contents), `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`, `SPARKLE_PRIVATE_KEY` | `SPARKLE_PUBLIC_KEY` |
 | Mac and Windows |                                                                                                                                                                             | `LICENCE_PUBLIC_KEY` |
 | Website upload  | `CLOUDFLARE_API_TOKEN` (Workers R2 Storage edit), `CLOUDFLARE_ACCOUNT_ID`                                                                                                   |                      |
