@@ -262,10 +262,27 @@ public final class Device {
         case .requested, .requestedByPeer: break
         }
 
+        if state == .paired, action.becamePaired { sendFeatures() }
         delegate?.device(self, pairStateChanged: state)
+    }
+
+    /// The peer ignores feature changes until paired, so tell it what is on once pairing is done.
+    private func sendFeatures() {
+        let own = ownFeatures()
+        if own.reported != nil { link.send(own.toPacket()) }
     }
 
     private static func heartbeatPacket(pong: Bool) -> NetworkPacket {
         NetworkPacket(type: PacketType.heartbeat, body: ["pong": .bool(pong)])
+    }
+}
+
+private extension PairAction {
+    /// Accepting sends the answer; being accepted arrives as `paired`.
+    var becamePaired: Bool {
+        switch self {
+        case .paired, .send: return true
+        case .none, .askUser, .unpaired: return false
+        }
     }
 }
