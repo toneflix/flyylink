@@ -177,6 +177,32 @@ class LanLinkTest {
         assertEquals(PacketType.LOCATION_REQUEST, onPhoneReceived.poll(10, TimeUnit.SECONDS)?.type)
     }
 
+    @Test fun featuresChosenBeforePairingArriveOncePaired() {
+        phone = Peer("Phone", DeviceType.PHONE, 41731..41764, features = PhoneFeatures.of())
+        val (onPhone, onMac) = connect()
+        val phoneHas = PhoneFeatures.of(PhoneFeature.CLIPBOARD, PhoneFeature.FILES)
+        val requests = LinkedBlockingQueue<String>()
+        val changes = LinkedBlockingQueue<NetworkPacket>()
+
+        val phoneDevice = Device(onPhone, phone.certificate, phone.trust, ownFeatures = { phoneHas }).apply { start() }
+        val macDevice = Device(onMac, mac.certificate, mac.trust).apply {
+            listener = object : Device.Listener {
+                override fun onPairRequest(device: Device, code: String) = requests.put(code)
+
+                override fun onPacket(device: Device, packet: NetworkPacket) = changes.put(packet)
+            }
+            start()
+        }
+        assertEquals(PhoneFeatures.of(), macDevice.features)
+
+        phoneDevice.requestPair()
+        requests.poll(10, TimeUnit.SECONDS)
+        macDevice.accept()
+
+        assertEquals(PacketType.FEATURES, changes.poll(10, TimeUnit.SECONDS)?.type)
+        assertEquals(phoneHas, macDevice.features)
+    }
+
     @Test fun flyyDropMovesOnlyTheAcceptedFileBetweenUnpairedDevices() {
         val (onPhone, onMac) = connect()
         val phoneDrop = FlyyDrop()

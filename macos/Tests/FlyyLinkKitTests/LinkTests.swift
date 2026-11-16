@@ -262,6 +262,26 @@ final class LanLinkTests: XCTestCase {
         XCTAssertEqual(phone.recorder.packets.take()?.type, PacketType.locationRequest)
     }
 
+    func testFeaturesChosenBeforePairingArriveOncePaired() throws {
+        phone = try Peer(name: "Phone", type: .phone, ports: 41731...41764, features: .of())
+        let (onPhone, onMac) = try connect()
+        let phoneHas = PhoneFeatures.of(.clipboard, .files)
+        let phoneDevice = Device(link: onPhone, ownCertificate: phone.certificate, trustStore: phone.trust, ownFeatures: { phoneHas })
+        let macDevice = Device(link: onMac, ownCertificate: mac.certificate, trustStore: mac.trust)
+        phoneDevice.delegate = phone.recorder
+        macDevice.delegate = mac.recorder
+        phoneDevice.start()
+        macDevice.start()
+        XCTAssertEqual(macDevice.features, .of())
+
+        phoneDevice.requestPair()
+        _ = mac.recorder.requests.take()
+        macDevice.accept()
+
+        XCTAssertEqual(mac.recorder.packets.take()?.type, PacketType.features)
+        XCTAssertEqual(macDevice.features, phoneHas)
+    }
+
     func testChangedCertificateIsRejected() throws {
         let other = try DeviceCertificate.generate(deviceId: phone.identity.deviceId)
         mac.trust.trust(phone.identity.deviceId, certificate: other.certificateDER)

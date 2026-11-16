@@ -206,6 +206,26 @@ public sealed class LanLinkTests : IDisposable
     }
 
     [Fact]
+    public void FeaturesChosenBeforePairingArriveOncePaired()
+    {
+        using var featuredPhone = new Peer("Phone", DeviceType.Phone, new PortRange(42791, 42799), features: PhoneFeatures.Of());
+        _ = featuredPhone.Lan.ConnectAsync(pc.Announced, "127.0.0.1");
+        var onPhone = featuredPhone.Recorder.Links.Take() ?? throw new Exception("phone got no link");
+        var onPc = pc.Recorder.Links.Take() ?? throw new Exception("PC got no link");
+        var phoneHas = PhoneFeatures.Of(PhoneFeature.Clipboard, PhoneFeature.Files);
+        var phoneDevice = featuredPhone.DeviceFor(onPhone, features: () => phoneHas);
+        var pcDevice = pc.DeviceFor(onPc);
+        Assert.Equal(PhoneFeatures.Of(), pcDevice.Features);
+
+        phoneDevice.RequestPair();
+        pc.Recorder.Requests.Take();
+        pcDevice.Accept();
+
+        Assert.Equal(PacketType.Features, pc.Recorder.Packets.Take()?.Type);
+        Assert.Equal(phoneHas, pcDevice.Features);
+    }
+
+    [Fact]
     public void LinkIsEncryptedAndCarriesIdentities()
     {
         var (onPhone, onPc) = Connect();

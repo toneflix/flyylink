@@ -171,7 +171,14 @@ class Device(
         }
 
         syncTrust()
+        if (pairing.state == PairState.PAIRED && (action == PairAction.Paired || action is PairAction.Send)) sendFeatures()
         listener?.onPairStateChanged(this, pairing.state)
+    }
+
+    /** The peer ignores feature changes until paired, so tell it what is on once pairing is done. */
+    private fun sendFeatures() {
+        val own = ownFeatures()
+        if (own.reported != null) link.send(own.toPacket())
     }
 
     private fun syncTrust() {

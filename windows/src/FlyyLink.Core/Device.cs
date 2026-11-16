@@ -260,7 +260,15 @@ public sealed class Device
                 break;
         }
 
+        if (state == PairState.Paired && action.Kind is PairActionKind.Paired or PairActionKind.Send) SendFeatures();
         Delegate?.DevicePairStateChanged(this, state);
+    }
+
+    /// The peer ignores feature changes until paired, so tell it what is on once pairing is done.
+    private void SendFeatures()
+    {
+        var own = ownFeatures();
+        if (own.Reported is not null) Link.Send(own.ToPacket());
     }
 
     private static NetworkPacket HeartbeatPacket(bool pong) => new(PacketType.Heartbeat, new JsonObject { ["pong"] = pong });
