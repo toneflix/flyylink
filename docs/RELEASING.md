@@ -21,6 +21,8 @@ After the GitHub release is published, the Android bundle is uploaded to Google 
 | `1.2.3-alpha.1`                | `alpha` (closed testing)      |
 | `1.2.3-internal.1`             | `internal` (internal testing) |
 
+A build also goes to every testing track below its own: production also goes to open, closed and internal testing, open testing to closed and internal, and closed testing to internal. The bundle is uploaded once and added to each track in one Play edit (`.github/scripts/play_release.py`).
+
 Any other suffix stops the release. A version with a suffix is marked as a pre-release on GitHub and isn't put on the website or in the Mac and Windows update feeds. Use `android-1.2.3-beta.1` to send a test build of the Android app alone.
 
 Without the `PLAY_SERVICE_ACCOUNT_JSON` secret, the Play step is skipped with a warning.

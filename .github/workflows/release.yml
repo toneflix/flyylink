@@ -15,6 +15,7 @@ name: Release
 #
 # Google Play: secret PLAY_SERVICE_ACCOUNT_JSON (the service account's JSON key). Without it, Play is skipped.
 # The version picks the Play track: 1.2.3 production, 1.2.3-beta.1 or -rc.1 beta, -alpha.1 alpha, -internal.1 internal.
+# A build also goes to every testing track below its own, so production reaches beta, alpha and internal too.
 # A version with a suffix is a GitHub pre-release and isn't put on the website or in the update feeds.
 #
 # Mac secrets: MACOS_CERT_P12 (base64 Developer ID Application .p12), MACOS_CERT_PASSWORD,
@@ -395,18 +396,26 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - uses: actions/checkout@v7
+        if: steps.key.outputs.ready == 'true'
+        with:
+          sparse-checkout: .github/scripts
+
       - uses: actions/download-artifact@v8
         if: steps.key.outputs.ready == 'true'
         with:
           name: android
           path: dist
 
+      - uses: actions/setup-python@v6
+        if: steps.key.outputs.ready == 'true'
+        with:
+          python-version: '3.12'
+
       - name: Upload to Google Play
         if: steps.key.outputs.ready == 'true'
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.toneflix.flyylink
-          releaseFiles: dist/FlyyLink-*.aab
-          track: ${{ needs.android.outputs.track }}
-          status: completed
+        env:
+          TRACK: ${{ needs.android.outputs.track }}
+        run: |
+          pip install --quiet google-api-python-client google-auth
+          python .github/scripts/play_release.py com.toneflix.flyylink dist/FlyyLink-*.aab "$TRACK"
