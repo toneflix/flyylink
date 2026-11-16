@@ -121,6 +121,9 @@ public static class PacketType
 
     /// The phone's contacts. Body: {"contacts": [{"name", "numbers": [...]}]}; see `PhoneContacts`.
     public const string Contacts = "flyylink.contacts";
+
+    /// The phone features the user has on, sent when one changes. Body: {"features": [...]}; see `PhoneFeatures`.
+    public const string Features = "flyylink.features";
 }
 
 public static class Capabilities
@@ -172,6 +175,7 @@ public static class Capabilities
         PacketType.Files,
         PacketType.ContactsRequest,
         PacketType.Contacts,
+        PacketType.Features,
     };
 
     /// What a TV sends and accepts: no texts, calls, contacts, signal, clipboard, battery, location, photos, files or screen sharing.

@@ -26,12 +26,14 @@ data class DeviceIdentity(
     val incomingCapabilities: Set<String> = Capabilities.mvp,
     val outgoingCapabilities: Set<String> = Capabilities.mvp,
     val tcpPort: Int? = null,
+    /** The phone features the user has on. Devices that don't report them get [PhoneFeatures.ALL]. */
+    val features: PhoneFeatures = PhoneFeatures.ALL,
 ) {
     /**
      * The identity sent over UDP. Capabilities follow over TLS, and leaving them out keeps the datagram
      * under one MTU: macOS refuses to send a broadcast that would need fragmenting.
      */
-    fun announcement(): NetworkPacket = copy(incomingCapabilities = emptySet(), outgoingCapabilities = emptySet()).toPacket()
+    fun announcement(): NetworkPacket = copy(incomingCapabilities = emptySet(), outgoingCapabilities = emptySet(), features = PhoneFeatures.ALL).toPacket()
 
     fun toPacket(): NetworkPacket = NetworkPacket(
         type = PacketType.IDENTITY,
@@ -43,6 +45,7 @@ data class DeviceIdentity(
             "incomingCapabilities" to incomingCapabilities.sorted(),
             "outgoingCapabilities" to outgoingCapabilities.sorted(),
             "tcpPort" to tcpPort,
+            PhoneFeatures.BODY_KEY to features.wire(),
         ),
     )
 
@@ -72,6 +75,7 @@ data class DeviceIdentity(
                 incomingCapabilities = packet.stringList("incomingCapabilities").toSet(),
                 outgoingCapabilities = packet.stringList("outgoingCapabilities").toSet(),
                 tcpPort = packet.int("tcpPort"),
+                features = PhoneFeatures.fromBody(packet),
             )
         }
     }

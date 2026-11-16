@@ -505,9 +505,11 @@ public sealed class AppModel : Observable, IDeviceDelegate
         }
     }
 
-    /// Whether the phone runs a FlyyLink that lets computers browse its storage.
+    /// Whether the phone runs a FlyyLink that lets computers browse its storage, with the feature on.
     public bool SharesFiles(string id) =>
-        connected[id]?.Link.Identity.IncomingCapabilities.Contains(PacketType.FilesRequest) == true;
+        connected[id] is { } device
+        && device.Link.Identity.IncomingCapabilities.Contains(PacketType.FilesRequest)
+        && device.Features.Contains(PhoneFeature.Files);
 
     /// Opens the phone's storage in Explorer.
     public void OpenPhoneFiles(string id)
@@ -1250,7 +1252,8 @@ public sealed class AppModel : Observable, IDeviceDelegate
                     locations.Location(device.Id),
                     device.Link.Identity.IncomingCapabilities.Contains(PacketType.FlyyDropRequest),
                     flyyDropSends.GetValueOrDefault(device.Id),
-                    connectivity.Signal(device.Id));
+                    connectivity.Signal(device.Id),
+                    device.Features);
             })
             .OrderBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
@@ -1302,25 +1305,29 @@ public sealed class AppModel : Observable, IDeviceDelegate
     /// The paired phone Messages and Photos use: the one shown, or else the first paired phone.
     private Device? Primary => new DeviceFocus(settings.SelectedPhone).Pick(connected.PairedPhones, d => d.Id, d => d.Name);
 
-    /// Texts and photos come from the primary phone.
+    /// Texts and photos come from the primary phone, while it has those features on.
     private void SyncStores(Device? phone)
     {
-        folderPhone = phone;
-        if (phone is not null && ShowsPhotosInExplorer)
+        var photosPhone = phone?.Features.Contains(PhoneFeature.Photos) == true ? phone : null;
+        var messagesPhone = phone?.Features.Contains(PhoneFeature.Messages) == true ? phone : null;
+
+        folderPhone = photosPhone;
+        if (photosPhone is not null && ShowsPhotosInExplorer)
         {
-            folder.Use(phone.Id);
+            folder.Use(photosPhone.Id);
             folder.Connect();
         }
 
-        if (phone is not null)
+        if (photosPhone is not null) Photos.Attach(photosPhone.Id);
+        else if ((phone?.Id ?? messagesDevice) is string photosId) Photos.Detach(photosId);
+
+        if (messagesPhone is not null)
         {
-            Photos.Attach(phone.Id);
-            if (messagesDevice != phone.Id || !Messages.HasPhone) Messages.Attach(phone.Id);
-            messagesDevice = phone.Id;
+            if (messagesDevice != messagesPhone.Id || !Messages.HasPhone) Messages.Attach(messagesPhone.Id);
+            messagesDevice = messagesPhone.Id;
         }
         else if (messagesDevice is string id)
         {
-            Photos.Detach(id);
             Messages.Detach(id);
         }
     }
@@ -1365,7 +1372,17 @@ public sealed class AppModel : Observable, IDeviceDelegate
         ui.TryEnqueue(Publish);
     }
 
-    void IDeviceDelegate.DeviceReceived(Device device, NetworkPacket packet) => plugins.Dispatch(packet, device);
+    void IDeviceDelegate.DeviceReceived(Device device, NetworkPacket packet)
+    {
+        if (packet.Type == PacketType.Features)
+        {
+            plugins.OnFeaturesChanged(device);
+            ui.TryEnqueue(Publish);
+            return;
+        }
+
+        plugins.Dispatch(packet, device);
+    }
 
     void IDeviceDelegate.DeviceDisconnected(Device device) => ui.TryEnqueue(() => Remove(device));
 

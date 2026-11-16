@@ -7,6 +7,7 @@ import java.io.OutputStream
  * A connected peer: its encrypted link plus pairing. Packets from a device that
  * is not paired are dropped, except pairing packets and what [guests] lets through.
  * With [canPair] false the peer stays unpaired, so only [guests] traffic gets through.
+ * Packets of a feature that is off, in [ownFeatures] or the peer's [features], go neither way.
  */
 class Device(
     val link: DeviceLink,
@@ -15,6 +16,7 @@ class Device(
     private val clock: () -> Long = { System.currentTimeMillis() / 1000 },
     private val guests: GuestAccess? = null,
     val canPair: Boolean = true,
+    private val ownFeatures: () -> PhoneFeatures = { PhoneFeatures.ALL },
 ) {
     interface Listener {
         /** The peer asked to pair. Show [code] and call [accept] or [reject]. */
@@ -32,6 +34,10 @@ class Device(
     val name: String get() = link.identity.deviceName
 
     var listener: Listener? = null
+
+    /** The features the peer has on: from its identity, then from each [PacketType.FEATURES] it sends. */
+    @Volatile var features: PhoneFeatures = link.identity.features
+        private set
 
     private val payloads by lazy { PayloadTransfer(ownCertificate) }
 
@@ -143,10 +149,18 @@ class Device(
             return
         }
 
+        if (packet.type == PacketType.FEATURES && isPaired) PhoneFeatures.fromPacket(packet)?.let { features = it }
+
+        if (!ownFeatures().accepts(packet.type)) return
+
         if (isPaired || guests?.admitsIncoming(id, packet) == true) listener?.onPacket(this, packet)
     }
 
-    private fun maySend(packet: NetworkPacket): Boolean = isPaired || guests?.admitsOutgoing(id, packet) == true
+    private fun maySend(packet: NetworkPacket): Boolean {
+        if (!ownFeatures().sends(packet.type) || !features.accepts(packet.type)) return false
+
+        return isPaired || guests?.admitsOutgoing(id, packet) == true
+    }
 
     private fun apply(action: PairAction) {
         when (action) {

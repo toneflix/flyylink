@@ -19,6 +19,7 @@ public extension DeviceDelegate {
 /// A connected peer: its encrypted link plus pairing. Packets from a device that
 /// is not paired are dropped, except pairing packets and what `guests` lets through. Mirrors Device.kt.
 /// With `canPair` false the peer stays unpaired, so only `guests` traffic gets through.
+/// Packets of a feature that is off, in `ownFeatures` or the peer's `features`, go neither way.
 public final class Device {
     public let link: DeviceLink
     public let canPair: Bool
@@ -29,6 +30,8 @@ public final class Device {
     private let clock: () -> Int64
     private let guests: GuestAccess?
     private let pairing: PairingStateMachine
+    private let ownFeatures: () -> PhoneFeatures
+    private var peerFeatures: PhoneFeatures
     private let lock = NSLock()
     private var lastReceived: Int64
     private lazy var payloads = try? PayloadTransfer(certificate: ownCertificate)
@@ -42,7 +45,8 @@ public final class Device {
         trustStore: TrustStore,
         clock: @escaping () -> Int64 = { Int64(Date().timeIntervalSince1970) },
         guests: GuestAccess? = nil,
-        canPair: Bool = true
+        canPair: Bool = true,
+        ownFeatures: @escaping () -> PhoneFeatures = { .all }
     ) {
         self.link = link
         self.canPair = canPair
@@ -55,6 +59,8 @@ public final class Device {
             allowed: canPair
         )
         self.lastReceived = clock()
+        self.ownFeatures = ownFeatures
+        self.peerFeatures = link.identity.features
 
         if !canPair { trustStore.forget(link.identity.deviceId) }
     }
@@ -64,6 +70,9 @@ public final class Device {
     public var name: String { link.identity.deviceName }
 
     public var pairState: PairState { lock.withLock { pairing.state } }
+
+    /// The features the peer has on: from its identity, then from each `PacketType.features` it sends.
+    public var features: PhoneFeatures { lock.withLock { peerFeatures } }
 
     public var isPaired: Bool { pairState == .paired }
 
@@ -218,11 +227,19 @@ public final class Device {
             return
         }
 
+        if packet.type == PacketType.features, isPaired, let features = PhoneFeatures(packet: packet) {
+            lock.withLock { peerFeatures = features }
+        }
+
+        guard ownFeatures().accepts(packet.type) else { return }
+
         if isPaired || guests?.admitsIncoming(from: id, packet) == true { delegate?.device(self, received: packet) }
     }
 
     private func maySend(_ packet: NetworkPacket) -> Bool {
-        isPaired || guests?.admitsOutgoing(to: id, packet) == true
+        guard ownFeatures().sends(packet.type), features.accepts(packet.type) else { return false }
+
+        return isPaired || guests?.admitsOutgoing(to: id, packet) == true
     }
 
     private func run(_ step: (PairingStateMachine) -> PairAction) {

@@ -89,11 +89,11 @@ struct MenuPanel: View {
             } else {
                 DeviceHero(device: device, model: model)
             }
-            if model.finding == device.id, let location = device.location {
+            if model.finding == device.id, device.features.contains(.location), let location = device.location {
                 FindCard(deviceName: device.name, location: location) { model.finding = nil }
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
-            if let media = device.media {
+            if device.features.contains(.media), let media = device.media {
                 NowPlayingCard(deviceId: device.id, media: media, model: model)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
@@ -101,7 +101,7 @@ struct MenuPanel: View {
             if device.isComputer {
                 ScreenShareCard(device: device, model: model)
                 KeyboardMouseCard(device: device, model: model)
-            } else if device.isPhone {
+            } else if device.isPhone, device.features.contains(.messages) {
                 CallAudioRow(audio: model.callAudio)
             }
             if device.isPhone && model.sharesNotifications && !model.canReadNotifications {

@@ -21,6 +21,8 @@ struct DeviceState: Identifiable, Equatable {
     let location: PhoneLocation?
     /// Runs FlyyLink with FlyyDrop, so files can go to it without pairing.
     var canFlyyDrop = false
+    /// What the phone has turned on. Everything, for devices that don't say.
+    var features = PhoneFeatures.all
 
     var isComputer: Bool { type.isComputer }
 
@@ -924,7 +926,8 @@ final class AppModel: ObservableObject {
                     signal: connectivity.signal(for: device.id),
                     media: mediaPlugin.nowPlaying(for: device.id),
                     location: locations.location(for: device.id),
-                    canFlyyDrop: device.link.identity.incomingCapabilities.contains(PacketType.flyyDropRequest)
+                    canFlyyDrop: device.link.identity.incomingCapabilities.contains(PacketType.flyyDropRequest),
+                    features: device.features
                 )
             }
             .sorted { $0.name < $1.name }
@@ -1002,21 +1005,22 @@ final class AppModel: ObservableObject {
         return phoneId
     }
 
-    /// Texts and photos come from the primary phone.
+    /// Texts and photos come from the primary phone, while it has those features on.
     private func syncMessages() {
-        let phone = primaryPhone
+        let photosPhone = primaryPhone.flatMap { $0.features.contains(.photos) ? $0 : nil }
+        let messagesPhone = primaryPhone.flatMap { $0.features.contains(.messages) ? $0 : nil }
 
-        if let phone {
+        if let phone = photosPhone {
             photos.attach(phone.id)
             photosDevice = phone.id
         } else if let id = photosDevice {
             photos.detach(id)
         }
 
-        if let phone, messagesDevice != phone.id || !messages.hasPhone {
+        if let phone = messagesPhone, messagesDevice != phone.id || !messages.hasPhone {
             messagesDevice = phone.id
             messages.attach(phone.id)
-        } else if phone == nil, let id = messagesDevice {
+        } else if messagesPhone == nil, let id = messagesDevice {
             messages.detach(id)
         }
     }
@@ -1087,6 +1091,12 @@ extension AppModel: DeviceDelegate {
     }
 
     nonisolated func device(_ device: Device, received packet: NetworkPacket) {
+        if packet.type == PacketType.features {
+            plugins.onFeaturesChanged(device)
+            Task { @MainActor in self.publish() }
+            return
+        }
+
         plugins.dispatch(packet, from: device)
     }
 
@@ -1096,6 +1106,6 @@ extension AppModel: DeviceDelegate {
 }
 
 private extension Device {
-    /// Runs a FlyyLink that lets computers browse its storage.
-    var sharesFiles: Bool { link.identity.incomingCapabilities.contains(PacketType.filesRequest) }
+    /// Runs a FlyyLink that lets computers browse its storage, with the feature on.
+    var sharesFiles: Bool { link.identity.incomingCapabilities.contains(PacketType.filesRequest) && features.contains(.files) }
 }

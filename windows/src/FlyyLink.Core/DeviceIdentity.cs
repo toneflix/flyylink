@@ -46,6 +46,9 @@ public sealed record DeviceIdentity
 
     public int? TcpPort { get; init; }
 
+    /// The phone features the user has on. Devices that don't report them get `PhoneFeatures.All`.
+    public PhoneFeatures Features { get; init; } = PhoneFeatures.All;
+
     public bool Equals(DeviceIdentity? other) =>
         other is not null
         && DeviceId == other.DeviceId
@@ -54,7 +57,8 @@ public sealed record DeviceIdentity
         && ProtocolVersion == other.ProtocolVersion
         && IncomingCapabilities.SetEquals(other.IncomingCapabilities)
         && OutgoingCapabilities.SetEquals(other.OutgoingCapabilities)
-        && TcpPort == other.TcpPort;
+        && TcpPort == other.TcpPort
+        && Features.Equals(other.Features);
 
     public override int GetHashCode() => HashCode.Combine(DeviceId, DeviceName, DeviceType, TcpPort);
 
@@ -75,7 +79,7 @@ public sealed record DeviceIdentity
     /// The identity sent over UDP. Capabilities follow over TLS, and leaving them out keeps the datagram
     /// under one MTU: macOS refuses to send a broadcast that would need fragmenting.
     public NetworkPacket Announcement() =>
-        (this with { IncomingCapabilities = new HashSet<string>(), OutgoingCapabilities = new HashSet<string>() }).ToPacket();
+        (this with { IncomingCapabilities = new HashSet<string>(), OutgoingCapabilities = new HashSet<string>(), Features = PhoneFeatures.All }).ToPacket();
 
     public NetworkPacket ToPacket()
     {
@@ -89,6 +93,7 @@ public sealed record DeviceIdentity
             ["outgoingCapabilities"] = new JsonArray(OutgoingCapabilities.Order(StringComparer.Ordinal).Select(c => (JsonNode)c).ToArray()),
         };
         if (TcpPort is int port) body["tcpPort"] = port;
+        if (Features.Wire() is { } features) body[PhoneFeatures.BodyKey] = new JsonArray(features.Select(f => (JsonNode)f).ToArray());
 
         return new NetworkPacket(PacketType.Identity, body);
     }
@@ -110,6 +115,7 @@ public sealed record DeviceIdentity
             IncomingCapabilities = packet.GetStringList("incomingCapabilities").ToHashSet(),
             OutgoingCapabilities = packet.GetStringList("outgoingCapabilities").ToHashSet(),
             TcpPort = port is > 0 and <= ushort.MaxValue ? (int)port : null,
+            Features = PhoneFeatures.FromBody(packet),
         };
     }
 }

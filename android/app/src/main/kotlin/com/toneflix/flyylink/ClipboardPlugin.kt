@@ -14,6 +14,7 @@ import com.toneflix.flyylink.protocol.ClipboardFile
 import com.toneflix.flyylink.protocol.Device
 import com.toneflix.flyylink.protocol.NetworkPacket
 import com.toneflix.flyylink.protocol.PacketType
+import com.toneflix.flyylink.protocol.PhoneFeature
 import com.toneflix.flyylink.protocol.Plugin
 import java.io.File
 import java.io.FileNotFoundException
@@ -67,6 +68,8 @@ object ClipboardPlugin : Plugin {
 
     /** Sends the phone's clipboard to every paired computer. Call while an activity has focus. */
     fun send(context: Context): Boolean {
+        if (!Features.isOn(PhoneFeature.CLIPBOARD)) return false
+
         val clip = clipboard(context).primaryClip?.takeIf { it.itemCount > 0 } ?: return false
         val item = clip.getItemAt(0)
 
@@ -81,6 +84,8 @@ object ClipboardPlugin : Plugin {
 
     /** Sends text to every paired computer and returns how many got it. */
     fun sendText(text: String): Int {
+        if (!Features.isOn(PhoneFeature.CLIPBOARD)) return 0
+
         val packet = Clipboard.packet(text)
         val targets = DeviceStore.pairedDevices()
 

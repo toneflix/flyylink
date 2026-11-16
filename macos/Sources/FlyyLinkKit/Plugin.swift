@@ -9,11 +9,16 @@ public protocol Plugin: AnyObject {
     /// The device just became paired, or connected while already paired.
     func onPaired(_ device: Device)
 
+    /// The device turned a feature on or off; see `PhoneFeatures`.
+    func onFeaturesChanged(_ device: Device)
+
     func onPacket(_ packet: NetworkPacket, from device: Device)
 }
 
 public extension Plugin {
     func onPaired(_ device: Device) {}
+
+    func onFeaturesChanged(_ device: Device) {}
 }
 
 /// Hands each packet to the plugins that accept its type.
@@ -30,6 +35,10 @@ public final class PluginRouter {
 
     public func onPaired(_ device: Device) {
         plugins.forEach { $0.onPaired(device) }
+    }
+
+    public func onFeaturesChanged(_ device: Device) {
+        plugins.forEach { $0.onFeaturesChanged(device) }
     }
 
     /// Returns false when no plugin accepts the packet.

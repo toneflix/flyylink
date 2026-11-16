@@ -387,28 +387,17 @@
                             </StackPanel>
                         </Border>
 
-                        <Grid ColumnSpacing="10" RowSpacing="10" Visibility="{x:Bind Model.FocusIsPhone, Mode=OneWay}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                        <views:TileGrid Spacing="10" Visibility="{x:Bind Model.FocusIsPhone, Mode=OneWay}">
                             <views:ActionTile Icon="Volume2" Title="Ring phone" Click="Ring_Click" />
-                            <views:ActionTile Grid.Column="1" Icon="FileUp" Title="Send file" Click="SendFiles_Click" />
-                            <views:ActionTile Grid.Row="1" Icon="Clipboard" Title="Clipboard" Subtitle="{x:Bind Model.ClipboardSubtitle, Mode=OneWay}" Click="Clipboard_Click" />
-                            <views:ActionTile Grid.Row="1" Grid.Column="1" Icon="{x:Bind NotificationsIcon(Model.MirrorsNotifications), Mode=OneWay}" Title="Notifications" Subtitle="{x:Bind Model.NotificationsSubtitle, Mode=OneWay}" IsOn="{x:Bind Model.MirrorsNotifications, Mode=OneWay}" Click="Notifications_Click" />
-                            <views:ActionTile Grid.Row="2" Icon="MessageSquare" Title="Messages" Subtitle="{x:Bind Model.MessagesSubtitle, Mode=OneWay}" Click="Messages_Click" />
-                            <views:ActionTile Grid.Row="2" Grid.Column="1" Icon="Phone" Title="Call" Click="Call_Click" />
-                            <views:ActionTile Grid.Row="3" Icon="Cast" Title="Mirror" Click="Mirror_Click" />
-                            <views:ActionTile Grid.Row="3" Grid.Column="1" Icon="Images" Title="Photos" Click="Photos_Click" />
-                            <views:ActionTile Grid.Row="4" Icon="FolderOpen" Title="Files" Subtitle="In Explorer" Click="Files_Click" Visibility="{x:Bind SharesFiles(Model.Focused), Mode=OneWay}" />
-                        </Grid>
+                            <views:ActionTile Icon="FileUp" Title="Send file" Click="SendFiles_Click" />
+                            <views:ActionTile Icon="Clipboard" Title="Clipboard" Subtitle="{x:Bind Model.ClipboardSubtitle, Mode=OneWay}" Click="Clipboard_Click" Visibility="{x:Bind HasClipboard(Model.Focused), Mode=OneWay}" />
+                            <views:ActionTile Icon="{x:Bind NotificationsIcon(Model.MirrorsNotifications), Mode=OneWay}" Title="Notifications" Subtitle="{x:Bind Model.NotificationsSubtitle, Mode=OneWay}" IsOn="{x:Bind Model.MirrorsNotifications, Mode=OneWay}" Click="Notifications_Click" Visibility="{x:Bind HasNotifications(Model.Focused), Mode=OneWay}" />
+                            <views:ActionTile Icon="MessageSquare" Title="Messages" Subtitle="{x:Bind Model.MessagesSubtitle, Mode=OneWay}" Click="Messages_Click" Visibility="{x:Bind HasMessages(Model.Focused), Mode=OneWay}" />
+                            <views:ActionTile Icon="Phone" Title="Call" Click="Call_Click" Visibility="{x:Bind HasMessages(Model.Focused), Mode=OneWay}" />
+                            <views:ActionTile Icon="Cast" Title="Mirror" Click="Mirror_Click" Visibility="{x:Bind HasMirroring(Model.Focused), Mode=OneWay}" />
+                            <views:ActionTile Icon="Images" Title="Photos" Click="Photos_Click" Visibility="{x:Bind HasPhotos(Model.Focused), Mode=OneWay}" />
+                            <views:ActionTile Icon="FolderOpen" Title="Files" Subtitle="In Explorer" Click="Files_Click" Visibility="{x:Bind SharesFiles(Model.Focused), Mode=OneWay}" />
+                        </views:TileGrid>
 
                         <!-- Things to do with a TV -->
                         <Grid ColumnSpacing="10" RowSpacing="10" Visibility="{x:Bind Model.FocusIsTv, Mode=OneWay}">

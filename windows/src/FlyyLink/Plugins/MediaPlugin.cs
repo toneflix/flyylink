@@ -33,6 +33,8 @@ internal sealed class MediaPlugin : IPlugin
 
     public void OnPaired(Device device) => device.Send(MediaRequest.PlayerList().ToPacket());
 
+    public void OnFeaturesChanged(Device device) => OnPaired(device);
+
     public void OnPacket(NetworkPacket packet, Device device)
     {
         if (Media.PlayerList(packet) is { } names) UpdateList(names, device);

@@ -112,6 +112,9 @@ public enum PacketType {
 
     /// The phone's contacts. Body: {"contacts": [{"name", "numbers": [...]}]}; see `PhoneContacts`.
     public static let contacts = "flyylink.contacts"
+
+    /// The phone features the user has on, sent when one changes. Body: {"features": [...]}; see `PhoneFeatures`.
+    public static let features = "flyylink.features"
 }
 
 public enum Capabilities {
@@ -161,6 +164,7 @@ public enum Capabilities {
         PacketType.files,
         PacketType.contactsRequest,
         PacketType.contacts,
+        PacketType.features,
     ]
 
     /// What a TV sends and accepts: no texts, calls, contacts, signal, clipboard, battery, location, photos, files or screen sharing.

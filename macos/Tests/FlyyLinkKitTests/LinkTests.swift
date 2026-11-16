@@ -93,14 +93,16 @@ final class LanLinkTests: XCTestCase {
             type: DeviceType,
             ports: ClosedRange<UInt16>,
             udpPort: UInt16 = 41716,
-            capabilities: Set<String> = Capabilities.mvp
+            capabilities: Set<String> = Capabilities.mvp,
+            features: PhoneFeatures = .all
         ) throws {
             let identity = DeviceIdentity(
                 deviceId: DeviceIdentity.newDeviceId(),
                 deviceName: name,
                 deviceType: type,
                 incomingCapabilities: capabilities,
-                outgoingCapabilities: capabilities
+                outgoingCapabilities: capabilities,
+                features: features
             )
             let certificate = try DeviceCertificate.generate(deviceId: identity.deviceId)
             let trust = InMemoryTrustStore()
@@ -228,6 +230,36 @@ final class LanLinkTests: XCTestCase {
 
         XCTAssertTrue(phoneDevice.send(NetworkPacket(type: PacketType.ping)))
         XCTAssertEqual(mac.recorder.packets.take()?.type, PacketType.ping)
+    }
+
+    func testFeaturesArriveWithTheIdentityAndWhenTheyChange() throws {
+        let phoneHas = FeatureBox(.of(.clipboard))
+        phone = try Peer(name: "Phone", type: .phone, ports: 41731...41764, features: phoneHas.value)
+        phone.trust.trust(mac.identity.deviceId, certificate: mac.certificate.certificateDER)
+        mac.trust.trust(phone.identity.deviceId, certificate: phone.certificate.certificateDER)
+        let (onPhone, onMac) = try connect()
+        let phoneDevice = Device(link: onPhone, ownCertificate: phone.certificate, trustStore: phone.trust, ownFeatures: { phoneHas.value })
+        let macDevice = Device(link: onMac, ownCertificate: mac.certificate, trustStore: mac.trust)
+        phoneDevice.delegate = phone.recorder
+        macDevice.delegate = mac.recorder
+        phoneDevice.start()
+        macDevice.start()
+
+        XCTAssertEqual(macDevice.features, .of(.clipboard))
+        XCTAssertFalse(macDevice.send(PhoneLocation.request()))
+        XCTAssertFalse(phoneDevice.send(PhoneLocation(latitude: 1, longitude: 2, accuracy: 3, time: 4).toPacket()))
+
+        onMac.send(PhoneLocation.request())
+        XCTAssertTrue(macDevice.send(Clipboard.packet("hi")))
+        XCTAssertEqual(phone.recorder.packets.take()?.type, PacketType.clipboard)
+
+        phoneHas.value = .of(.clipboard, .location)
+        XCTAssertTrue(phoneDevice.send(phoneHas.value.toPacket()))
+        XCTAssertEqual(mac.recorder.packets.take()?.type, PacketType.features)
+
+        XCTAssertEqual(macDevice.features, phoneHas.value)
+        XCTAssertTrue(macDevice.send(PhoneLocation.request()))
+        XCTAssertEqual(phone.recorder.packets.take()?.type, PacketType.locationRequest)
     }
 
     func testChangedCertificateIsRejected() throws {
@@ -484,6 +516,14 @@ private final class ConnectedSet: @unchecked Sendable {
 }
 
 /// A clock tests can move forward.
+private final class FeatureBox: @unchecked Sendable {
+    var value: PhoneFeatures
+
+    init(_ value: PhoneFeatures) {
+        self.value = value
+    }
+}
+
 private final class Clock: @unchecked Sendable {
     var now: Int64 = 1_000
 }

@@ -8,6 +8,9 @@ interface Plugin {
     /** The device just became paired, or connected while already paired. */
     fun onPaired(device: Device) {}
 
+    /** The device turned a feature on or off; see [PhoneFeatures]. */
+    fun onFeaturesChanged(device: Device) {}
+
     fun onPacket(device: Device, packet: NetworkPacket)
 }
 
@@ -17,6 +20,10 @@ class PluginRouter(private val plugins: List<Plugin>) {
 
     fun onPaired(device: Device) {
         plugins.forEach { it.onPaired(device) }
+    }
+
+    fun onFeaturesChanged(device: Device) {
+        plugins.forEach { it.onFeaturesChanged(device) }
     }
 
     /** Returns false when no plugin accepts the packet. */

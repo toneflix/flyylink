@@ -10,6 +10,9 @@ public interface IPlugin
     /// The device just became paired, or connected while already paired.
     void OnPaired(Device device) { }
 
+    /// The device turned a feature on or off; see `PhoneFeatures`.
+    void OnFeaturesChanged(Device device) { }
+
     void OnPacket(NetworkPacket packet, Device device);
 }
 
@@ -21,6 +24,11 @@ public sealed class PluginRouter(IReadOnlyList<IPlugin> plugins)
     public void OnPaired(Device device)
     {
         foreach (var plugin in plugins) plugin.OnPaired(device);
+    }
+
+    public void OnFeaturesChanged(Device device)
+    {
+        foreach (var plugin in plugins) plugin.OnFeaturesChanged(device);
     }
 
     /// Returns false when no plugin accepts the packet.

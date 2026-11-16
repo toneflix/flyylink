@@ -45,6 +45,9 @@ internal sealed class NotificationPlugin(ToastCenter toasts, DeviceRegistry devi
 
     public void OnPaired(Device device) => device.Send(NotificationRequests.RequestAll());
 
+    /// Fills in what is showing on the phone once its notifications are turned on.
+    public void OnFeaturesChanged(Device device) => OnPaired(device);
+
     public void OnPacket(NetworkPacket packet, Device device) => Present(packet, device.Id, device.Name, device);
 
     /// A notification another computer passed on from its phone. Relayed notifications come without icons.
