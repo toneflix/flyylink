@@ -33,7 +33,7 @@ public sealed class FlowRow : Panel
         var lines = Lines(available.Width);
         var width = lines.Count == 0 ? 0 : lines.Max(line => line.Width);
 
-        return new Size(width, Height(lines));
+        return new Size(width, LinesHeight(lines));
     }
 
     protected override Size ArrangeOverride(Size final)
@@ -96,6 +96,6 @@ public sealed class FlowRow : Panel
         return lines;
     }
 
-    private double Height(List<Line> lines) =>
+    private double LinesHeight(List<Line> lines) =>
         lines.Count == 0 ? 0 : lines.Sum(line => line.Height) + LineSpacing * (lines.Count - 1);
 }

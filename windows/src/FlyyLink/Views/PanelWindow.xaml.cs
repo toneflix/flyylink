@@ -266,6 +266,10 @@ public sealed partial class PanelWindow : Window
 
     public Visibility ShowsSignal(DeviceState? device) => Shown(device?.HasSignal == true);
 
+    public Visibility ShowsNotificationsBadge(DeviceState? device) => HasNotifications(device);
+
+    public Visibility ShowsClipboardBadge(DeviceState? device) => HasClipboard(device);
+
     public string SignalHint(DeviceState? device) => SignalBars.Label(device?.SignalStrength ?? 0, device?.SignalGeneration ?? "");
 
     public Brush InputChip(bool active) => (Brush)Application.Current.Resources[active ? "FlyyLinkAccentBrush" : "FlyyLinkTintBrush"];
