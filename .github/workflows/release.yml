@@ -49,7 +49,7 @@ jobs:
     if: ${{ !startsWith(github.ref_name, 'macos-') && !startsWith(github.ref_name, 'windows-') }}
     runs-on: ubuntu-latest
     outputs:
-      track: ${{ steps.version.outputs.track }}
+      tracks: ${{ steps.version.outputs.tracks }}
     defaults:
       run:
         working-directory: android
@@ -69,18 +69,18 @@ jobs:
           number="${tag#v}"
 
           case "$number" in
-            *-internal*) track=internal ;;
-            *-alpha*) track=alpha ;;
-            *-beta* | *-rc*) track=beta ;;
+            *-internal*) tracks=internal ;;
+            *-alpha*) tracks=alpha,internal ;;
+            *-beta* | *-rc*) tracks=beta,alpha,internal ;;
             *-*)
               echo "::error::Use -beta, -rc, -alpha or -internal after the version, or no suffix for production."
               exit 1
               ;;
-            *) track=production ;;
+            *) tracks=production,beta,alpha,internal ;;
           esac
 
           echo "number=$number" >> "$GITHUB_OUTPUT"
-          echo "track=$track" >> "$GITHUB_OUTPUT"
+          echo "tracks=$tracks" >> "$GITHUB_OUTPUT"
 
       - name: Load the signing key
         env:
@@ -396,26 +396,18 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v7
-        if: steps.key.outputs.ready == 'true'
-        with:
-          sparse-checkout: .github/scripts
-
       - uses: actions/download-artifact@v8
         if: steps.key.outputs.ready == 'true'
         with:
           name: android
           path: dist
 
-      - uses: actions/setup-python@v6
-        if: steps.key.outputs.ready == 'true'
-        with:
-          python-version: '3.12'
-
       - name: Upload to Google Play
         if: steps.key.outputs.ready == 'true'
-        env:
-          TRACK: ${{ needs.android.outputs.track }}
-        run: |
-          pip install --quiet google-api-python-client google-auth
-          python .github/scripts/play_release.py com.toneflix.flyylink dist/FlyyLink-*.aab "$TRACK"
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.toneflix.flyylink
+          releaseFiles: dist/FlyyLink-*.aab
+          tracks: ${{ needs.android.outputs.tracks }}
+          status: completed
