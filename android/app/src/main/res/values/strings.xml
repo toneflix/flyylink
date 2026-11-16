@@ -30,6 +30,8 @@
     <string name="home_connected">Connected</string>
     <string name="home_wifi">Wi-Fi</string>
     <string name="home_flowing">Syncing</string>
+    <string name="home_disconnected">Disconnected</string>
+    <string name="home_connect">Connect</string>
     <string name="home_looking">Looking for your devices</string>
     <string name="home_looking_hint">Open FlyyLink on your computer or TV, on the same Wi-Fi.</string>
     <string name="home_pick_mac">Pick a device to pair</string>

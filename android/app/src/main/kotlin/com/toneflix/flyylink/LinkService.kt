@@ -22,6 +22,9 @@ import com.toneflix.flyylink.protocol.PhoneFeature
 import com.toneflix.flyylink.protocol.PhoneFeatures
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
@@ -47,6 +50,7 @@ class LinkService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForegroundCompat()
+        _running.value = true
         if (scheduler == null) {
             startLink()
             showConnectionState()
@@ -72,6 +76,7 @@ class LinkService : Service() {
         wifiLock?.release()
         link = null
         scheduler = null
+        _running.value = false
         super.onDestroy()
     }
 
@@ -201,7 +206,13 @@ class LinkService : Service() {
         const val CHANNEL_ID = "link"
         private const val NOTIFICATION_ID = 1
 
+        private val _running = MutableStateFlow(false)
+
+        /** False after Disconnect or Stop, until something starts FlyyLink again. */
+        val running: StateFlow<Boolean> = _running.asStateFlow()
+
         fun start(context: Context) {
+            _running.value = true
             context.startForegroundService(Intent(context, LinkService::class.java))
         }
 
