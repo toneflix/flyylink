@@ -207,6 +207,22 @@ extension FlyyDrop.Receiving {
     }
 }
 
+/// The gear menu entry for who may FlyyDrop to this Mac.
+struct FlyyDropReceivingMenu: View {
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        Picker("Who can FlyyDrop to this Mac", selection: Binding(
+            get: { model.flyyDropReceiving },
+            set: { model.setFlyyDropReceiving($0) }
+        )) {
+            ForEach(FlyyDrop.Receiving.allCases, id: \.self) { mode in
+                Text(mode.title).tag(mode)
+            }
+        }
+    }
+}
+
 /// Shown while anyone nearby may FlyyDrop to this Mac, with a way to stop that.
 struct FlyyDropReceivingBanner: View {
     @ObservedObject var model: AppModel

@@ -876,6 +876,14 @@ public sealed class AppModel : Observable, IDeviceDelegate
         }
     }
 
+    /// The FlyyDrop receiving choices with their titles, in menu order.
+    public static readonly (FlyyDrop.Receiving Mode, string Title)[] FlyyDropChoices =
+    [
+        (FlyyDrop.Receiving.Off, "Paired devices only"),
+        (FlyyDrop.Receiving.EveryoneFor10Minutes, "Everyone for 10 minutes"),
+        (FlyyDrop.Receiving.Everyone, "Everyone"),
+    ];
+
     public bool ShowsFlyyDropBanner => FlyyDropReceiving != FlyyDrop.Receiving.Off;
 
     public string FlyyDropBannerText => flyyDrop.Drop.ReceivingUntil is long until
