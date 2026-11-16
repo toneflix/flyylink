@@ -35,6 +35,10 @@ One-time setup:
 
 The bundle must be signed with the upload key Play expects, which is the `ANDROID_KEYSTORE` key. Play rejects a build number it has already seen, so a re-run of an old release fails the Play step only.
 
+## Store release notes
+
+Play's "What's new" and Amazon's release notes come from the GitHub release's notes. Only lines for pull requests that changed the Android app's code are kept, without `chore`, `docs`, `ci`, `build`, `refactor`, `style` or `test` changes, and with the `feat:`/`fix:` prefix dropped. They're cut to 500 characters, in English (`en-US`). When nothing in the notes touches the app, the stores keep no new notes.
+
 ## Amazon Appstore
 
 Versions without a suffix, such as `1.2.3`, also replace the APK on the Amazon Appstore and send it for review. The same APK runs on Fire tablets and Fire TV, and Amazon keeps the device targeting. Versions with a suffix aren't sent to Amazon. Without the Amazon secrets and variable, this step is skipped with a warning.

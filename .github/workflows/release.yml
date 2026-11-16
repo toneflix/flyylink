@@ -18,6 +18,8 @@ name: Release
 # A build also goes to every testing track below its own, so production reaches beta, alpha and internal too.
 # A version with a suffix is a GitHub pre-release and isn't put on the website or in the update feeds.
 #
+# Both stores get the release's notes, keeping only changes whose pull request touched the Android app (500 characters at most).
+#
 # Amazon Appstore: secrets AMAZON_CLIENT_ID and AMAZON_CLIENT_SECRET (an App Submission API security profile) and
 # variable AMAZON_APP_ID. Only versions without a suffix go to Amazon, as a new APK sent for review. Without them, Amazon is skipped.
 #
@@ -399,11 +401,29 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - uses: actions/checkout@v7
+        if: steps.key.outputs.ready == 'true'
+        with:
+          sparse-checkout: .github/scripts
+
       - uses: actions/download-artifact@v8
         if: steps.key.outputs.ready == 'true'
         with:
           name: android
           path: dist
+
+      - name: Write the release notes
+        id: notes
+        if: steps.key.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 .github/scripts/store_notes.py "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME" whatsnew/whatsnew-en-US ||
+            echo "::warning::Couldn't read the release notes, so Play gets none."
+
+          if [ -f whatsnew/whatsnew-en-US ]; then
+            echo "dir=whatsnew" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Upload to Google Play
         if: steps.key.outputs.ready == 'true'
@@ -414,6 +434,7 @@ jobs:
           releaseFiles: dist/FlyyLink-*.aab
           tracks: ${{ needs.android.outputs.tracks }}
           status: completed
+          whatsNewDirectory: ${{ steps.notes.outputs.dir }}
 
   # Amazon has no testing tracks here, so only production versions go to it.
   amazon:
@@ -448,4 +469,9 @@ jobs:
 
       - name: Submit to the Amazon Appstore
         if: steps.key.outputs.ready == 'true'
-        run: python3 .github/scripts/amazon_appstore.py "$AMAZON_APP_ID" dist/FlyyLink-*.apk
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 .github/scripts/store_notes.py "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME" notes.txt ||
+            echo "::warning::Couldn't read the release notes, so Amazon gets none."
+          python3 .github/scripts/amazon_appstore.py "$AMAZON_APP_ID" dist/FlyyLink-*.apk notes.txt

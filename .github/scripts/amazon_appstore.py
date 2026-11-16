@@ -1,6 +1,6 @@
-"""Replaces the app's APK on the Amazon Appstore and submits it for review.
+"""Replaces the app's APK on the Amazon Appstore, sets its release notes and submits it for review.
 
-Usage: amazon_appstore.py <app id> <release.apk>
+Usage: amazon_appstore.py <app id> <release.apk> [notes file]
 Reads AMAZON_CLIENT_ID and AMAZON_CLIENT_SECRET from the environment.
 """
 
@@ -22,12 +22,13 @@ class AmazonAppstore:
     TOKEN_URL = "https://api.amazon.com/auth/o2/token"
     API_URL = "https://developer.amazon.com/api/appstore/v1/applications"
     APK_TYPE = "application/vnd.android.package-archive"
+    LANGUAGE = "en-US"
 
     def __init__(self, app_id, client_id, client_secret):
         self.app_url = f"{self.API_URL}/{app_id}"
         self.token = self._token(client_id, client_secret)
 
-    def release(self, apk_path):
+    def release(self, apk_path, notes=None):
         edit = self._open_edit()
         apks = self._request("GET", f"/edits/{edit}/apks")[0]
 
@@ -44,10 +45,28 @@ class AmazonAppstore:
         else:
             self._request("POST", f"/edits/{edit}/apks/upload", apk, self.APK_TYPE)
 
+        if notes:
+            self._set_notes(edit, notes)
+
         etag = self._request("GET", f"/edits/{edit}")[1]
         self._request("POST", f"/edits/{edit}/commit", etag=etag)
 
         return edit
+
+    def _set_notes(self, edit, notes):
+        path = f"/edits/{edit}/listings/{self.LANGUAGE}"
+
+        try:
+            listing, etag = self._request("GET", path)
+        except AppstoreError as error:
+            if error.status != 404:
+                raise
+
+            print(f"::warning::No {self.LANGUAGE} listing on Amazon, so the release notes weren't set.")
+            return
+
+        listing["recentChanges"] = notes
+        self._request("PUT", path, json.dumps(listing).encode(), etag=etag)
 
     def _open_edit(self):
         try:
@@ -100,10 +119,12 @@ class AmazonAppstore:
 
 if __name__ == "__main__":
     app_id, apk_path = sys.argv[1:3]
+    notes_path = sys.argv[3] if len(sys.argv) > 3 else ""
+    notes = open(notes_path).read() if os.path.isfile(notes_path) else None
     store = AmazonAppstore(app_id, os.environ["AMAZON_CLIENT_ID"], os.environ["AMAZON_CLIENT_SECRET"])
 
     try:
-        edit = store.release(apk_path)
+        edit = store.release(apk_path, notes)
     except AppstoreError as error:
         print(f"::error::{error}")
         sys.exit(1)
