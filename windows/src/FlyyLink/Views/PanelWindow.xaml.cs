@@ -268,7 +268,7 @@ public sealed partial class PanelWindow : Window
 
     public string SignalHint(DeviceState? device) => SignalBars.Label(device?.SignalStrength ?? 0, device?.SignalGeneration ?? "");
 
-        public Brush InputChip(bool active) => (Brush)Application.Current.Resources[active ? "FlyyLinkAccentBrush" : "FlyyLinkTintBrush"];
+    public Brush InputChip(bool active) => (Brush)Application.Current.Resources[active ? "FlyyLinkAccentBrush" : "FlyyLinkTintBrush"];
 
     public Brush InputGlyph(bool active) => active ? new SolidColorBrush(Microsoft.UI.Colors.White) : (Brush)Application.Current.Resources["FlyyLinkAccentBrush"];
 
