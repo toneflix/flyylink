@@ -266,7 +266,7 @@
                             <Border.RenderTransform>
                                 <TranslateTransform x:Name="HeroShift" />
                             </Border.RenderTransform>
-                            <Grid ColumnSpacing="14">
+                            <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
@@ -283,25 +283,26 @@
                                             <MenuFlyout x:Name="PhoneMenu" Opening="PhoneMenu_Opening" />
                                         </Button.Flyout>
                                     </Button>
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <Border Background="{ThemeResource FlyyLinkOkTintBrush}" CornerRadius="10" Padding="9,4" HorizontalAlignment="Left" ToolTipService.ToolTip="Connected over Wi-Fi">
+                                    <views:FlowRow Spacing="6" LineSpacing="6">
+                                        <Border Background="{ThemeResource FlyyLinkOkTintBrush}" CornerRadius="10" Padding="9,4" ToolTipService.ToolTip="Connected over Wi-Fi">
                                             <StackPanel Orientation="Horizontal" Spacing="6">
                                                 <Ellipse Width="7" Height="7" Fill="{ThemeResource FlyyLinkOkBrush}" VerticalAlignment="Center" />
-                                                <TextBlock Text="Connected" FontSize="11" FontWeight="SemiBold" Foreground="{ThemeResource FlyyLinkOkBrush}" />
+                                                <TextBlock Text="Connected" FontSize="11" FontWeight="SemiBold" Foreground="{ThemeResource FlyyLinkOkBrush}" TextWrapping="NoWrap" />
                                                 <views:LucideIcon Icon="Wifi" Size="11" Foreground="{ThemeResource FlyyLinkOkBrush}" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Border>
-                                        <Border Background="#14000000" CornerRadius="10" Padding="9,5" VerticalAlignment="Center" Visibility="{x:Bind ShowsSignal(Model.Focused), Mode=OneWay}"
+                                        <Border Background="#14000000" CornerRadius="10" Padding="9,5" Visibility="{x:Bind ShowsSignal(Model.Focused), Mode=OneWay}"
                                                 ToolTipService.ToolTip="{x:Bind SignalHint(Model.Focused), Mode=OneWay}">
                                             <views:SignalBars Strength="{x:Bind Model.Focused.SignalStrength, Mode=OneWay, FallbackValue=0}" Generation="{x:Bind Model.Focused.SignalGeneration, Mode=OneWay, FallbackValue=''}" />
                                         </Border>
-                                    </StackPanel>
+                                    </views:FlowRow>
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <Button Width="24" Height="24" Padding="0" CornerRadius="12" Style="{StaticResource FlyyLinkPlainButton}" Background="{x:Bind StatusBackground(Model.MirrorsNotifications), Mode=OneWay}" Click="Notifications_Click"
+                                                Visibility="{x:Bind ShowsNotificationsBadge(Model.Focused), Mode=OneWay}"
                                                 ToolTipService.ToolTip="{x:Bind NotificationsHint(Model.MirrorsNotifications), Mode=OneWay}" AutomationProperties.Name="{x:Bind NotificationsHint(Model.MirrorsNotifications), Mode=OneWay}">
                                             <views:LucideIcon Icon="{x:Bind HeroBell(Model.MirrorsNotifications), Mode=OneWay}" Size="12" Foreground="#4A4030" Opacity="{x:Bind StatusOpacity(Model.MirrorsNotifications), Mode=OneWay}" />
                                         </Button>
-                                        <Border Width="24" Height="24" CornerRadius="12" Background="#14000000" ToolTipService.ToolTip="Clipboard synced" AutomationProperties.Name="Clipboard synced">
+                                        <Border Width="24" Height="24" CornerRadius="12" Background="#14000000" Visibility="{x:Bind ShowsClipboardBadge(Model.Focused), Mode=OneWay}" ToolTipService.ToolTip="Clipboard synced" AutomationProperties.Name="Clipboard synced">
                                             <views:LucideIcon Icon="Clipboard" Size="12" Foreground="#4A4030" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
                                     </StackPanel>

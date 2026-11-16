@@ -114,7 +114,7 @@ struct DesktopArt: View {
 struct BatteryRing: View {
     let charge: Int?
     let isCharging: Bool
-    var size: CGFloat = 54
+    var size: CGFloat = 40
 
     var body: some View {
         let fraction = Double(min(max(charge ?? 0, 0), 100)) / 100
@@ -122,18 +122,18 @@ struct BatteryRing: View {
         let color = isLow ? Theme.warn : Theme.ok
 
         ZStack {
-            Circle().stroke(Theme.track, lineWidth: 5)
+            Circle().stroke(Theme.track, lineWidth: 4)
             Circle()
                 .trim(from: 0, to: fraction)
-                .stroke(color, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(.easeInOut(duration: 0.6), value: fraction)
 
             VStack(spacing: 0) {
                 Text(charge.map { "\($0)%" } ?? "–")
-                    .font(.system(size: 12, weight: .bold).monospacedDigit())
+                    .font(.system(size: 10, weight: .bold).monospacedDigit())
                 if isCharging {
-                    Image(lucide: .zap, size: 8)
+                    Image(lucide: .zap, size: 7)
                         .foregroundStyle(color)
                 }
             }
