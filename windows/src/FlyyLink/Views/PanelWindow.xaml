@@ -266,7 +266,7 @@
                             <Border.RenderTransform>
                                 <TranslateTransform x:Name="HeroShift" />
                             </Border.RenderTransform>
-                            <Grid ColumnSpacing="14">
+                            <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
@@ -295,17 +295,17 @@
                                                 ToolTipService.ToolTip="{x:Bind SignalHint(Model.Focused), Mode=OneWay}">
                                             <views:SignalBars Strength="{x:Bind Model.Focused.SignalStrength, Mode=OneWay, FallbackValue=0}" Generation="{x:Bind Model.Focused.SignalGeneration, Mode=OneWay, FallbackValue=''}" />
                                         </Border>
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <Button Width="24" Height="24" Padding="0" CornerRadius="12" Style="{StaticResource FlyyLinkPlainButton}" Background="{x:Bind StatusBackground(Model.MirrorsNotifications), Mode=OneWay}" Click="Notifications_Click"
-                                                    Visibility="{x:Bind ShowsNotificationsBadge(Model.Focused), Mode=OneWay}"
-                                                    ToolTipService.ToolTip="{x:Bind NotificationsHint(Model.MirrorsNotifications), Mode=OneWay}" AutomationProperties.Name="{x:Bind NotificationsHint(Model.MirrorsNotifications), Mode=OneWay}">
-                                                <views:LucideIcon Icon="{x:Bind HeroBell(Model.MirrorsNotifications), Mode=OneWay}" Size="12" Foreground="#4A4030" Opacity="{x:Bind StatusOpacity(Model.MirrorsNotifications), Mode=OneWay}" />
-                                            </Button>
-                                            <Border Width="24" Height="24" CornerRadius="12" Background="#14000000" Visibility="{x:Bind ShowsClipboardBadge(Model.Focused), Mode=OneWay}" ToolTipService.ToolTip="Clipboard synced" AutomationProperties.Name="Clipboard synced">
-                                                <views:LucideIcon Icon="Clipboard" Size="12" Foreground="#4A4030" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                            </Border>
-                                        </StackPanel>
                                     </views:FlowRow>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Button Width="24" Height="24" Padding="0" CornerRadius="12" Style="{StaticResource FlyyLinkPlainButton}" Background="{x:Bind StatusBackground(Model.MirrorsNotifications), Mode=OneWay}" Click="Notifications_Click"
+                                                Visibility="{x:Bind ShowsNotificationsBadge(Model.Focused), Mode=OneWay}"
+                                                ToolTipService.ToolTip="{x:Bind NotificationsHint(Model.MirrorsNotifications), Mode=OneWay}" AutomationProperties.Name="{x:Bind NotificationsHint(Model.MirrorsNotifications), Mode=OneWay}">
+                                            <views:LucideIcon Icon="{x:Bind HeroBell(Model.MirrorsNotifications), Mode=OneWay}" Size="12" Foreground="#4A4030" Opacity="{x:Bind StatusOpacity(Model.MirrorsNotifications), Mode=OneWay}" />
+                                        </Button>
+                                        <Border Width="24" Height="24" CornerRadius="12" Background="#14000000" Visibility="{x:Bind ShowsClipboardBadge(Model.Focused), Mode=OneWay}" ToolTipService.ToolTip="Clipboard synced" AutomationProperties.Name="Clipboard synced">
+                                            <views:LucideIcon Icon="Clipboard" Size="12" Foreground="#4A4030" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                    </StackPanel>
                                 </StackPanel>
                                 <views:BatteryRing Grid.Column="2" VerticalAlignment="Center" Visibility="{x:Bind ShowsBattery(Model.Focused), Mode=OneWay}" Charge="{x:Bind BatteryCharge(Model.Focused), Mode=OneWay}" IsCharging="{x:Bind Model.Focused.IsCharging, Mode=OneWay, FallbackValue=False}" />
                             </Grid>

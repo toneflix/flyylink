@@ -7,7 +7,7 @@ struct DeviceHero: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             DeviceArt(type: device.type, width: device.isComputer ? 30 : 40)
 
             VStack(alignment: .leading, spacing: 6) {
@@ -38,23 +38,23 @@ struct DeviceHero: View {
                             .fixedSize()
                             .help(SignalBars.label(signal))
                     }
+                }
 
-                    if hasNotifications || hasClipboard {
-                        HStack(spacing: 6) {
-                            if hasNotifications {
-                                Button { model.mirrorsNotifications.toggle() } label: {
-                                    StatusIcon(icon: model.mirrorsNotifications ? .bell : .bellOff, isOn: model.mirrorsNotifications)
-                                }
-                                .buttonStyle(.plain)
-                                .help(model.mirrorsNotifications ? "Pause notifications" : "Turn on notifications")
-                                .accessibilityLabel(model.mirrorsNotifications ? "Notifications on" : "Notifications paused")
+                if hasNotifications || hasClipboard {
+                    HStack(spacing: 6) {
+                        if hasNotifications {
+                            Button { model.mirrorsNotifications.toggle() } label: {
+                                StatusIcon(icon: model.mirrorsNotifications ? .bell : .bellOff, isOn: model.mirrorsNotifications)
                             }
+                            .buttonStyle(.plain)
+                            .help(model.mirrorsNotifications ? "Pause notifications" : "Turn on notifications")
+                            .accessibilityLabel(model.mirrorsNotifications ? "Notifications on" : "Notifications paused")
+                        }
 
-                            if hasClipboard {
-                                StatusIcon(icon: .clipboard, isOn: true)
-                                    .help("Clipboard synced")
-                                    .accessibilityLabel("Clipboard synced")
-                            }
+                        if hasClipboard {
+                            StatusIcon(icon: .clipboard, isOn: true)
+                                .help("Clipboard synced")
+                                .accessibilityLabel("Clipboard synced")
                         }
                     }
                 }

@@ -273,12 +273,12 @@ public sealed class BatteryRing : UserControl
     public static readonly DependencyProperty IsChargingProperty =
         DependencyProperty.Register(nameof(IsCharging), typeof(bool), typeof(BatteryRing), new PropertyMetadata(false, (d, _) => ((BatteryRing)d).Draw()));
 
-    private const double Size = 54;
-    private const double Thickness = 5;
+    private const double Size = 40;
+    private const double Thickness = 4;
 
     private readonly Microsoft.UI.Xaml.Shapes.Path arc = new() { StrokeThickness = Thickness, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round };
-    private readonly TextBlock label = new() { FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center };
-    private readonly LucideIcon bolt = new() { Icon = Lucide.Zap, Size = 9, HorizontalAlignment = HorizontalAlignment.Center };
+    private readonly TextBlock label = new() { FontSize = 10, FontWeight = Microsoft.UI.Text.FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center };
+    private readonly LucideIcon bolt = new() { Icon = Lucide.Zap, Size = 7, HorizontalAlignment = HorizontalAlignment.Center };
 
     public BatteryRing()
     {
