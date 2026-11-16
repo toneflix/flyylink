@@ -112,6 +112,7 @@ fun HomeScreen(phoneName: String, onOpenFeatures: () -> Unit) {
     val focusId by DeviceStore.focusId.collectAsStateWithLifecycle()
     val style by DeviceStore.switcherStyle.collectAsStateWithLifecycle()
     val recent by Recent.items.collectAsStateWithLifecycle()
+    val running by LinkService.running.collectAsStateWithLifecycle()
     val macs = devices.filter { it.pairState == PairState.PAIRED }
     val mac = DeviceStore.focused(devices, focusId)
     val others = devices.filter { it.pairState != PairState.PAIRED && (it.canPair || it.canFlyyDrop) }
@@ -136,6 +137,8 @@ fun HomeScreen(phoneName: String, onOpenFeatures: () -> Unit) {
             if (mac != null) {
                 if (carousel) MacCarousel(macs, mac.id) else ConnectedHero(mac, sharedWithOthers = macs.size > 1)
                 QuickTiles(mac, macCount = macs.size)
+            } else if (!running) {
+                DisconnectedHero()
             } else {
                 SearchingHero(hasNearby = others.any { it.canPair })
             }
@@ -389,6 +392,27 @@ private fun Pill(content: @Composable () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) { content() }
+}
+
+/** After Disconnect in the notification, while the app stays open. */
+@Composable
+private fun DisconnectedHero() {
+    val context = LocalContext.current
+
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.large)
+            .padding(vertical = 30.dp, horizontal = 22.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
+        LaptopArt(120.dp)
+        Text(stringResource(R.string.home_disconnected), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Button(onClick = { LinkService.start(context) }) {
+            Text(stringResource(R.string.home_connect), fontWeight = FontWeight.SemiBold)
+        }
+    }
 }
 
 @Composable
