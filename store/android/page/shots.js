@@ -47,11 +47,14 @@ class Tablet extends Phone {
   }
 }
 
-/** One 1080x1920 store screenshot: logo, two-line headline, and the app in a phone. */
+/**
+ * One 1080x1920 store screenshot: logo, two-line headline, and the app in a phone.
+ * The Amazon Appstore copy uses `amazonLines` where given, since Amazon rejects Google marks such as "Android".
+ */
 class StoreShot {
-  constructor({ id, lines, dark = false, screen, extra = () => '' }) {
-    this.id = id;
-    this.lines = lines;
+  constructor({ id, lines, amazonLines = lines, dark = false, screen, extra = () => '' }, store = 'play') {
+    this.id = store === 'amazon' ? `amazon-phone-${id}` : id;
+    this.lines = store === 'amazon' ? amazonLines : lines;
     this.dark = dark;
     this.screen = screen;
     this.extra = extra;
@@ -86,14 +89,14 @@ class StoreShot {
  */
 class TabletShot extends StoreShot {
   static FORMATS = {
-    'tablet-7': { dpWidth: 600, width: 1080, scale: 4 / 3 },
-    'tablet-10': { dpWidth: 800, width: 1080, scale: 2 },
-    'amazon-tablet-7': { dpWidth: 600, width: 1200, scale: 1 },
-    'amazon-tablet-10': { dpWidth: 800, width: 1200, scale: 4 / 3 },
+    'tablet-7': { dpWidth: 600, width: 1080, scale: 4 / 3, store: 'play' },
+    'tablet-10': { dpWidth: 800, width: 1080, scale: 2, store: 'play' },
+    'amazon-tablet-7': { dpWidth: 600, width: 1200, scale: 1, store: 'amazon' },
+    'amazon-tablet-10': { dpWidth: 800, width: 1200, scale: 4 / 3, store: 'amazon' },
   };
 
   constructor(spec, format) {
-    super(spec);
+    super(spec, TabletShot.FORMATS[format].store);
     this.id = `${format}-${spec.id}`;
     this.dpWidth = TabletShot.FORMATS[format].dpWidth;
     this.width = TabletShot.FORMATS[format].width;
@@ -109,10 +112,11 @@ class TabletShot extends StoreShot {
   }
 }
 
-/** The 1024x500 feature graphic. */
+/** The 1024x500 feature graphic: Play's feature graphic, or the Amazon Appstore promo image without Google marks. */
 class FeatureGraphic {
-  constructor() {
-    this.id = 'feature-graphic';
+  constructor(id = 'feature-graphic', title = 'Your Android phone,') {
+    this.id = id;
+    this.title = title;
   }
 
   render(assets) {
@@ -126,7 +130,7 @@ class FeatureGraphic {
       <div class="device">${phone.render(screen)}</div>
       <div class="copy">
         <div class="brand"><img src="${assets.mark}"><span>FlyyLink</span></div>
-        <div class="headline">Your Android phone,<br><span class="accent">on your Mac and PC</span></div>
+        <div class="headline">${this.title}<br><span class="accent">on your Mac and PC</span></div>
         <div class="sub">Texts, calls, notifications and files.</div>
       </div>
     </div>`;
@@ -140,6 +144,7 @@ const SCREENS = [
   {
     id: '01-home',
     lines: ['Android meets', 'your Mac and PC'],
+    amazonLines: ['Your phone meets', 'your Mac and PC'],
     screen: (app) => app.screen(app.home([
       app.hero('MacBook Pro', FLOWING),
       app.tiles(),
@@ -155,7 +160,7 @@ const SCREENS = [
     lines: ['FlyyDrop to', 'anyone nearby'],
     screen: (app) => app.screen(
       app.home([app.hero('MacBook Pro', FLOWING), app.tiles(), app.flyyDropCard()]),
-      app.flyyDropSheet("Ada's Pixel 8", { title: '3 photos · 12.4 MB', detail: 'IMG_2207.jpg, IMG_2208.jpg, IMG_2210.jpg' }),
+      app.flyyDropSheet("Ada's phone", { title: '3 photos · 12.4 MB', detail: 'IMG_2207.jpg, IMG_2208.jpg, IMG_2210.jpg' }),
     ),
   },
   {
@@ -234,6 +239,13 @@ const SCREENS = [
 ];
 
 const SHOTS = SCREENS.map((spec) => new StoreShot(spec));
+const AMAZON_SHOTS = SCREENS.map((spec) => new StoreShot(spec, 'amazon'));
 const TABLET_SHOTS = Object.keys(TabletShot.FORMATS).flatMap((format) => SCREENS.map((spec) => new TabletShot(spec, format)));
 
-const GRAPHICS = [new FeatureGraphic(), ...SHOTS, ...TABLET_SHOTS];
+const GRAPHICS = [
+  new FeatureGraphic(),
+  new FeatureGraphic('amazon-promo', 'Your phone,'),
+  ...SHOTS,
+  ...AMAZON_SHOTS,
+  ...TABLET_SHOTS,
+];

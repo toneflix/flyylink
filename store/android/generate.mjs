@@ -97,6 +97,8 @@ class Renderer {
 /** Where each graphic goes: the TV banner inside the app is the launcher's, the rest are for the listing. */
 function outputFor(id) {
   if (id === 'feature-graphic') return join(HERE, 'feature-graphic.png');
+  if (id === 'amazon-promo') return join(HERE, 'amazon/promo.png');
+  if (id.startsWith('amazon-phone-')) return join(HERE, `amazon/screenshots/${id.slice('amazon-phone-'.length)}.png`);
   if (id === 'tv-banner-app') return join(ROOT, 'android/app/src/main/res/drawable-xhdpi/tv_banner.png');
   if (id === 'tv-banner') return join(HERE, 'tv/banner.png');
   if (id.startsWith('tv-')) return join(HERE, `tv/screenshots/${id.slice(3)}.png`);
@@ -109,7 +111,7 @@ function outputFor(id) {
 
 const assets = new Assets(ROOT).load();
 
-for (const folder of ['screenshots', 'tablet/7-inch', 'tablet/10-inch', 'amazon/tablet/7-inch', 'amazon/tablet/10-inch', 'tv/screenshots', '../../android/app/src/main/res/drawable-xhdpi']) {
+for (const folder of ['screenshots', 'tablet/7-inch', 'tablet/10-inch', 'amazon/screenshots', 'amazon/tablet/7-inch', 'amazon/tablet/10-inch', 'tv/screenshots', '../../android/app/src/main/res/drawable-xhdpi']) {
   mkdirSync(join(HERE, folder), { recursive: true });
 }
 

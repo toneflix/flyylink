@@ -138,15 +138,15 @@ class TvBanner {
 
 const TV_HOME = {
   name: 'Living Room TV',
-  connected: ["Ada's Pixel 8", 'MacBook Pro'],
+  connected: ["Ada's phone", 'MacBook Pro'],
   devices: [
-    { type: 'phone', name: "Ada's Pixel 8", status: 'Connected', paired: true },
+    { type: 'phone', name: "Ada's phone", status: 'Connected', paired: true },
     { type: 'laptop', name: 'MacBook Pro', status: 'Connected', paired: true },
   ],
   received: [
-    { picture: 'sunset', title: 'IMG_2207.jpg', detail: "From Ada's Pixel 8 · Saved to Downloads" },
+    { picture: 'sunset', title: 'IMG_2207.jpg', detail: "From Ada's phone · Saved to Downloads" },
     { icon: 'film', title: 'Birthday.mp4', detail: 'From MacBook Pro · Saved to Downloads' },
-    { icon: 'link', title: 'youtube.com', detail: "Link from Ada's Pixel 8" },
+    { icon: 'link', title: 'flyylink.toneflix.net', detail: "Link from Ada's phone" },
   ],
 };
 
@@ -154,13 +154,13 @@ const TV_GRAPHICS = [
   new TvBanner('tv-banner', 1280),
   new TvBanner('tv-banner-app', 320),
   new TvShot({ id: 'tv-01-home', screen: (tv) => tv.screen(tv.home({ ...TV_HOME, focus: 'rec-0' })) }),
-  new TvShot({ id: 'tv-02-photo', screen: (tv) => tv.screen(tv.viewer('sunset', 'IMG_2207.jpg', "From Ada's Pixel 8 · Saved to Downloads")) }),
-  new TvShot({ id: 'tv-03-notifications', screen: (tv) => tv.screen(tv.film(), tv.popup("WhatsApp · Ada's Pixel 8", 'Mum', 'On my way home')) }),
+  new TvShot({ id: 'tv-02-photo', screen: (tv) => tv.screen(tv.viewer('sunset', 'IMG_2207.jpg', "From Ada's phone · Saved to Downloads")) }),
+  new TvShot({ id: 'tv-03-notifications', screen: (tv) => tv.screen(tv.film(), tv.popup("Messages · Ada's phone", 'Mum', 'On my way home')) }),
   new TvShot({
     id: 'tv-04-pair',
     screen: (tv) => tv.screen(
-      tv.home({ name: 'Living Room TV', connected: [], devices: [{ type: 'phone', name: "Ada's Pixel 8", status: 'Wants to pair' }], received: [] }),
-      tv.pairDialog("Ada's Pixel 8", '4F7A2C91'),
+      tv.home({ name: 'Living Room TV', connected: [], devices: [{ type: 'phone', name: "Ada's phone", status: 'Wants to pair' }], received: [] }),
+      tv.pairDialog("Ada's phone", '4F7A2C91'),
     ),
   }),
 ];
