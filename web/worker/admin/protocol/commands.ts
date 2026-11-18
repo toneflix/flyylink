@@ -138,13 +138,14 @@ export const AdminCommands = [
     arguments: [],
     options: [
       search("licences"),
-      { name: "status", label: "Status", description: "Only licences with this status", type: "text", choices: ["active", "revoked"] },
+      { name: "status", label: "Status", description: "Only licences with this status", type: "text", choices: ["active", "ended", "revoked"] },
       { name: "provider", label: "Source", description: "Only licences from this source", type: "text", choices: ["paddle", "manual"] },
+      { name: "plan", label: "Plan", description: "Only licences on this plan", type: "text", choices: ["monthly", "annual", "lifetime"] },
       page,
       limit("licences"),
     ],
     results: {
-      label: "{email}  {provider}  {status}",
+      label: "{email}  {plan}  {provider}  {status}",
       actions: [
         { label: "Show the user", command: "users:show", arguments: { email: "{email}" } },
         {

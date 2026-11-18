@@ -1,3 +1,7 @@
+import { type Plan, Plans } from "./plans";
+
+export type LicenceStatus = "active" | "ended" | "revoked";
+
 export interface Account {
   id: string;
   email: string;
@@ -19,8 +23,27 @@ export interface Licence {
   email: string;
   provider: string;
   order_id: string;
-  status: "active" | "revoked";
+  status: LicenceStatus;
+  plan: Plan;
+  /** When the paid period ends, or null for a lifetime licence. */
+  ends_at: number | null;
+  /** 1 while a subscription will renew at `ends_at`. */
+  renews: number;
+  customer_id: string | null;
   created_at: number;
+}
+
+/** A Paddle subscription as its latest webhook describes it. */
+export interface Subscription {
+  accountId: string;
+  orderId: string;
+  customerId: string;
+  plan: Plan;
+  status: LicenceStatus;
+  endsAt: number | null;
+  renews: boolean;
+  /** When Paddle sent the event, so an older event never undoes a newer one. */
+  syncedAt: number;
 }
 
 export interface AccountSummary {
@@ -78,17 +101,47 @@ export class LicenceStore {
       .run();
   }
 
-  async setLicenceStatus(provider: string, orderId: string, status: "active" | "revoked"): Promise<void> {
+  /** Adds or updates a subscription's licence. A revoked one stays revoked. */
+  async saveSubscription(subscription: Subscription, now: number): Promise<void> {
+    const { accountId, orderId, customerId, plan, status, endsAt, renews, syncedAt } = subscription;
+
+    await this.db
+      .prepare(
+        "INSERT INTO licences (id, account_id, provider, order_id, status, plan, ends_at, renews, customer_id, synced_at, created_at) " +
+          "VALUES (?, ?, 'paddle', ?, ?, ?, ?, ?, ?, ?, ?) " +
+          "ON CONFLICT (provider, order_id) DO UPDATE SET plan = excluded.plan, ends_at = excluded.ends_at, renews = excluded.renews, " +
+          "customer_id = excluded.customer_id, synced_at = excluded.synced_at, " +
+          "status = CASE WHEN licences.status = 'revoked' THEN 'revoked' ELSE excluded.status END " +
+          "WHERE licences.synced_at IS NULL OR licences.synced_at <= excluded.synced_at",
+      )
+      .bind(crypto.randomUUID(), accountId, orderId, status, plan, endsAt, renews ? 1 : 0, customerId, syncedAt, now)
+      .run();
+  }
+
+  findLicenceByOrder(provider: string, orderId: string): Promise<Licence | null> {
+    return this.db
+      .prepare("SELECT l.*, a.email FROM licences l JOIN accounts a ON a.id = l.account_id WHERE l.provider = ? AND l.order_id = ?")
+      .bind(provider, orderId)
+      .first<Licence>();
+  }
+
+  async setLicenceStatus(provider: string, orderId: string, status: LicenceStatus): Promise<void> {
     await this.db.prepare("UPDATE licences SET status = ? WHERE provider = ? AND order_id = ?").bind(status, provider, orderId).run();
   }
 
-  async hasActiveLicence(accountId: string): Promise<boolean> {
-    const row = await this.db
-      .prepare("SELECT 1 AS found FROM licences WHERE account_id = ? AND status = 'active' LIMIT 1")
+  /** The licence that lets the account's computers in the longest: a lifetime one first, then the latest to end. */
+  currentLicence(accountId: string): Promise<Licence | null> {
+    return this.db
+      .prepare(
+        "SELECT l.*, a.email FROM licences l JOIN accounts a ON a.id = l.account_id " +
+          `WHERE l.account_id = ? AND ${Plans.current("l")} ORDER BY l.ends_at IS NULL DESC, l.ends_at DESC LIMIT 1`,
+      )
       .bind(accountId)
-      .first();
+      .first<Licence>();
+  }
 
-    return row !== null;
+  async hasActiveLicence(accountId: string): Promise<boolean> {
+    return (await this.currentLicence(accountId)) !== null;
   }
 
   async computers(accountId: string): Promise<Computer[]> {
@@ -139,7 +192,7 @@ export class LicenceStore {
 
   async findAccounts(filter: { search: string; licence: string }, paging: Paging): Promise<Found<AccountSummary>> {
     const where = ["a.email LIKE ?"];
-    const licensed = "EXISTS (SELECT 1 FROM licences l WHERE l.account_id = a.id AND l.status = 'active')";
+    const licensed = `EXISTS (SELECT 1 FROM licences l WHERE l.account_id = a.id AND ${Plans.current("l")})`;
     if (filter.licence === "with") where.push(licensed);
     if (filter.licence === "without") where.push(`NOT ${licensed}`);
 
@@ -158,10 +211,10 @@ export class LicenceStore {
     return { rows: results, total: count?.total ?? 0 };
   }
 
-  async findLicences(filter: { search: string; status: string; provider: string }, paging: Paging): Promise<Found<Licence>> {
+  async findLicences(filter: { search: string; status: string; provider: string; plan: string }, paging: Paging): Promise<Found<Licence>> {
     const where = ["a.email LIKE ?"];
     const binds: unknown[] = [`%${filter.search.toLowerCase()}%`];
-    for (const [column, value] of [["l.status", filter.status], ["l.provider", filter.provider]]) {
+    for (const [column, value] of [["l.status", filter.status], ["l.provider", filter.provider], ["l.plan", filter.plan]]) {
       if (!value) continue;
 
       where.push(`${column} = ?`);
@@ -191,7 +244,7 @@ export class LicenceStore {
     return this.db.prepare("SELECT l.*, a.email FROM licences l JOIN accounts a ON a.id = l.account_id WHERE l.id = ?").bind(id).first<Licence>();
   }
 
-  async setLicenceStatusById(id: string, status: "active" | "revoked"): Promise<void> {
+  async setLicenceStatusById(id: string, status: LicenceStatus): Promise<void> {
     await this.db.prepare("UPDATE licences SET status = ? WHERE id = ?").bind(status, id).run();
   }
 
@@ -228,9 +281,12 @@ export class LicenceStore {
     return {
       accounts: await count("SELECT COUNT(*) AS n FROM accounts"),
       newAccounts: await count("SELECT COUNT(*) AS n FROM accounts WHERE created_at >= ?", since),
-      licensed: await count("SELECT COUNT(DISTINCT account_id) AS n FROM licences WHERE status = 'active'"),
-      paid: await count("SELECT COUNT(*) AS n FROM licences WHERE status = 'active' AND provider = 'paddle'"),
-      free: await count("SELECT COUNT(*) AS n FROM licences WHERE status = 'active' AND provider = 'manual'"),
+      licensed: await count(`SELECT COUNT(DISTINCT account_id) AS n FROM licences WHERE ${Plans.current()}`),
+      monthly: await count(`SELECT COUNT(*) AS n FROM licences WHERE ${Plans.current()} AND provider = 'paddle' AND plan = 'monthly'`),
+      annual: await count(`SELECT COUNT(*) AS n FROM licences WHERE ${Plans.current()} AND provider = 'paddle' AND plan = 'annual'`),
+      lifetime: await count(`SELECT COUNT(*) AS n FROM licences WHERE ${Plans.current()} AND provider = 'paddle' AND plan = 'lifetime'`),
+      free: await count(`SELECT COUNT(*) AS n FROM licences WHERE ${Plans.current()} AND provider = 'manual'`),
+      ended: await count("SELECT COUNT(*) AS n FROM licences WHERE status = 'ended'"),
       revoked: await count("SELECT COUNT(*) AS n FROM licences WHERE status = 'revoked'"),
       newLicences: await count("SELECT COUNT(*) AS n FROM licences WHERE created_at >= ?", since),
       macs: await count("SELECT COUNT(*) AS n FROM computers WHERE removed_at IS NULL AND platform = 'mac'"),

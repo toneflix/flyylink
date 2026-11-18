@@ -1,15 +1,24 @@
 "use client";
 
-import { Laptop, LogOut, Monitor } from "lucide-react";
+import { CreditCard, Laptop, LogOut, Monitor } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import { type AccountInfo, LicenceClient, LicenceError } from "./api";
+import { type AccountInfo, LicenceClient, LicenceError, type LicenceInfo } from "./api";
 
 const client = new LicenceClient();
 
 type Step = { name: "loading" } | { name: "email" } | { name: "code"; email: string } | { name: "account"; info: AccountInfo };
 
-function lastSeen(seconds: number): string {
+function date(seconds: number): string {
   return new Date(seconds * 1000).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+}
+
+function planLine(licence: LicenceInfo | null): string {
+  if (!licence) return "No plan yet";
+  if (licence.plan === "lifetime" || licence.endsAt === null) return "Lifetime licence";
+
+  const name = licence.plan === "monthly" ? "Monthly plan" : "Annual plan";
+
+  return `${name}, ${licence.renews ? "renews" : "ends"} ${date(licence.endsAt)}`;
 }
 
 export function AccountPanel() {
@@ -89,7 +98,7 @@ export function AccountPanel() {
       <div className="account-head">
         <div>
           <h2>{info.email}</h2>
-          <p className="price-note">{info.licensed ? "Lifetime licence" : "No licence yet"}</p>
+          <p className="price-note">{planLine(info.licence)}</p>
         </div>
         <button className="button button-ghost" onClick={() => run(async () => { await client.signOut(); setStep({ name: "email" }); })}>
           <LogOut size={16} />
@@ -101,6 +110,13 @@ export function AccountPanel() {
         <a className="button button-primary" href="/buy">
           Buy FlyyLink
         </a>
+      )}
+
+      {info.licence?.manageable && (
+        <button className="button button-ghost" disabled={busy} onClick={() => run(async () => { window.location.assign(await client.billing()); })}>
+          <CreditCard size={16} />
+          Manage plan
+        </button>
       )}
 
       {info.licensed && (
@@ -115,7 +131,7 @@ export function AccountPanel() {
                 {computer.platform === "mac" ? <Laptop size={22} /> : <Monitor size={22} />}
                 <div>
                   <strong>{computer.name}</strong>
-                  <span>Last seen {lastSeen(computer.seenAt)}</span>
+                  <span>Last seen {date(computer.seenAt)}</span>
                 </div>
                 <button
                   className="button button-ghost"

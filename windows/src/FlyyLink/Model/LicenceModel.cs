@@ -286,7 +286,7 @@ public sealed class LicenceModel : Observable
         "bad_email" => "Check the email address.",
         "bad_code" => "That code didn't work. Ask for a new one.",
         "too_many_codes" => "Too many codes. Try again in an hour.",
-        "no_licence" => "This email hasn't bought FlyyLink yet.",
+        "no_licence" => "This email has no FlyyLink plan.",
         "computer_limit" => "You're on 5 computers already. Remove one in your account.",
         "offline" => "Couldn't reach FlyyLink. Check your connection.",
         _ => "Something went wrong. Try again.",

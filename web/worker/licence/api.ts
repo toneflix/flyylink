@@ -2,14 +2,14 @@ import { HttpError, readJson, requireString } from "../http";
 import type { Router } from "../router";
 import { SignInCodes } from "./codes";
 import { Licensing, type Machine } from "./licensing";
-import type { PaddleWebhook } from "./paddle";
+import type { PaddleApi, PaddleWebhook } from "./paddle";
+import type { Plan, Plans } from "./plans";
 import type { ReviewAccess } from "./review";
 import type { Sessions } from "./sessions";
 import type { LicenceStore } from "./store";
 
 export interface CheckoutConfig {
   clientToken: string;
-  priceId: string;
   sandbox: boolean;
 }
 
@@ -24,6 +24,8 @@ export class LicenceApi {
     private readonly codes: SignInCodes,
     private readonly sessions: Sessions,
     private readonly paddle: PaddleWebhook,
+    private readonly paddleApi: PaddleApi,
+    private readonly plans: Plans,
     private readonly checkout: CheckoutConfig,
     private readonly review: ReviewAccess,
   ) {}
@@ -39,13 +41,15 @@ export class LicenceApi {
       .post("/api/session", (request) => this.signIn(request))
       .post("/api/session/end", (request) => this.signOut(request))
       .get("/api/account", (request) => this.account(request))
-      .post("/api/account/computers/:machine/remove", (request, { machine }) => this.remove(request, machine));
+      .post("/api/account/computers/:machine/remove", (request, { machine }) => this.remove(request, machine))
+      .post("/api/account/billing", (request) => this.billing(request));
   }
 
   private checkoutConfig(): Response {
-    if (!this.checkout.clientToken || !this.checkout.priceId) throw new HttpError(503, "not_open");
+    const prices: Partial<Record<Plan, string>> = this.plans.onSale();
+    if (!this.checkout.clientToken || Object.keys(prices).length === 0) throw new HttpError(503, "not_open");
 
-    return Response.json(this.checkout);
+    return Response.json({ ...this.checkout, prices });
   }
 
   private async sendCode(request: Request): Promise<Response> {
@@ -90,9 +94,12 @@ export class LicenceApi {
   private async account(request: Request): Promise<Response> {
     const account = await this.sessions.account(request, now());
 
+    const licence = await this.licensing.licence(account);
+
     return Response.json({
       email: account.email,
-      licensed: await this.store.hasActiveLicence(account.id),
+      licensed: licence !== null,
+      licence,
       computers: await this.licensing.computers(account),
       limit: await this.licensing.limit(),
       removalsLeft: await this.licensing.removalsLeft(account, now()),
@@ -104,6 +111,15 @@ export class LicenceApi {
     await this.licensing.remove(account, machine, now());
 
     return new Response(null, { status: 204 });
+  }
+
+  /** Sends the person to Paddle to cancel their subscription or change how they pay. */
+  private async billing(request: Request): Promise<Response> {
+    const account = await this.sessions.account(request, now());
+    const licence = await this.store.currentLicence(account.id);
+    if (!licence?.customer_id || licence.plan === "lifetime" || licence.provider !== "paddle") throw new HttpError(404, "no_subscription");
+
+    return Response.json({ url: await this.paddleApi.portal(licence.customer_id, licence.order_id) });
   }
 
   /** Checks the emailed code, or a reviewer's fixed one; an email that never bought anything still gets an account. */

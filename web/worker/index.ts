@@ -14,7 +14,8 @@ import { SignInCodes } from "./licence/codes";
 import { Emails } from "./licence/emails";
 import { Licensing } from "./licence/licensing";
 import { LogMailer, SendPulseMailer } from "./licence/mailer";
-import { PaddleWebhook } from "./licence/paddle";
+import { PaddleApi, PaddleWebhook } from "./licence/paddle";
+import { Plans } from "./licence/plans";
 import { ReviewAccess } from "./licence/review";
 import { Sessions } from "./licence/sessions";
 import { TokenSigner } from "./licence/signer";
@@ -29,6 +30,10 @@ export interface Env {
   LICENCES: D1Database;
 
   PADDLE_CLIENT_TOKEN?: string;
+  PADDLE_PRICE_MONTHLY?: string;
+  PADDLE_PRICE_ANNUAL?: string;
+  PADDLE_PRICE_LIFETIME?: string;
+  /** The lifetime price from before monthly and annual plans; PADDLE_PRICE_LIFETIME replaces it. */
   PADDLE_PRICE_ID?: string;
   PADDLE_SANDBOX?: string;
   /** Trial length in days, set in the dashboard. */
@@ -67,6 +72,9 @@ function router(env: Env): Router {
   const notices = new Notices(env.LICENCES, store, mailer, emails);
   const operators = new Operators(env.LICENCES);
   const audit = new AuditLog(env.LICENCES);
+  const plans = new Plans({ monthly: env.PADDLE_PRICE_MONTHLY, annual: env.PADDLE_PRICE_ANNUAL, lifetime: env.PADDLE_PRICE_LIFETIME || env.PADDLE_PRICE_ID });
+  const paddleConfig = { webhookSecret: env.PADDLE_WEBHOOK_SECRET, apiKey: env.PADDLE_API_KEY, sandbox };
+  const paddleApi = new PaddleApi(paddleConfig);
 
   new Downloads(env.RELEASES).register(router);
   new LicenceApi(
@@ -74,8 +82,10 @@ function router(env: Env): Router {
     licensing,
     new SignInCodes(env.LICENCES, mailer, emails, env.CODE_SECRET),
     new Sessions(env.LICENCES, store),
-    new PaddleWebhook({ webhookSecret: env.PADDLE_WEBHOOK_SECRET, apiKey: env.PADDLE_API_KEY, priceId: env.PADDLE_PRICE_ID ?? "", sandbox }, store),
-    { clientToken: env.PADDLE_CLIENT_TOKEN ?? "", priceId: env.PADDLE_PRICE_ID ?? "", sandbox },
+    new PaddleWebhook(paddleConfig, paddleApi, plans, store),
+    paddleApi,
+    plans,
+    { clientToken: env.PADDLE_CLIENT_TOKEN ?? "", sandbox },
     new ReviewAccess(settings, env.REVIEW_CODE),
   ).register(router);
   notices.register(router);

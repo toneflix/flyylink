@@ -2,6 +2,7 @@ import { readJson, requireString } from "./http";
 import { sha256 } from "./licence/crypto";
 import type { Emails } from "./licence/emails";
 import type { Mailer } from "./licence/mailer";
+import { Plans } from "./licence/plans";
 import type { Found, LicenceStore, Paging } from "./licence/store";
 import type { Router } from "./router";
 
@@ -48,7 +49,7 @@ export interface AppNotice {
 }
 
 const day = 24 * 60 * 60;
-const licensed = "EXISTS (SELECT 1 FROM licences l WHERE l.account_id = a.id AND l.status = 'active')";
+const licensed = `EXISTS (SELECT 1 FROM licences l WHERE l.account_id = a.id AND ${Plans.current("l")})`;
 const conditions: Record<Exclude<Audience, "emails">, string> = { all: "1", licensed, unlicensed: `NOT ${licensed}` };
 
 /**

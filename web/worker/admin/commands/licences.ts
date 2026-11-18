@@ -1,5 +1,5 @@
 import { SignInCodes } from "../../licence/codes";
-import type { LicenceStore } from "../../licence/store";
+import type { LicenceStatus, LicenceStore } from "../../licence/store";
 import { CommandGroup, type CommandContext } from "./group";
 
 const day = 24 * 60 * 60;
@@ -28,7 +28,10 @@ export class LicenceCommands extends CommandGroup {
 
   private async list({ input, reply }: CommandContext): Promise<void> {
     const paging = LicenceCommands.paging(input);
-    const found = await this.store.findLicences({ search: input.text("search"), status: input.text("status"), provider: input.text("provider") }, paging);
+    const found = await this.store.findLicences(
+      { search: input.text("search"), status: input.text("status"), provider: input.text("provider"), plan: input.text("plan") },
+      paging,
+    );
 
     reply.listing(
       LicenceCommands.listing(
@@ -38,10 +41,20 @@ export class LicenceCommands extends CommandGroup {
           { key: "id", label: "Id" },
           { key: "email", label: "Email" },
           { key: "provider", label: "Source" },
+          { key: "plan", label: "Plan" },
           { key: "status", label: "Status" },
+          { key: "ends", label: "Ends" },
           { key: "created", label: "Created" },
         ],
-        (licence) => ({ id: licence.id, email: licence.email, provider: licence.provider, status: licence.status, created: LicenceCommands.when(licence.created_at) }),
+        (licence) => ({
+          id: licence.id,
+          email: licence.email,
+          provider: licence.provider,
+          plan: licence.plan,
+          status: licence.status,
+          ends: licence.ends_at === null ? "never" : LicenceCommands.when(licence.ends_at),
+          created: LicenceCommands.when(licence.created_at),
+        }),
         "No licences match.",
       ),
     );
@@ -58,7 +71,7 @@ export class LicenceCommands extends CommandGroup {
     reply.success(`${email} has a free licence.`);
   }
 
-  private async setStatus({ input, reply }: CommandContext, status: "active" | "revoked"): Promise<void> {
+  private async setStatus({ input, reply }: CommandContext, status: LicenceStatus): Promise<void> {
     const licence = await this.store.findLicence(input.argument("id"));
 
     if (!licence) {

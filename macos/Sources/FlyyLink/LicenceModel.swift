@@ -194,7 +194,7 @@ final class LicenceModel: ObservableObject {
         case "bad_email": return "Check the email address."
         case "bad_code": return "That code didn't work. Ask for a new one."
         case "too_many_codes": return "Too many codes. Try again in an hour."
-        case "no_licence": return "This email hasn't bought FlyyLink yet."
+        case "no_licence": return "This email has no FlyyLink plan."
         case "computer_limit": return "You're on 5 computers already. Remove one in your account."
         case "offline": return "Couldn't reach FlyyLink. Check your connection."
         default: return "Something went wrong. Try again."

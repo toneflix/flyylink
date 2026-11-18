@@ -764,6 +764,56 @@ h3 {
   transform: none;
 }
 
+.plan-switch {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.licence-panel .plan-switch button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.licence-panel .plan-switch button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 4px 14px -6px rgb(60 40 0 / 0.35);
+}
+
+.plan-saving {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #1d1500;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.price-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+  min-height: 56px;
+}
+
 .price {
   font-size: 56px;
   font-weight: 800;
