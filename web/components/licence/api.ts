@@ -6,9 +6,19 @@ export interface Computer {
   seenAt: number;
 }
 
+export type Plan = "monthly" | "annual" | "lifetime";
+
+export interface LicenceInfo {
+  plan: Plan;
+  endsAt: number | null;
+  renews: boolean;
+  manageable: boolean;
+}
+
 export interface AccountInfo {
   email: string;
   licensed: boolean;
+  licence: LicenceInfo | null;
   computers: Computer[];
   limit: number;
   removalsLeft: number;
@@ -16,8 +26,8 @@ export interface AccountInfo {
 
 export interface CheckoutConfig {
   clientToken: string;
-  priceId: string;
   sandbox: boolean;
+  prices: Partial<Record<Plan, string>>;
 }
 
 const messages: Record<string, string> = {
@@ -26,6 +36,7 @@ const messages: Record<string, string> = {
   too_many_codes: "Too many codes. Try again in an hour.",
   removal_limit: "You've removed 3 computers this month. Try again later.",
   signed_out: "You're signed out.",
+  no_subscription: "You have no plan to manage.",
 };
 
 /** Calls the licence API on this site. Errors carry the server's code, worded for people. */
@@ -52,6 +63,11 @@ export class LicenceClient {
 
   async remove(machine: string): Promise<void> {
     await this.call("POST", `/api/account/computers/${encodeURIComponent(machine)}/remove`);
+  }
+
+  /** Paddle's page for cancelling the subscription or changing how to pay. */
+  async billing(): Promise<string> {
+    return (await this.call<{ url: string }>("POST", "/api/account/billing")).url;
   }
 
   private async call<T>(method: string, path: string, body?: unknown): Promise<T> {

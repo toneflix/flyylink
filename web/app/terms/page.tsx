@@ -25,8 +25,8 @@ export default function TermsPage() {
 
       <h2>2. Buying FlyyLink</h2>
       <p>
-        The Android app is free. The Mac and Windows apps are free for {site.trialDays} days on each computer, then need a lifetime
-        licence, bought once.
+        The Android app is free. The Mac and Windows apps are free for {site.trialDays} days on each computer, then need a licence: a
+        monthly or annual subscription, or a lifetime licence bought once.
       </p>
       <ul>
         <li>
@@ -38,6 +38,10 @@ export default function TermsPage() {
           future updates. You can swap computers on the <a href="/account">account page</a> up to 3 times a month.
         </li>
         <li>Do not share, sell or transfer your licence, or let others sign in with it.</li>
+        <li>
+          Subscriptions renew automatically at the end of each month or year until you cancel. Cancel any time on the{" "}
+          <a href="/account">account page</a>; your computers keep working until the end of the period you paid for.
+        </li>
         <li>
           If you are not happy, ask for a refund within 14 days of buying. A refunded licence stops working on your
           computers.
