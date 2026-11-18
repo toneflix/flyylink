@@ -1,8 +1,9 @@
 import { HttpError } from "../http";
 import { randomToken, sha256 } from "./crypto";
 import type { Settings } from "../settings";
-import type { Account, LicenceStore } from "./store";
-import type { TokenKind, TokenSigner } from "./signer";
+import { type Plan, Plans } from "./plans";
+import type { Account, Licence, LicenceStore } from "./store";
+import type { TokenSigner } from "./signer";
 
 const day = 24 * 60 * 60;
 
@@ -10,6 +11,15 @@ export interface Machine {
   id: string;
   name: string;
   platform: string;
+}
+
+export interface LicenceView {
+  plan: Plan;
+  /** When the paid period ends, or null for a lifetime licence. */
+  endsAt: number | null;
+  renews: boolean;
+  /** Whether the account page can send the person to Paddle to cancel or change how they pay. */
+  manageable: boolean;
 }
 
 export interface ComputerView {
@@ -21,7 +31,7 @@ export interface ComputerView {
 }
 
 /**
- * The rules of the lifetime licence: one purchase covers an account's computers up to a limit,
+ * The rules of a licence: a monthly, annual or lifetime plan covers an account's computers up to a limit,
  * phones are free, and computers can only be swapped a few times a month. The limits and trial
  * length come from `Settings`; these are their defaults.
  */
@@ -45,7 +55,8 @@ export class Licensing {
 
   /** Activates a computer for a signed-in account and returns its token and refresh secret. */
   async activate(account: Account, machine: Machine, now: number): Promise<{ token: string; secret: string }> {
-    if (!(await this.store.hasActiveLicence(account.id))) throw new HttpError(402, "no_licence");
+    const licence = await this.store.currentLicence(account.id);
+    if (!licence) throw new HttpError(402, "no_licence");
 
     const active = (await this.store.computers(account.id)).filter((c) => c.removed_at === null);
     const known = active.some((c) => c.machine === machine.id);
@@ -57,7 +68,7 @@ export class Licensing {
     const secret = randomToken();
     await this.store.saveComputer(account.id, machine.id, machine.name, machine.platform, await sha256(secret), now);
 
-    return { token: await this.token("licence", machine.id, now, account.email), secret };
+    return { token: await this.token(licence, machine.id, now, account.email), secret };
   }
 
   /** Issues a fresh token to a computer that is still active on a licensed account. */
@@ -66,11 +77,12 @@ export class Licensing {
     if (!computer) throw new HttpError(401, "not_activated");
 
     const account = await this.store.findAccountById(computer.account_id);
-    if (!account || !(await this.store.hasActiveLicence(account.id))) throw new HttpError(402, "no_licence");
+    const licence = account ? await this.store.currentLicence(account.id) : null;
+    if (!account || !licence) throw new HttpError(402, "no_licence");
 
     await this.store.touchComputer(account.id, machine, now);
 
-    return this.token("licence", machine, now, account.email);
+    return this.token(licence, machine, now, account.email);
   }
 
   /** The trial runs from the first time this computer asked, however often it asks again. */
@@ -80,6 +92,18 @@ export class Licensing {
     if (ends <= now) throw new HttpError(402, "trial_over");
 
     return this.signer.sign({ v: 1, kind: "trial", machine, issued: now, renew: ends, expires: ends });
+  }
+
+  async licence(account: Account): Promise<LicenceView | null> {
+    const licence = await this.store.currentLicence(account.id);
+    if (!licence) return null;
+
+    return {
+      plan: licence.plan,
+      endsAt: licence.ends_at,
+      renews: licence.renews === 1,
+      manageable: licence.provider === "paddle" && licence.plan !== "lifetime" && licence.customer_id !== null,
+    };
   }
 
   async computers(account: Account): Promise<ComputerView[]> {
@@ -99,10 +123,11 @@ export class Licensing {
     await this.store.removeComputer(account.id, machine, now);
   }
 
-  private token(kind: TokenKind, machine: string, now: number, email?: string): Promise<string> {
-    const renew = now + Licensing.renewDays * day;
+  /** A licence token never asks to renew later than the licence's paid period runs. */
+  private token(licence: Licence, machine: string, now: number, email: string): Promise<string> {
+    const renew = Math.min(now + Licensing.renewDays * day, Plans.lapsesAt(licence.ends_at) ?? Infinity);
 
-    return this.signer.sign({ v: 1, kind, machine, email, issued: now, renew, expires: renew + Licensing.graceDays * day });
+    return this.signer.sign({ v: 1, kind: "licence", machine, email, issued: now, renew, expires: renew + Licensing.graceDays * day });
   }
 
   private static view(c: { machine: string; name: string; platform: string; activated_at: number; seen_at: number }): ComputerView {

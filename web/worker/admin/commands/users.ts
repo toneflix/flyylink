@@ -51,7 +51,7 @@ export class UserCommands extends CommandGroup {
 
     reply.fields([
       ["Email", account.email],
-      ["Licensed", UserCommands.yesNo(licences.some((licence) => licence.status === "active"))],
+      ["Licensed", UserCommands.yesNo(await this.store.hasActiveLicence(account.id))],
       ["Computers", `${computers.length} of ${await this.licensing.limit()}`],
       ["Removals left", String(await this.licensing.removalsLeft(account, now))],
     ]);
@@ -61,10 +61,20 @@ export class UserCommands extends CommandGroup {
         { key: "id", label: "Id" },
         { key: "provider", label: "Source" },
         { key: "order", label: "Order" },
+        { key: "plan", label: "Plan" },
         { key: "status", label: "Status" },
+        { key: "ends", label: "Ends" },
         { key: "created", label: "Created" },
       ],
-      rows: licences.map((licence) => ({ id: licence.id, provider: licence.provider, order: licence.order_id, status: licence.status, created: UserCommands.when(licence.created_at) })),
+      rows: licences.map((licence) => ({
+        id: licence.id,
+        provider: licence.provider,
+        order: licence.order_id,
+        plan: licence.plan,
+        status: licence.status,
+        ends: licence.ends_at === null ? "never" : UserCommands.when(licence.ends_at),
+        created: UserCommands.when(licence.created_at),
+      })),
       empty: "No licences.",
     });
     reply.table({
