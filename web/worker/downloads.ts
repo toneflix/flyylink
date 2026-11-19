@@ -29,7 +29,7 @@ const contentTypes: Record<string, string> = {
 /**
  * Serves releases from R2. The release workflow uploads each file to `releases/`, the Mac and Windows
  * update feeds to `updates/appcast.xml` and `updates/windows-appcast.xml`, and records the newest build
- * per platform in `latest.json`. Windows builds from before WinSparkle read `/updates/windows.json`.
+ * per platform in `latest.json`.
  */
 export class Downloads {
   constructor(private readonly bucket: R2Bucket) {}
@@ -39,8 +39,7 @@ export class Downloads {
       .get("/download/:platform", (request, { platform }) => this.download(request, platform))
       .get("/releases/:file", (request, { file }) => this.file(request, `releases/${file}`, true))
       .get("/updates/mac/appcast.xml", (request) => this.file(request, "updates/appcast.xml", false))
-      .get("/updates/windows/appcast.xml", (request) => this.file(request, "updates/windows-appcast.xml", false))
-      .get("/updates/windows.json", (request) => this.windowsUpdate(request));
+      .get("/updates/windows/appcast.xml", (request) => this.file(request, "updates/windows-appcast.xml", false));
   }
 
   private async download(request: Request, platform: string): Promise<Response> {
@@ -53,17 +52,6 @@ export class Downloads {
     return Response.redirect(new URL(`/releases/${build.download}`, request.url).toString(), 302);
   }
 
-  private async windowsUpdate(request: Request): Promise<Response> {
-    const build = (await this.latest()).windows;
-    if (!build) return new Response("No release yet.", { status: 404 });
-
-    const origin = new URL(request.url).origin;
-
-    return Response.json(
-      { version: build.version, installer: `${origin}/releases/${build.download}`, notes: `${origin}/#download` },
-      { headers: { "Cache-Control": "public, max-age=300" } },
-    );
-  }
 
   private async latest(): Promise<Latest> {
     const object = await this.bucket.get("latest.json");

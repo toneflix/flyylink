@@ -31,7 +31,6 @@ name: Release
 # Website secrets: CLOUDFLARE_API_TOKEN (with R2 edit access) and CLOUDFLARE_ACCOUNT_ID. Every file is uploaded
 # to the flyylink-releases bucket, which the website serves at /download/<platform> and /releases/<file>.
 # The Mac app reads its update feed from /updates/mac/appcast.xml and the Windows app from /updates/windows/appcast.xml.
-# Windows builds from before WinSparkle read /updates/windows.json, which the website builds from latest.json.
 # Builds from before the move still read the GitHub releases, so those are published too.
 # Digits after the prefix keep the macos-appcast tag from starting a release.
 on:

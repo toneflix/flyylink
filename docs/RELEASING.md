@@ -57,7 +57,7 @@ One-time setup:
 
 ## Where files go
 
-Every file is uploaded to the `flyylink-releases` R2 bucket. The website serves it at `/download/<platform>` and `/releases/<file>`, and serves the update feeds: `/updates/mac/appcast.xml` for the Mac and `/updates/windows/appcast.xml` for Windows, which installed copies check twice a day. Both are signed with the Sparkle key, and Windows updates through [WinSparkle](https://winsparkle.org). Windows builds from before WinSparkle still read `/updates/windows.json`.
+Every file is uploaded to the `flyylink-releases` R2 bucket. The website serves it at `/download/<platform>` and `/releases/<file>`, and serves the update feeds: `/updates/mac/appcast.xml` for the Mac and `/updates/windows/appcast.xml` for Windows, which installed copies check twice a day. Both are signed with the Sparkle key, and Windows updates through [WinSparkle](https://winsparkle.org).
 
 The Windows installer isn't signed, so on first install Windows SmartScreen asks: pick "More info", then "Run anyway".
 
