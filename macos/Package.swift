@@ -51,6 +51,8 @@ let package = Package(
                 ]),
             ]
         ),
+        // The native messaging host browsers start for the add-on. bundle.sh puts it next to the app.
+        .executableTarget(name: "FlyyLinkBrowserHost", dependencies: ["FlyyLinkKit"]),
         .testTarget(name: "FlyyLinkKitTests", dependencies: ["FlyyLinkKit"]),
     ]
 )

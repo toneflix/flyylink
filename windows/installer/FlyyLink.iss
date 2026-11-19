@@ -57,12 +57,18 @@ Filename: "{app}\{#AppExe}"; Description: "Open FlyyLink"; Flags: nowait postins
 
 [UninstallRun]
 Filename: "{sys}\taskkill.exe"; Parameters: "/im {#AppExe} /f"; Flags: runhidden; RunOnceId: "StopFlyyLink"
+Filename: "{sys}\taskkill.exe"; Parameters: "/im FlyyLink.BrowserHost.exe /f"; Flags: runhidden; RunOnceId: "StopBrowserHost"
 
 [Registry]
 ; FlyyLink writes these itself on launch. Listed here so uninstalling removes them.
 Root: HKCU; Subkey: "Software\Classes\*\shell\FlyyLink.Send"; Flags: uninsdeletekey dontcreatekey
 Root: HKCU; Subkey: "Software\Classes\FlyyLink.tel"; Flags: uninsdeletekey dontcreatekey
 Root: HKCU; Subkey: "Software\FlyyLink"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\Google\Chrome\NativeMessagingHosts\com.toneflix.flyylink"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\Chromium\NativeMessagingHosts\com.toneflix.flyylink"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\Microsoft\Edge\NativeMessagingHosts\com.toneflix.flyylink"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.toneflix.flyylink"; Flags: uninsdeletekey dontcreatekey
+Root: HKCU; Subkey: "Software\Mozilla\NativeMessagingHosts\com.toneflix.flyylink"; Flags: uninsdeletekey dontcreatekey
 Root: HKCU; Subkey: "Software\RegisteredApplications"; ValueType: none; ValueName: "FlyyLink"; Flags: uninsdeletevalue dontcreatekey
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "FlyyLink"; Flags: uninsdeletevalue dontcreatekey
 ; Same value the app's "Start with Windows" setting writes.

@@ -5,14 +5,15 @@ import UniformTypeIdentifiers
 /// What is playing on a TV right now. Times are in milliseconds; a duration of 0 means unknown.
 struct TvSession: Equatable {
     var tv: TvRenderer
-    var file: MediaFile
+    /// What the card shows: the file's name, or the page's title for a video from the browser.
+    var name: String
     var kind: CastKind
     var state: CastState = .loading
     var position: Int64 = 0
     var duration: Int64 = 0
 
     static func == (lhs: TvSession, rhs: TvSession) -> Bool {
-        lhs.tv == rhs.tv && lhs.file.url == rhs.file.url && lhs.state == rhs.state && lhs.position == rhs.position && lhs.duration == rhs.duration
+        lhs.tv == rhs.tv && lhs.name == rhs.name && lhs.state == rhs.state && lhs.position == rhs.position && lhs.duration == rhs.duration
     }
 }
 
@@ -85,23 +86,34 @@ final class PlayOnTvModel: ObservableObject {
         guard let file = picked, let kind = CastKind.of(file.mime) else { return }
 
         picked = nil
+        start(on: tv, name: file.name, kind: kind, mime: file.mime, size: file.size) { [weak self] in
+            guard let self else { throw CancellationError() }
+
+            let media = try self.mediaServer()
+            media.clear()
+            return try media.share(file, tvHost: tv.host)
+        }
+    }
+
+    /// Plays a video or song straight from the web, such as one the browser add-on found on a page.
+    func play(url: String, title: String, mime: String, on tv: TvRenderer) {
+        start(on: tv, name: title, kind: CastKind.of(mime) ?? .video, mime: mime, size: nil) { url }
+    }
+
+    private func start(on tv: TvRenderer, name: String, kind: CastKind, mime: String, size: Int64?, address: @escaping () throws -> String) {
         error = nil
         watcher?.cancel()
 
         let previous = player
         let tvPlayer = TvPlayer(tv: tv)
         player = tvPlayer
-        session = TvSession(tv: tv, file: file, kind: kind)
+        session = TvSession(tv: tv, name: name, kind: kind)
 
         Task {
             try? await previous?.stop()
 
             do {
-                let media = try mediaServer()
-                media.clear()
-                let url = try media.share(file, tvHost: tv.host)
-
-                try await tvPlayer.play(url: url, title: file.name, mime: file.mime, size: file.size)
+                try await tvPlayer.play(url: try address(), title: name, mime: mime, size: size)
                 watch(tvPlayer)
             } catch {
                 end()

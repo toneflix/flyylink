@@ -36,6 +36,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
     private readonly ScreenPlugin screen = new();
     private readonly FindPlugin find;
     private readonly MediaHostPlugin mediaHost;
+    private readonly BrowserCompanion browsers;
     private readonly NotificationSharePlugin notificationShare;
     private readonly InputSharePlugin inputShare;
     private readonly ScreenHostPlugin screenHost = new();
@@ -176,7 +177,19 @@ public sealed class AppModel : Observable, IDeviceDelegate
         };
         Mirror.Send = (id, packet) => connected[id]?.Send(packet) == true;
         find = new FindPlugin(toasts);
-        mediaHost = new MediaHostPlugin(connected);
+        browsers = new BrowserCompanion(connected, share, ui)
+        {
+            State = DescribeForBrowser,
+            Phone = id => id is null ? Primary : connected[id] is { IsPaired: true } phone ? phone : null,
+            Dial = (number, id) => Dial(number, null, id),
+            PlayOnTv = PlayFromBrowser,
+        };
+        notifications.OnArrived = browsers.Notified;
+        PlayOnTv.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(PlayOnTvState.Tvs)) browsers.Refresh();
+        };
+        mediaHost = new MediaHostPlugin(connected, browsers);
         notificationShare = new NotificationSharePlugin(connected) { IsEnabled = settings.SharesNotifications };
         inputShare = new InputSharePlugin(connected, settings) { OnChange = () => ui.TryEnqueue(InputChanged) };
         relay = new PhoneRelayPlugin(connected, settings);
@@ -211,6 +224,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
         {
             if (Licence.IsLocked) StopLink();
             else StartLink();
+            browsers.Refresh();
         };
         hotspot = new PhoneHotspot(() => settings.PhoneHotspots, settings.RememberHotspot);
 
@@ -240,7 +254,11 @@ public sealed class AppModel : Observable, IDeviceDelegate
     public ActiveCall? Call
     {
         get => call;
-        private set => Set(ref call, value);
+        private set
+        {
+            var wasActive = call is not null;
+            if (Set(ref call, value) && wasActive != (value is not null)) browsers.CallChanged(value is not null);
+        }
     }
 
     /// The phone being looked for: its map shows in the panel until closed.
@@ -614,6 +632,8 @@ public sealed class AppModel : Observable, IDeviceDelegate
         updater.Start();
         Licence.Start();
         if (!Licence.IsLocked) StartLink();
+        browsers.Start();
+        browsers.Refresh();
     }
 
     /// Finds and connects to devices. Runs only while the licence allows it.
@@ -669,6 +689,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
     public void Stop()
     {
         StopLink();
+        browsers.Dispose();
         updater.Stop();
         folder.Disconnect();
         drives.Stop();
@@ -769,13 +790,14 @@ public sealed class AppModel : Observable, IDeviceDelegate
         Call = current with { IsMuted = muted };
     }
 
-    /// Places a call on the phone the panel shows.
-    public void Dial(string number, string? name = null)
+    /// Places a call on a paired phone, or the one the panel shows.
+    public void Dial(string number, string? name = null, string? phoneId = null)
     {
         var trimmed = number.Trim();
         if (trimmed.Length == 0) return;
 
-        if (Primary is not Device phone || !phone.Send(Core.Call.Dial(trimmed)))
+        var from = phoneId is null ? Primary : connected[phoneId] is { IsPaired: true } chosen ? chosen : null;
+        if (from is not Device phone || !phone.Send(Core.Call.Dial(trimmed)))
         {
             Record(new Activity(ActivityKind.Failed, $"Couldn't call {trimmed}", "Connect your phone first, then try again"));
             return;
@@ -1277,8 +1299,41 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
         SyncStores(Primary);
         ShowDrives();
+        browsers.Refresh();
         SendWaiting();
         SaveStatus();
+    }
+
+    /// Phones and TVs the browser add-on can send to, and network TVs it can play on.
+    private BrowserState DescribeForBrowser()
+    {
+        var targets = connected.Paired
+            .Where(d => !d.Link.Identity.DeviceType.IsComputer())
+            .OrderBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase)
+            .Select(d =>
+            {
+                var talks = d.Features.Contains(PhoneFeature.Messages);
+                var accepts = d.Link.Identity.IncomingCapabilities;
+
+                return new BrowserDevice(
+                    d.Id,
+                    d.Name,
+                    d.Link.Identity.DeviceType.ToString().ToLowerInvariant(),
+                    talks && accepts.Contains(PacketType.CallRequest),
+                    talks && accepts.Contains(PacketType.SmsRequest));
+            })
+            .ToList();
+        var tvs = PlayOnTv.Tvs.Select(tv => new BrowserTv(tv.Id, tv.Name)).ToList();
+
+        return new BrowserState(Licence.IsLocked ? BrowserState.Locked : BrowserState.Ready, Identity.DeviceName, "windows", targets, tvs);
+    }
+
+    private bool PlayFromBrowser(string tvId, BrowserRequest.PlayOnTv request)
+    {
+        if (PlayOnTv.Tvs.FirstOrDefault(tv => tv.Id == tvId) is not TvRenderer tv) return false;
+
+        PlayOnTv.PlayUrl(tv, request.Url, request.Title, request.Mime ?? "video/mp4");
+        return true;
     }
 
     private void ShowDrives()

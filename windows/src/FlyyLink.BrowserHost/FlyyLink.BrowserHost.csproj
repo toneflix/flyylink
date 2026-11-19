@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The native messaging host browsers start for the FlyyLink add-on. Published as one file next to FlyyLink.exe. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>FlyyLink.BrowserHost</RootNamespace>
+    <AssemblyName>FlyyLink.BrowserHost</AssemblyName>
+    <Version>0.1.0</Version>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FlyyLink.Core\FlyyLink.Core.csproj" />
+  </ItemGroup>
+</Project>

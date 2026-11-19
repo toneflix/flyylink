@@ -16,7 +16,7 @@ public sealed class PlayOnTvState : Observable, IDisposable
     private List<TvRenderer> tvs = [];
     private bool searching;
     private MediaFile? picked;
-    private MediaFile? playing;
+    private Playing? playing;
     private TvRenderer? tv;
     private CastState state = CastState.Loading;
     private long position;
@@ -107,20 +107,35 @@ public sealed class PlayOnTvState : Observable, IDisposable
 
     public void CancelPick() => Picked = null;
 
-    public async void Play(TvRenderer target)
+    public void Play(TvRenderer target)
     {
         if (picked is not MediaFile file) return;
 
+        Picked = null;
+        Start(target, new Playing(file.Name, file.Mime), () =>
+        {
+            server ??= new MediaServer();
+            server.Clear();
+
+            return server.Share(file, target.Host);
+        }, file.Size);
+    }
+
+    /// Plays a video or song straight from the web, such as one the browser add-on found on a page.
+    public void PlayUrl(TvRenderer target, string url, string title, string mime) =>
+        Start(target, new Playing(title, mime), () => url, null);
+
+    private async void Start(TvRenderer target, Playing media, Func<string> address, long? size)
+    {
         watcher?.Cancel();
         var previous = player;
         var tvPlayer = new TvPlayer(target);
         player = tvPlayer;
         tv = target;
-        playing = file;
+        playing = media;
         state = CastState.Loading;
         position = 0;
         duration = 0;
-        Picked = null;
         RaisePlayback();
 
         try
@@ -133,11 +148,7 @@ public sealed class PlayOnTvState : Observable, IDisposable
 
         try
         {
-            server ??= new MediaServer();
-            server.Clear();
-            var url = server.Share(file, target.Host);
-
-            await tvPlayer.PlayAsync(url, file.Name, file.Mime, file.Size);
+            await tvPlayer.PlayAsync(address(), media.Name, media.Mime, size);
             Watch(tvPlayer);
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException or ProtocolException or System.Net.Sockets.SocketException or IOException)
@@ -224,6 +235,8 @@ public sealed class PlayOnTvState : Observable, IDisposable
         RaiseModes();
         RaisePlayback();
     }
+
+    private sealed record Playing(string Name, string Mime);
 
     private static async Task Quietly(Task task)
     {

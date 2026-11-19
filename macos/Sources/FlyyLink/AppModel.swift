@@ -43,7 +43,11 @@ final class AppModel: ObservableObject {
     @Published private(set) var recent: [Activity] = []
     @Published private(set) var clipboardSyncedAt: Date?
     @Published private(set) var notificationsToday = 0
-    @Published private(set) var call: ActiveCall?
+    @Published private(set) var call: ActiveCall? {
+        didSet {
+            if (oldValue == nil) != (call == nil) { browsers.callChanged(active: call != nil) }
+        }
+    }
 
     /// The paired device the panel and the Share menu use: a phone or another computer. Every paired device stays connected.
     @Published private(set) var primaryId: String?
@@ -159,6 +163,8 @@ final class AppModel: ObservableObject {
     private let callAudioPlugin = CallAudioPlugin()
     private let find = FindPlugin()
     private let mediaHost: MediaHostPlugin
+    private let browsers: BrowserCompanion
+    private var browserTvs: AnyCancellable?
     private let inputShare: InputSharePlugin
     private let screenHost = ScreenHostPlugin()
     private let relay: PhoneRelayPlugin
@@ -209,7 +215,8 @@ final class AppModel: ObservableObject {
             deviceType: Self.isLaptop() ? .laptop : .desktop
         )
         battery = BatteryPlugin(devices: connected)
-        mediaHost = MediaHostPlugin(devices: connected)
+        browsers = BrowserCompanion(devices: connected, share: share)
+        mediaHost = MediaHostPlugin(devices: connected, browsers: browsers)
         inputShare = InputSharePlugin(devices: connected)
         relay = PhoneRelayPlugin(devices: connected)
         clipboard = ClipboardPlugin(devices: connected)
@@ -307,6 +314,12 @@ final class AppModel: ObservableObject {
         }
         clipboard.onSync = { [weak self] in Task { @MainActor in self?.clipboardSyncedAt = Date() } }
         notifications.onShown = { [weak self] in Task { @MainActor in self?.countNotification() } }
+        notifications.onArrived = { [weak browsers] note, phone in browsers?.notified(note, deviceName: phone) }
+        browsers.state = { [unowned self] in self.describeForBrowser() }
+        browsers.phone = { [unowned self] id in self.browserPhone(id) }
+        browsers.dial = { [unowned self] number, id in self.dial(number, name: nil, from: id) }
+        browsers.playOnTv = { [unowned self] tv, url, title, mime in self.playFromBrowser(tv: tv, url: url, title: title, mime: mime) }
+        browserTvs = playOnTv.$tvs.sink { [weak self] _ in Task { @MainActor in self?.browsers.refresh() } }
         share.onActivity = { [weak self] activity in Task { @MainActor in self?.record(activity) } }
         share.onFileReceived = { [weak notifications] url, device in notifications?.announce(file: url, from: device) }
         share.restore()
@@ -319,6 +332,8 @@ final class AppModel: ObservableObject {
         shortcuts.isEnabled = usesShortcuts
         drives.prune(keeping: Set(trustStore.trustedIds))
         drives.start()
+        browsers.start()
+        browsers.refresh()
     }
 
     /// The paired phone after the one shown, wrapping round to the first.
@@ -470,10 +485,10 @@ final class AppModel: ObservableObject {
         endCall()
     }
 
-    /// Places a call on the paired phone.
-    func dial(_ number: String, name: String?) {
+    /// Places a call on a paired phone, or the one the panel shows.
+    func dial(_ number: String, name: String?, from phoneId: String? = nil) {
         let number = number.trimmingCharacters(in: .whitespaces)
-        guard !number.isEmpty, let phone = primaryPhone, phone.send(Call.dial(number)) else { return }
+        guard !number.isEmpty, let phone = browserPhone(phoneId), phone.send(Call.dial(number)) else { return }
 
         call = ActiveCall(deviceId: phone.id, deviceName: phone.name, number: number, name: name, phase: .dialing)
         callPanel.show(self)
@@ -767,6 +782,7 @@ final class AppModel: ObservableObject {
     }
 
     private func licenceChanged() {
+        browsers.refresh()
         guard licence.isLocked else {
             start()
             return
@@ -937,7 +953,47 @@ final class AppModel: ObservableObject {
 
         showRequests()
         updateWidget()
+        browsers.refresh()
         drives.show(pairedPhones.filter(\.sharesFiles).map { (id: $0.id, name: $0.name) })
+    }
+
+    // MARK: Browser add-on
+
+    /// Phones and TVs the browser add-on can send to, and network TVs it can play on.
+    private func describeForBrowser() -> BrowserState {
+        let targets = connected.all
+            .filter { $0.isPaired && !$0.link.identity.deviceType.isComputer }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            .map { device in
+                let talks = device.features.contains(.messages)
+                let accepts = device.link.identity.incomingCapabilities
+
+                return BrowserDevice(
+                    id: device.id,
+                    name: device.name,
+                    type: device.link.identity.deviceType.rawValue,
+                    canCall: talks && accepts.contains(PacketType.callRequest),
+                    canText: talks && accepts.contains(PacketType.smsRequest)
+                )
+            }
+        let tvs = playOnTv.tvs.map { BrowserTv(id: $0.id, name: $0.name) }
+
+        return BrowserState(status: licence.isLocked ? BrowserState.locked : BrowserState.ready, computer: identity.deviceName, platform: "macos", devices: targets, tvs: tvs)
+    }
+
+    /// A paired phone by id, or the one the panel shows.
+    private func browserPhone(_ id: String?) -> Device? {
+        guard let id else { return primaryPhone }
+        guard let device = connected[id], device.isPaired else { return nil }
+
+        return device
+    }
+
+    private func playFromBrowser(tv id: String, url: String, title: String, mime: String?) -> Bool {
+        guard let tv = playOnTv.tvs.first(where: { $0.id == id }) else { return false }
+
+        playOnTv.play(url: url, title: title, mime: mime ?? "video/mp4", on: tv)
+        return true
     }
 
     /// Pops up pairing and FlyyDrop requests in their own window.
