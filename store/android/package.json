@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "generate": "node generate.mjs"
+    "generate": "node generate.mjs",
+    "promo": "node ../promo/generate.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "5.2.5",
