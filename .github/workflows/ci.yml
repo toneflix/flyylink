@@ -5,8 +5,38 @@ on:
     branches: [main]
   pull_request:
 
+# A newer push to the same branch or pull request stops the run before it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # Each app builds only when its own code, or this workflow, changed.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      android: ${{ steps.filter.outputs.android }}
+      macos: ${{ steps.filter.outputs.macos }}
+      windows: ${{ steps.filter.outputs.windows }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            android:
+              - 'android/**'
+              - '.github/workflows/ci.yml'
+            macos:
+              - 'macos/**'
+              - '.github/workflows/ci.yml'
+            windows:
+              - 'windows/**'
+              - '.github/workflows/ci.yml'
+
   android:
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -26,6 +56,8 @@ jobs:
         run: ./gradlew :app:assembleRelease
 
   macos:
+    needs: changes
+    if: needs.changes.outputs.macos == 'true'
     runs-on: macos-15
     defaults:
       run:
@@ -38,14 +70,19 @@ jobs:
           xcode=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
           if [ -n "$xcode" ]; then sudo xcode-select -s "$xcode"; fi
           swift --version
-      - name: Build
-        run: swift build
+      - uses: actions/cache@v5
+        with:
+          path: macos/.build
+          key: swiftpm-${{ runner.os }}-${{ hashFiles('macos/Package.resolved') }}-${{ github.sha }}
+          restore-keys: swiftpm-${{ runner.os }}-${{ hashFiles('macos/Package.resolved') }}-
       - name: Test
         run: swift test
       - name: Bundle app
         run: ./scripts/bundle.sh
 
   windows:
+    needs: changes
+    if: needs.changes.outputs.windows == 'true'
     runs-on: windows-latest
     defaults:
       run:
