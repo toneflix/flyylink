@@ -119,7 +119,7 @@ class AndroidApp {
 
     return this.sheet(`<div class="pair">
       ${this.laptop(150)}
-      <div><div class="title">Pair with ${name}?</div><div class="hint">Same code on both screens?</div></div>
+      <div><div class="title">Pair with ${name}?</div><div class="hint">Do you see the same code on both screens?</div></div>
       <div class="digits">${digits}</div>
       <div class="buttons"><div class="filled">Pair</div><div class="outlined">Not now</div></div>
     </div>`);

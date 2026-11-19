@@ -13,7 +13,7 @@
     <string name="clipboard_send">Send clipboard</string>
     <string name="clipboard_sent">Clipboard sent</string>
     <string name="clipboard_sent_many">Clipboard sent to %1$d computers</string>
-    <string name="clipboard_empty">Clipboard is empty</string>
+    <string name="clipboard_empty">There\'s nothing on your clipboard</string>
     <string name="copy_to_computer">Copy to computer</string>
     <string name="channel_transfers">Files and links</string>
     <string name="share_label">Send to devices</string>
@@ -33,7 +33,7 @@
     <string name="home_disconnected">Disconnected</string>
     <string name="home_connect">Connect</string>
     <string name="home_looking">Looking for your devices</string>
-    <string name="home_looking_hint">Open FlyyLink on your computer or TV, on the same Wi-Fi.</string>
+    <string name="home_looking_hint">Open FlyyLink on your computer or TV. Make sure it\'s on the same Wi-Fi as your phone.</string>
     <string name="home_pick_mac">Pick a device to pair</string>
     <string name="home_send_files">Send files</string>
     <string name="home_clipboard">Clipboard</string>
@@ -54,37 +54,37 @@
 
     <string name="back">Back</string>
     <string name="feature_screen_title">Features</string>
-    <string name="feature_pick">Pick what to use</string>
+    <string name="feature_pick">Choose what you want to use</string>
     <string name="feature_count">%1$d on</string>
     <string name="feature_done">Done</string>
-    <string name="feature_needs_access">Allow again to keep it on</string>
+    <string name="feature_needs_access">Allow access again to keep this on</string>
     <string name="feature_group_devices">With your devices</string>
     <string name="feature_group_connection">Connection</string>
     <string name="feature_notifications">Notifications</string>
-    <string name="feature_notifications_hint">See and answer them on your computer</string>
+    <string name="feature_notifications_hint">See your notifications and reply from your computer</string>
     <string name="feature_messages">Texts and calls</string>
     <string name="feature_messages_hint">Text and call from your computer</string>
     <string name="feature_clipboard">Clipboard</string>
-    <string name="feature_clipboard_hint">Copy on one, paste on the other</string>
+    <string name="feature_clipboard_hint">Copy on one device and paste on the other</string>
     <string name="feature_media">Media controls</string>
-    <string name="feature_media_hint">Play, pause and skip from your computer</string>
+    <string name="feature_media_hint">Play, pause and skip songs from your computer</string>
     <string name="feature_photos">Photos</string>
-    <string name="feature_photos_hint">Browse them on your computer</string>
+    <string name="feature_photos_hint">See your photos on your computer</string>
     <string name="feature_files">Phone storage</string>
-    <string name="feature_files_hint">Open your files on your computer</string>
+    <string name="feature_files_hint">Open your phone\'s files on your computer</string>
     <string name="feature_mirroring">Screen mirroring</string>
-    <string name="feature_mirroring_hint">Show your phone on your computer</string>
+    <string name="feature_mirroring_hint">See your phone\'s screen on your computer</string>
     <string name="feature_control">Computer control</string>
-    <string name="feature_control_hint">Use your mouse and keyboard on the mirror</string>
+    <string name="feature_control_hint">Use your mouse and keyboard on your phone\'s screen</string>
     <string name="feature_location">Location</string>
-    <string name="feature_location_hint">Find your phone on a map</string>
+    <string name="feature_location_hint">See where your phone is on a map</string>
     <string name="feature_background">Stay connected</string>
-    <string name="feature_background_hint">Keep working when the app is closed</string>
+    <string name="feature_background_hint">Stay connected even when the app is closed</string>
     <string name="feature_nearby">Bluetooth</string>
-    <string name="feature_nearby_hint">Connect without shared Wi-Fi</string>
+    <string name="feature_nearby_hint">Connect even when you\'re not on the same Wi-Fi</string>
     <string name="channel_screen">Screen mirroring</string>
     <string name="screen_ask_title">Mirror your screen to %1$s?</string>
-    <string name="screen_ask_text">Tap, then choose "Start now"</string>
+    <string name="screen_ask_text">Tap here, then choose "Start now"</string>
     <string name="screen_mirroring">Mirroring to %1$s</string>
     <string name="screen_stop">Stop</string>
     <string name="screen_control_label">FlyyLink computer control</string>
@@ -122,7 +122,7 @@
     <string name="home_mirror">Mirror</string>
     <string name="channel_hotspot">Hotspot requests</string>
     <string name="hotspot_ask_title">Your computer wants to use your hotspot</string>
-    <string name="hotspot_ask_text">Tap to turn it on</string>
+    <string name="hotspot_ask_text">Tap here to turn it on</string>
 
     <string name="files_disclosure_title">Your files on your computer</string>
     <string name="files_disclosure_intro">FlyyLink uses All files access so your paired Mac or PC can open this phone\'s storage like a drive.</string>
@@ -138,14 +138,14 @@
     <string name="status_paired">Paired</string>
 
     <string name="pair_title">Pair with %1$s?</string>
-    <string name="pair_hint">Same code on both screens?</string>
-    <string name="pair_check_mac">Accept on the other screen if the code matches</string>
+    <string name="pair_hint">Do you see the same code on both screens?</string>
+    <string name="pair_check_mac">If the code matches, accept on the other screen too</string>
 
     <string name="link_title">Open a link on %1$s</string>
 
     <string name="share_send_to">Send to</string>
     <string name="share_send_all">Send to all</string>
-    <string name="share_looking">Looking for devices…</string>
+    <string name="share_looking">Looking for your devices…</string>
     <string name="share_tap_to_send">Tap to send</string>
     <string name="share_hide">Hide</string>
     <string name="share_starting">Starting…</string>
@@ -154,8 +154,8 @@
     <string name="share_progress">%1$s of %2$s</string>
     <string name="share_text_summary">Text</string>
     <string name="share_sent_toast">Sent</string>
-    <string name="share_send_failed_toast">Some files didn\'t send</string>
-    <string name="share_not_connected">Not connected</string>
+    <string name="share_send_failed_toast">Some files didn\'t send. Please try again.</string>
+    <string name="share_not_connected">Not connected right now</string>
     <string name="share_sending">Sending to %1$s</string>
     <string name="share_resuming">Resuming to %1$s</string>
     <string name="share_sent">Sent to %1$s</string>
@@ -163,9 +163,9 @@
     <string name="share_receiving">Receiving %1$s from %2$s</string>
     <string name="share_received">From %1$s · Saved to Downloads</string>
     <string name="share_received_note">From %1$s · Tap to open</string>
-    <string name="share_no_app">No app opens this file. It\'s in Downloads</string>
-    <string name="share_file_gone">File moved or deleted</string>
-    <string name="share_save_failed">Couldn\'t save to Downloads</string>
+    <string name="share_no_app">No app on your phone can open this file. You\'ll find it in Downloads.</string>
+    <string name="share_file_gone">This file was moved or deleted</string>
+    <string name="share_save_failed">We couldn\'t save it to Downloads</string>
     <string name="share_paused">Paused · resumes when %1$s reconnects</string>
     <string name="share_stopped">Transfer from %1$s stopped</string>
     <string name="share_link_from">Link from %1$s</string>
@@ -173,11 +173,11 @@
     <string name="share_text_copied">Copied from %1$s</string>
 
     <string name="play_on_tv">Play on TV</string>
-    <string name="play_on_tv_hint">Photos, videos and music</string>
+    <string name="play_on_tv_hint">Show your photos, videos and music on your TV</string>
     <string name="play_on_tv_looking">Looking for TVs…</string>
-    <string name="play_on_tv_none">No TVs found</string>
+    <string name="play_on_tv_none">We couldn\'t find any TVs</string>
     <string name="play_on_tv_search_again">Search again</string>
-    <string name="play_on_tv_tap">Tap to play</string>
+    <string name="play_on_tv_tap">Tap a TV to play on it</string>
     <string name="play_on_tv_on">On %1$s</string>
     <string name="play_on_tv_playing">Playing on %1$s</string>
     <string name="play_on_tv_failed">Couldn\'t play on %1$s</string>
@@ -219,12 +219,12 @@
     </plurals>
     <string name="flyydrop_nearby">FlyyDrop to nearby</string>
     <string name="flyydrop_tap">Tap to FlyyDrop</string>
-    <string name="flyydrop_waiting">Waiting for them…</string>
-    <string name="flyydrop_declined">Declined</string>
-    <string name="flyydrop_unavailable">Not taking FlyyDrops right now</string>
-    <string name="flyydrop_busy">Busy with another request</string>
-    <string name="flyydrop_no_answer">No answer</string>
-    <string name="flyydrop_failed">Didn\'t finish</string>
+    <string name="flyydrop_waiting">Waiting for them to accept…</string>
+    <string name="flyydrop_declined">They said no</string>
+    <string name="flyydrop_unavailable">They\'re not taking FlyyDrops right now</string>
+    <string name="flyydrop_busy">They\'re busy with another request</string>
+    <string name="flyydrop_no_answer">They didn\'t answer</string>
+    <string name="flyydrop_failed">It didn\'t finish. Please try again.</string>
     <string name="flyydrop_sent">Sent</string>
     <string name="flyydrop_send_files">FlyyDrop files to %1$s</string>
 
@@ -249,12 +249,12 @@
     <string name="remote_enter">Enter</string>
     <string name="remote_buttons">Buttons</string>
     <string name="remote_touchpad">Touchpad</string>
-    <string name="remote_touchpad_hint">Slide to move. Tap to click. Two fingers to scroll.</string>
-    <string name="home_remote_computer">Touchpad, keyboard and slides</string>
+    <string name="remote_touchpad_hint">Slide to move, tap to click and use two fingers to scroll.</string>
+    <string name="home_remote_computer">Use your phone as a touchpad, keyboard or slide clicker</string>
     <string name="computer_remote_title">Computer</string>
     <string name="computer_remote_keyboard">Keyboard</string>
     <string name="computer_remote_slides">Slides</string>
-    <string name="computer_remote_touchpad_hint">Two fingers to scroll. Hold to drag.</string>
+    <string name="computer_remote_touchpad_hint">Use two fingers to scroll, or hold to drag.</string>
     <string name="computer_remote_click">Click</string>
     <string name="computer_remote_right_click">Right-click</string>
     <string name="computer_remote_type">Type on computer</string>
@@ -266,13 +266,13 @@
     <string name="computer_remote_start_slides">Start</string>
     <string name="computer_remote_black_screen">Black</string>
     <string name="computer_remote_end_slides">End</string>
-    <string name="computer_remote_slides_hint">Volume buttons change slides too.</string>
-    <string name="computer_remote_blocked_mac">On the Mac, allow FlyyLink in Accessibility settings and turn on Let my devices control this Mac.</string>
-    <string name="computer_remote_blocked_pc">On the PC, turn on Let my devices control this PC in FlyyLink.</string>
+    <string name="computer_remote_slides_hint">You can change slides with the volume buttons too.</string>
+    <string name="computer_remote_blocked_mac">On your Mac, allow FlyyLink in Accessibility settings, then turn on Let my devices control this Mac.</string>
+    <string name="computer_remote_blocked_pc">On your PC, turn on Let my devices control this PC in FlyyLink.</string>
 
     <string name="tv_ready">Ready</string>
     <string name="tv_connected_to">Connected to %1$s</string>
-    <string name="tv_hint">Open FlyyLink on your phone or computer and pick this TV.</string>
+    <string name="tv_hint">Open FlyyLink on your phone or computer and choose this TV.</string>
     <string name="tv_devices">Devices</string>
     <string name="tv_received">Received</string>
     <string name="tv_settings">Settings</string>
@@ -281,14 +281,14 @@
     <string name="tv_off">Off</string>
     <string name="tv_turn_on">Turn on</string>
     <string name="tv_remote">Remote</string>
-    <string name="tv_remote_stopped">Turn off and on again</string>
+    <string name="tv_remote_stopped">Turn it off and on again</string>
     <string name="tv_popups">Notification pop-ups</string>
     <string name="tv_over_apps">Open right away</string>
     <string name="tv_now_playing">Show what\'s playing</string>
-    <string name="tv_pair_hint">Check the code matches</string>
+    <string name="tv_pair_hint">Check that the code matches</string>
     <string name="tv_from">From %1$s</string>
     <string name="tv_open_flyylink">Open FlyyLink to see it</string>
-    <string name="tv_no_app">No app on this TV opens it</string>
+    <string name="tv_no_app">No app on this TV can open it</string>
 
     <string name="tv_control_title">Use your phone or computer as a remote</string>
     <string name="tv_control_intro">FlyyLink uses an accessibility service, "FlyyLink remote", so your paired phone or computer can work this TV.</string>
