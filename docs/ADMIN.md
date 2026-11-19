@@ -52,6 +52,8 @@ On a terminal, missing input is asked for and listings let you pick a row and an
 | Notices   | `notify:send <to>`, `notify:continue <id>`, `notify:list`                                 |
 | Operators | `operators:add`, `operators:list`, `operators:revoke`, `audit:list`, `stats`              |
 
+`users:delete` revokes the account's Paddle orders for good: a late webhook or a later sign-in won't bring them back, but a new purchase will. It doesn't cancel anything in Paddle, so cancel a running subscription there.
+
 ## Settings
 
 Settings are stored in D1 and override the worker's defaults until unset.

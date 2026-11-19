@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import worker, { type Env } from "../index";
 import { hmac } from "../licence/crypto";
+import { LicenceStore } from "../licence/store";
 import type { TokenClaims } from "../licence/signer";
 import { testDatabase } from "./d1";
 
@@ -280,5 +281,30 @@ describe("missed webhooks", () => {
 
   it("still says there's no plan when Paddle has none", async () => {
     expect((await activate()).status).toBe(402);
+  });
+});
+
+describe("deleted accounts", () => {
+  it("don't get their Paddle orders back from a late webhook or a sign-in", async () => {
+    await paddle("subscription.activated", subscription("active", "pri_month", new Date(Date.now() + 30 * day * 1000)), new Date(Date.now() - 1000));
+    await paddle("transaction.completed", { id: "txn_1", customer_id: "ctm_1", items: [{ price: { id: "pri_life" } }] });
+    const store = new LicenceStore(env.LICENCES);
+    await store.deleteAccount((await store.findAccount(email))!, Math.floor(Date.now() / 1000));
+
+    await paddle("subscription.updated", subscription("active", "pri_month", new Date(Date.now() + 30 * day * 1000)));
+    listed.subscriptions = [subscription("active", "pri_month", new Date(Date.now() + 30 * day * 1000))];
+    listed.transactions = [{ id: "txn_1", customer_id: "ctm_1", items: [{ price: { id: "pri_life" } }] }];
+
+    expect((await activate()).status).toBe(402);
+  });
+
+  it("can buy again with a new order", async () => {
+    await paddle("transaction.completed", { id: "txn_1", customer_id: "ctm_1", items: [{ price: { id: "pri_life" } }] });
+    const store = new LicenceStore(env.LICENCES);
+    await store.deleteAccount((await store.findAccount(email))!, Math.floor(Date.now() / 1000));
+
+    await paddle("transaction.completed", { id: "txn_2", customer_id: "ctm_1", items: [{ price: { id: "pri_life" } }] });
+
+    expect((await activate()).status).toBe(200);
   });
 });

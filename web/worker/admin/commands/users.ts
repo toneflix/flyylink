@@ -106,7 +106,7 @@ export class UserCommands extends CommandGroup {
     reply.success(`Ended ${ended} website session${ended === 1 ? "" : "s"} for ${account.email}.`);
   }
 
-  private async delete({ input, reply }: CommandContext): Promise<void> {
+  private async delete({ input, reply, now }: CommandContext): Promise<void> {
     if (!input.flag("force")) {
       reply.error("Pass --force to delete the account.");
 
@@ -116,9 +116,9 @@ export class UserCommands extends CommandGroup {
     const account = await this.account(input.argument("email"), reply);
     if (!account) return;
 
-    await this.store.deleteAccount(account);
+    await this.store.deleteAccount(account, now);
 
-    reply.success(`Deleted ${account.email} with its licences, computers and sessions.`);
+    reply.success(`Deleted ${account.email} with its licences, computers and sessions. Its Paddle orders won't come back. If they still have a subscription, cancel it in Paddle.`);
   }
 
   private async removeComputer({ input, reply, now }: CommandContext): Promise<void> {
