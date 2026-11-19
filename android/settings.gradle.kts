@@ -2,6 +2,8 @@ pluginManagement {
     repositories {
         google()
         mavenCentral()
+        // Google's copy of Maven Central, for when Maven Central answers 404 for a file it has.
+        maven("https://maven-central.storage-download.googleapis.com/maven2/")
         gradlePluginPortal()
     }
     // Versions are set here and applied per module, so building :protocol
@@ -18,6 +20,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Google's copy of Maven Central, for when Maven Central answers 404 for a file it has.
+        maven("https://maven-central.storage-download.googleapis.com/maven2/")
     }
 }
 
