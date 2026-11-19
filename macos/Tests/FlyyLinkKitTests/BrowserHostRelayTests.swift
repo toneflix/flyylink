@@ -12,17 +12,18 @@ final class BrowserHostRelayTests: XCTestCase {
         private var pending = Data()
 
         init() {
-            listener = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+            let fd = Darwin.socket(AF_INET, SOCK_STREAM, 0)
             var address = sockaddr_in()
             address.sin_family = sa_family_t(AF_INET)
             address.sin_addr.s_addr = inet_addr("127.0.0.1")
             address.sin_port = 0
-            _ = withUnsafePointer(to: &address) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.bind(listener, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) } }
-            Darwin.listen(listener, 1)
+            _ = withUnsafePointer(to: &address) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.bind(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) } }
+            Darwin.listen(fd, 1)
 
             var bound = sockaddr_in()
             var length = socklen_t(MemoryLayout<sockaddr_in>.size)
-            _ = withUnsafeMutablePointer(to: &bound) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.getsockname(listener, $0, &length) } }
+            _ = withUnsafeMutablePointer(to: &bound) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.getsockname(fd, $0, &length) } }
+            listener = fd
             port = UInt16(bigEndian: bound.sin_port)
         }
 
