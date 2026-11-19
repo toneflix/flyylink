@@ -14,9 +14,6 @@ struct MenuPanel: View {
                 LicenceCard(licence: model.licence)
                     .transition(.scale(scale: 0.96).combined(with: .opacity))
             } else {
-                if model.licence.showsTrialBanner {
-                    TrialBanner(licence: model.licence)
-                }
                 content
             }
 

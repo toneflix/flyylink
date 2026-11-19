@@ -1,33 +1,5 @@
 import SwiftUI
 
-/// "12 days left in your trial", with Sign in and Buy.
-struct TrialBanner: View {
-    @ObservedObject var licence: LicenceModel
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Circle()
-                .fill(Theme.tint)
-                .frame(width: 26, height: 26)
-                .overlay(Image(lucide: .zap, size: 13).foregroundStyle(Theme.accent))
-            Text(licence.trialText)
-                .font(.system(size: 11.5))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-            Spacer(minLength: 4)
-            Button("Sign in") { licence.openCard() }
-                .buttonStyle(.plain)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(Theme.accent)
-            Button("Buy") { LicenceModel.buy() }
-                .buttonStyle(.plain)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(Theme.accent)
-        }
-        .card(padding: 10)
-    }
-}
-
 /// Signs in with an emailed code. While FlyyLink is locked it is the whole panel.
 struct LicenceCard: View {
     @ObservedObject var licence: LicenceModel
@@ -35,21 +7,12 @@ struct LicenceCard: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            ZStack(alignment: .topTrailing) {
-                Circle()
-                    .fill(Theme.tint)
-                    .frame(width: 56, height: 56)
-                    .overlay(Image(lucide: .lock, size: 24).foregroundStyle(Theme.accent))
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 6)
-                if !licence.isLocked {
-                    Button { licence.closeCard() } label: {
-                        Image(lucide: .x, size: 13).foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Close")
-                }
-            }
+            Circle()
+                .fill(Theme.tint)
+                .frame(width: 56, height: 56)
+                .overlay(Image(lucide: .lock, size: 24).foregroundStyle(Theme.accent))
+                .frame(maxWidth: .infinity)
+                .padding(.top, 6)
 
             VStack(spacing: 5) {
                 Text(licence.title)
@@ -106,7 +69,7 @@ struct LicenceCard: View {
 
             Divider()
             HStack(spacing: 8) {
-                Button("Buy FlyyLink") { LicenceModel.buy() }
+                Button(licence.buyTitle) { LicenceModel.buy() }
                     .buttonStyle(PillStyle(prominent: false))
                 Button("Your computers") { LicenceModel.manageComputers() }
                     .buttonStyle(PillStyle(prominent: false))

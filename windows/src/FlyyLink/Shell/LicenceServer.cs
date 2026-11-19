@@ -31,8 +31,6 @@ internal sealed class LicenceServer
 
     private sealed record ErrorReply([property: JsonPropertyName("error")] string? Error);
 
-    public async Task<string> TrialAsync(string machine) =>
-        (await PostAsync<TokenReply>("/api/trial", new { machine })).Token;
 
     public async Task SendCodeAsync(string email) => await PostAsync<object>("/api/code", new { email });
 

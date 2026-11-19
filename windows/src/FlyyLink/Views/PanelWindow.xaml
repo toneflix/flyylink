@@ -33,35 +33,12 @@
                     </Button>
                 </Grid>
 
-                <!-- Trial -->
-                <Border Style="{StaticResource FlyyLinkCard}" Padding="12,10" Visibility="{x:Bind Model.Licence.ShowsTrialBanner, Mode=OneWay}">
-                    <Grid ColumnSpacing="10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Border Width="26" Height="26" CornerRadius="13" Background="{ThemeResource FlyyLinkTintBrush}">
-                            <views:LucideIcon Icon="Zap" Size="13" Foreground="{ThemeResource FlyyLinkAccentBrush}" />
-                        </Border>
-                        <TextBlock Grid.Column="1" Text="{x:Bind Model.Licence.TrialText, Mode=OneWay}" Style="{StaticResource FlyyLinkCaption}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                        <HyperlinkButton Grid.Column="2" Content="Sign in" Padding="4,0" FontSize="11" VerticalAlignment="Center" Click="LicenceSignIn_Click" />
-                        <HyperlinkButton Grid.Column="3" Content="Buy" Padding="4,0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Click="LicenceBuy_Click" />
-                    </Grid>
-                </Border>
-
                 <!-- Licence: sign in, or why FlyyLink is locked -->
                 <Border Style="{StaticResource FlyyLinkCard}" Padding="20" Visibility="{x:Bind Model.Licence.ShowsCard, Mode=OneWay}">
                     <StackPanel Spacing="14">
-                        <Grid>
-                            <Border Width="56" Height="56" CornerRadius="28" Background="{ThemeResource FlyyLinkTintBrush}" HorizontalAlignment="Center" Margin="0,6,0,0">
-                                <views:LucideIcon Icon="Lock" Size="24" Foreground="{ThemeResource FlyyLinkAccentBrush}" />
-                            </Border>
-                            <Button Style="{StaticResource FlyyLinkPlainButton}" HorizontalAlignment="Right" VerticalAlignment="Top" Click="LicenceClose_Click" Visibility="{x:Bind Model.Licence.CanClose, Mode=OneWay}" ToolTipService.ToolTip="Close" AutomationProperties.Name="Close">
-                                <views:LucideIcon Icon="X" Size="14" Foreground="{ThemeResource FlyyLinkSubBrush}" />
-                            </Button>
-                        </Grid>
+                        <Border Width="56" Height="56" CornerRadius="28" Background="{ThemeResource FlyyLinkTintBrush}" HorizontalAlignment="Center" Margin="0,6,0,0">
+                            <views:LucideIcon Icon="Lock" Size="24" Foreground="{ThemeResource FlyyLinkAccentBrush}" />
+                        </Border>
 
                         <StackPanel Spacing="5">
                             <TextBlock Text="{x:Bind Model.Licence.Title, Mode=OneWay}" Style="{StaticResource FlyyLinkTitle}" FontSize="18" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
@@ -91,7 +68,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Button Content="Buy FlyyLink" Style="{StaticResource FlyyLinkPillButton}" HorizontalAlignment="Stretch" Click="LicenceBuy_Click" />
+                            <Button Content="{x:Bind Model.Licence.BuyTitle, Mode=OneWay}" Style="{StaticResource FlyyLinkPillButton}" HorizontalAlignment="Stretch" Click="LicenceBuy_Click" />
                             <Button Grid.Column="1" Content="Your computers" Style="{StaticResource FlyyLinkPillButton}" HorizontalAlignment="Stretch" Click="LicenceAccount_Click" />
                         </Grid>
                     </StackPanel>

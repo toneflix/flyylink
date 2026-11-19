@@ -11,24 +11,13 @@ internal sealed class LicenceStore(string path)
     private sealed class Values
     {
         public string? LicenceToken { get; set; }
-        public string? TrialToken { get; set; }
         public string? Secret { get; set; }
-        public long FirstLaunch { get; set; }
         public LicenceLock? ServerLock { get; set; }
     }
 
     private readonly Values values = Load(path);
 
-    /// Notes the first launch, which starts the trial while the server can't be reached.
-    public void Open()
-    {
-        if (values.FirstLaunch != 0) return;
-
-        values.FirstLaunch = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        Save();
-    }
-
-    public LicenceRecord Record => new(values.LicenceToken, values.TrialToken, DateTimeOffset.FromUnixTimeSeconds(values.FirstLaunch), values.ServerLock);
+    public LicenceRecord Record => new(values.LicenceToken, values.ServerLock);
 
     public string? Secret
     {
@@ -58,14 +47,6 @@ internal sealed class LicenceStore(string path)
     public void Renewed(string token)
     {
         values.LicenceToken = token;
-        Save();
-    }
-
-    /// A trial the server extended unlocks a PC whose trial had ended.
-    public void TrialStarted(string token)
-    {
-        values.TrialToken = token;
-        if (values.ServerLock is LicenceLock.TrialOver) values.ServerLock = null;
         Save();
     }
 
