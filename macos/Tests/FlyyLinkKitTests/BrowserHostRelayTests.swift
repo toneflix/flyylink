@@ -12,17 +12,17 @@ final class BrowserHostRelayTests: XCTestCase {
         private var pending = Data()
 
         init() {
-            listener = socket(AF_INET, SOCK_STREAM, 0)
+            listener = Darwin.socket(AF_INET, SOCK_STREAM, 0)
             var address = sockaddr_in()
             address.sin_family = sa_family_t(AF_INET)
             address.sin_addr.s_addr = inet_addr("127.0.0.1")
             address.sin_port = 0
-            _ = withUnsafePointer(to: &address) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { bind(listener, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) } }
-            listen(listener, 1)
+            _ = withUnsafePointer(to: &address) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.bind(listener, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) } }
+            Darwin.listen(listener, 1)
 
             var bound = sockaddr_in()
             var length = socklen_t(MemoryLayout<sockaddr_in>.size)
-            _ = withUnsafeMutablePointer(to: &bound) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(listener, $0, &length) } }
+            _ = withUnsafeMutablePointer(to: &bound) { $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.getsockname(listener, $0, &length) } }
             port = UInt16(bigEndian: bound.sin_port)
         }
 
@@ -38,22 +38,22 @@ final class BrowserHostRelayTests: XCTestCase {
                     pending = Data(pending[(newline + 1)...])
                     return line
                 }
-                guard recv(client, &byte, 1, 0) == 1 else { return nil }
+                guard Darwin.recv(client, &byte, 1, 0) == 1 else { return nil }
                 pending.append(byte)
             }
         }
 
         func write(_ line: String) {
             let bytes = Array((line + "\n").utf8)
-            _ = bytes.withUnsafeBytes { send(client, $0.baseAddress, $0.count, 0) }
+            _ = bytes.withUnsafeBytes { Darwin.send(client, $0.baseAddress, $0.count, 0) }
         }
 
         func closeClient() {
-            close(client)
+            Darwin.close(client)
         }
 
         deinit {
-            close(listener)
+            Darwin.close(listener)
         }
     }
 
