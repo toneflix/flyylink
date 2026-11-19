@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="../../android/page/store.css">
+  <link rel="stylesheet" href="../../android/page/app.css">
+  <link rel="stylesheet" href="../../android/page/tv.css">
+  <link rel="stylesheet" href="promo.css">
+  <script src="../../android/page/app.js"></script>
+  <script src="../../android/page/shots.js"></script>
+  <script src="../../android/page/tv.js"></script>
+  <script src="computer.js"></script>
+  <script src="promo.js"></script>
+</head>
+<body>
+  <script>
+    const id = new URLSearchParams(location.search).get('graphic');
+    const graphic = PROMO.find((g) => g.id === id);
+
+    if (graphic) {
+      document.body.innerHTML = graphic.render(window.ASSETS);
+      fit();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+@font-face { font-family: Inter; font-weight: 400; src: url(../../android/node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2); }
+@font-face { font-family: Inter; font-weight: 500; src: url(../../android/node_modules/@fontsource/inter/files/inter-latin-500-normal.woff2); }
+
+/* The promo canvas: copy, the stage of devices, and the site address. */
+
+.canvas.promo {
+  background:
+    radial-gradient(60% 40% at 50% 78%, rgba(0, 175, 255, 0.26), transparent 70%),
+    radial-gradient(45% 30% at 100% 0%, rgba(246, 193, 1, 0.16), transparent 70%),
+    radial-gradient(40% 30% at 0% 100%, rgba(0, 234, 255, 0.1), transparent 70%),
+    var(--night);
+}
+
+.canvas.promo { display: flex; flex-direction: column; justify-content: center; }
+.promo .copy { position: relative; flex: none; text-align: center; }
+.promo .brand { display: inline-flex; align-items: center; gap: 0.45em; margin-bottom: 0.7em; font-size: calc(var(--u) * 3.2 * var(--t)); font-weight: 800; letter-spacing: -0.02em; }
+.promo .brand img { width: 1.35em; height: 1.35em; }
+.promo .headline { font-size: calc(var(--u) * 6.2 * var(--t)); font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; }
+.promo .sub { margin: 0.8em auto 0; max-width: 30em; font-size: calc(var(--u) * 2.5 * var(--t)); line-height: 1.4; font-weight: 600; color: rgba(255, 255, 255, 0.68); }
+.promo .url { flex: none; position: relative; text-align: center; font-size: calc(var(--u) * 2.6); font-weight: 700; letter-spacing: 0.02em; color: var(--gold); }
+.promo .url { font-size: calc(var(--u) * 2.6 * var(--t)); }
+.canvas.promo:not(.wide) .url { position: absolute; left: 0; right: 0; bottom: calc(var(--safe) + var(--u) * 4); }
+.promo .stage-area { position: relative; flex: 1; min-height: 0; margin: calc(var(--u) * 4) 0 calc(var(--u) * 3); }
+
+.promo .glow {
+  position: absolute;
+  right: -12%;
+  top: -18%;
+  width: 60%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(246, 193, 1, 0.22), transparent);
+}
+
+.canvas.promo.wide { flex-direction: row; align-items: center; gap: calc(var(--u) * 6); }
+.promo.wide .copy { width: 46%; flex: none; text-align: left; }
+.promo.wide .brand { font-size: calc(var(--u) * 6); }
+.promo.wide .headline { font-size: calc(var(--u) * 7.4 * var(--t)); }
+.promo.wide .sub { margin: 0.7em 0 0; font-size: calc(var(--u) * 3.8 * var(--t)); }
+.promo.wide .url { margin-top: 1em; text-align: left; font-size: calc(var(--u) * 3.6); }
+.promo.wide .stage-area { align-self: stretch; margin: 0; }
+
+.stage { position: absolute; top: 0; left: 0; transform-origin: top left; }
+.stage .at { position: absolute; }
+.stage .pop { z-index: 30; }
+
+/* A laptop of no particular brand: dark lid, thin base with a notch. */
+
+.pc-laptop { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.55)); }
+.pc-laptop .lid { background: linear-gradient(170deg, #2a2f38, #0d0f13); box-shadow: inset 0 0 0 2px #3a3f48; }
+.pc-laptop .glass { position: relative; overflow: hidden; background: #000; }
+.pc-laptop .base { width: 112%; border-radius: 0 0 40% 40% / 0 0 100% 100%; background: linear-gradient(180deg, #c9ccd3, #7d828c); display: flex; justify-content: center; }
+.pc-laptop .base i { height: 35%; border-radius: 0 0 8px 8px; background: #9a9ea7; }
+
+.desktop { position: absolute; top: 0; left: 0; width: 1280px; height: 800px; transform-origin: top left; font-family: Inter, sans-serif; color: #1c1c1e; }
+.desktop .ic, .call .ic, .note .ic, .lock .ic { display: inline-flex; }
+.desktop .ic svg, .call .ic svg, .note .ic svg, .lock .ic svg { width: 100%; height: 100%; }
+
+.wallpaper {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 70% at 15% 20%, #2b6f9e, transparent 70%),
+    radial-gradient(50% 60% at 90% 90%, #c99a2e, transparent 70%),
+    linear-gradient(135deg, #1c3550, #3b3a5c 55%, #6a5a48);
+}
+
+/* A plain app window: title bar with the app icon, window buttons drawn as soft dots on the right. */
+
+.win { position: absolute; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.08); }
+.win .bar { flex: none; height: 46px; display: flex; align-items: center; gap: 10px; padding: 0 18px; font-size: 16px; font-weight: 600; color: #3a3a3c; background: #f4f3ef; border-bottom: 1px solid #e6e3da; }
+.win .bar img { width: 22px; height: 22px; border-radius: 6px; }
+.win .bar span { flex: 1; }
+.win .bar i { width: 12px; height: 12px; border-radius: 50%; background: #d4d1c8; }
+.win .content { flex: 1; min-height: 0; position: relative; }
+
+.avatar { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; font-weight: 700; color: #fff; }
+
+.messages { display: flex; height: 100%; }
+.messages .threads { width: 300px; flex: none; padding: 14px; display: flex; flex-direction: column; gap: 6px; background: #faf9f6; border-right: 1px solid #ece9e1; }
+.messages .search { display: flex; align-items: center; gap: 8px; padding: 10px 12px; margin-bottom: 6px; border-radius: 10px; font-size: 15px; color: #8a8a8e; background: #efede6; }
+.messages .search .ic { width: 16px; height: 16px; }
+.messages .thread { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; }
+.messages .thread.on { background: #e3f6ff; }
+.messages .thread .name { font-size: 17px; font-weight: 600; }
+.messages .thread .text { font-size: 14px; color: #6e6e73; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 190px; }
+.messages .chat { flex: 1; display: flex; flex-direction: column; }
+.messages .head { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #f0eee8; }
+.messages .head .avatar { width: 36px; height: 36px; font-size: 15px; }
+.messages .head b { flex: 1; font-size: 18px; }
+.messages .head .ic { width: 22px; height: 22px; color: #0086c9; }
+.messages .bubbles { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; padding: 20px; }
+.bubble { max-width: 72%; padding: 12px 18px; border-radius: 22px; font-size: 18px; line-height: 1.3; }
+.bubble.in { align-self: flex-start; background: #efede6; }
+.bubble.out { align-self: flex-end; color: #fff; background: #0086c9; }
+.messages .compose { display: flex; align-items: center; gap: 10px; margin: 0 20px 20px; padding: 8px 8px 8px 20px; border-radius: 26px; border: 1px solid #e2ded3; font-size: 17px; color: #3a3a3c; }
+.messages .compose span:first-child { flex: 1; }
+.messages .compose .send { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: #0086c9; }
+.messages .compose .send .ic { width: 20px; height: 20px; }
+
+/* Incoming call window and phone notification. */
+
+.call {
+  position: absolute;
+  width: 520px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-radius: 24px;
+  font-family: Inter, sans-serif;
+  color: #1c1c1e;
+  background: rgba(246, 246, 248, 0.94);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+.call .avatar { width: 64px; height: 64px; font-size: 22px; }
+.call .who { flex: 1; }
+.call .name { font-size: 22px; font-weight: 700; }
+.call .text { font-size: 15px; color: #6e6e73; margin-top: 2px; }
+.call .round { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; color: #fff; }
+.call .round .ic { width: 26px; height: 26px; }
+.call .decline { background: #e5484d; }
+.call .answer { background: #30a46c; }
+
+.note {
+  position: absolute;
+  width: 470px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-radius: 22px;
+  font-family: Inter, sans-serif;
+  color: #1c1c1e;
+  background: rgba(246, 246, 248, 0.95);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+.note img { width: 50px; height: 50px; border-radius: 12px; }
+.note .body { flex: 1; min-width: 0; }
+.note .top { display: flex; font-size: 13px; color: #6e6e73; }
+.note .top span:first-child { flex: 1; font-weight: 600; }
+.note .title { font-size: 18px; font-weight: 700; margin-top: 2px; }
+.note .text { font-size: 16px; color: #3a3a3c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.note .reply { padding: 10px 18px; border-radius: 12px; font-size: 15px; font-weight: 600; background: #e3e3e8; }
+
+/* Transfers, the mirrored phone and the Downloads folder. */
+
+.transfers { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.transfers .row { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 14px; background: #faf9f6; border: 1px solid #ece9e1; }
+.transfers .chip { width: 46px; height: 46px; flex: none; border-radius: 12px; display: grid; place-items: center; color: #0086c9; background: #e3f6ff; }
+.transfers .chip .ic { width: 22px; height: 22px; }
+.transfers .body { flex: 1; min-width: 0; }
+.transfers .title { font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.transfers .detail { font-size: 14px; color: #6e6e73; margin-top: 2px; }
+.transfers .progress { height: 6px; margin-top: 8px; border-radius: 3px; background: #d9f3ff; }
+.transfers .progress i { display: block; height: 100%; border-radius: 3px; background: #0086c9; }
+.transfers .percent { font-size: 16px; font-weight: 700; color: #0086c9; }
+.transfers .done .ic { width: 24px; height: 24px; color: #30a46c; }
+
+.mirror { position: absolute; inset: 0; padding: 20px; background: #1d1d20; }
+.mirror .screen { position: relative; overflow: hidden; border-radius: 26px; }
+.mirror .cursor { position: absolute; left: 230px; top: 470px; width: 40px; height: 40px; color: #fff; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6)); }
+.mirror .cursor svg { fill: #1c1c1e; }
+
+.folder { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 20px; }
+.folder .photo { aspect-ratio: 4 / 3; border-radius: 12px; }
+.photo.sunset { background: radial-gradient(18% 30% at 62% 58%, #fff3c4, #ffb347 40%, transparent 70%), linear-gradient(180deg, #2b1d5c 0%, #c2457a 45%, #ff9a4a 62%, #3b2a4a 63%, #1a1630 100%); }
+.photo.sea { background: linear-gradient(180deg, #8fd3ff 0%, #c9ecff 48%, #1a7fb5 50%, #0d4f78 100%); }
+.photo.city { background: linear-gradient(0deg, #1b1f2e 0 30%, transparent 30%), repeating-linear-gradient(90deg, #2b3350 0 18px, #384266 18px 34px), linear-gradient(180deg, #f4a36b, #6a4c8c); }
+.photo.forest { background: radial-gradient(30% 40% at 30% 60%, #2f7a46, transparent 70%), radial-gradient(35% 45% at 70% 65%, #1f5c34, transparent 70%), linear-gradient(180deg, #cfe9d9, #3a8a57 60%, #1d4a2c); }
+.photo.dusk { background: linear-gradient(180deg, #14213d 0%, #5b3c88 50%, #fca17d 100%); }
+.photo.sand { background: linear-gradient(180deg, #a7d8f0 0 40%, #f3d9a4 40% 70%, #e0b36a 100%); }
+
+/* A TV of no particular brand: slim panel on a pedestal. */
+
+.pc-tv { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 40px 60px rgba(0, 0, 0, 0.55)); }
+.pc-tv .panel { background: #0b0c0f; box-shadow: inset 0 0 0 2px #2c3038; }
+.pc-tv .glass { position: relative; overflow: hidden; }
+.pc-tv .stand { display: flex; flex-direction: column; align-items: center; }
+.pc-tv .stand i { background: linear-gradient(90deg, #3a3f48, #23262d); }
+.pc-tv .stand b { border-radius: 8px; background: linear-gradient(180deg, #4a4f58, #1d2026); }
+
+/* The encrypted link between the laptop and the phone. */
+
+.link-line { position: absolute; height: 6px; border-radius: 3px; background: repeating-linear-gradient(90deg, var(--cyan-light) 0 16px, transparent 16px 28px); filter: drop-shadow(0 0 12px rgba(0, 234, 255, 0.8)); }
+.lock { width: 100px; height: 100px; padding: 24px; border-radius: 50%; color: #2a1e00; background: linear-gradient(135deg, var(--gold), var(--gold-deep)); box-shadow: 0 0 0 10px rgba(246, 193, 1, 0.18), 0 20px 50px rgba(0, 0, 0, 0.5); z-index: 5; }
