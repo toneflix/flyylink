@@ -16,6 +16,8 @@ Android phone                                  Mac
 
 The protocol code exists three times, in Kotlin, Swift and C#, with the same names and the same tests. When you change one, change the others.
 
+The browser add-on (`browser/`) doesn't speak the protocol. It talks to the app on the same computer through native messaging and a small host inside the app, and the app does the rest. See [BROWSER.md](BROWSER.md).
+
 ## Why KDE Connect's protocol
 
 It already solves discovery, pairing, encryption and file transfer, and it is documented and widely used. Speaking it means FlyyLink works with KDE Connect on Linux, Windows and Android from day one. We add our own packet types (prefixed `flyylink.`) for features KDE Connect lacks. A peer only gets those if it lists them in its capabilities, so plain KDE Connect clients are unaffected.

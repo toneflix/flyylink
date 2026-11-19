@@ -27,6 +27,7 @@
 - **Computer remote.** Use your phone as a touchpad, a keyboard or a clicker for your slides.
 - **TV remote.** Control your TV from your phone or computer, and type with a real keyboard.
 - **Play on TV.** Show your photos, videos and music on your smart TV.
+- **Browser add-on.** Sign-in codes from your phone fill themselves in, phone numbers on pages call from your phone, and the videos playing in your tabs show up in your phone's media controls.
 - **Several devices.** Connect as many phones and computers as you like.
 - **No Wi-Fi? No problem.** FlyyLink works over your phone's hotspot too.
 
@@ -68,9 +69,10 @@ FlyyLink is three native apps sharing one protocol.
 | `macos/Sources/FlyyLink`    | The Mac menu bar app (SwiftUI).                                                                                                                                                                                                        |
 | `windows/src/FlyyLink.Core` | The protocol in C#.                                                                                                                                                                                                                    |
 | `windows/src/FlyyLink`      | The Windows tray app (WinUI 3).                                                                                                                                                                                                        |
+| `browser`                   | The browser add-on for Chrome, Edge and Firefox. See [docs/BROWSER.md](docs/BROWSER.md).                                                                                                                                               |
 | `web`                       | The website (Next.js), its worker, and the `flyylink-cli` CLI in `web/cli`.                                                                                                                                                            |
 | `branding`                  | The logo and the scripts that generate every app icon.                                                                                                                                                                                 |
-| `docs`                      | [Architecture](docs/ARCHITECTURE.md), [roadmap](docs/ROADMAP.md), [releasing](docs/RELEASING.md), [licences](docs/LICENCES.md), [admin CLI](docs/ADMIN.md), [website hosting](docs/WEBSITE.md) and the [Windows app](docs/WINDOWS.md). |
+| `docs`                      | [Architecture](docs/ARCHITECTURE.md), [roadmap](docs/ROADMAP.md), [releasing](docs/RELEASING.md), [licences](docs/LICENCES.md), [admin CLI](docs/ADMIN.md), [website hosting](docs/WEBSITE.md), the [Windows app](docs/WINDOWS.md) and the [browser add-on](docs/BROWSER.md). |
 
 **Android** (JDK 17 and the Android SDK):
 
@@ -99,6 +101,14 @@ dotnet test tests/FlyyLink.Core.Tests    # runs on any OS
 ```
 
 See [windows/README.md](windows/README.md) for building the app and the installer, and [docs/WINDOWS.md](docs/WINDOWS.md) for what it does.
+
+**Browser add-on** (Node 20 or later):
+
+```sh
+cd browser
+npm test
+npm run build                   # load browser/dist/chrome or browser/dist/firefox unpacked
+```
 
 **Website** (Node 20 or later):
 
