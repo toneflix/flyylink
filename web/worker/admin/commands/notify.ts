@@ -93,7 +93,7 @@ export class NotifyCommands extends CommandGroup {
     reply.next("notify:continue", { id: String(after.id) });
   }
 
-  /** Who a notice reaches, in words. Trial computers have no account, so app reach is described, not counted. */
+  /** Who a notice reaches, in words. Signed-out computers have no account, so app reach is described, not counted. */
   private static reach(channel: Channel, accounts: number, to: string): string {
     const email = `${accounts} account${accounts === 1 ? "" : "s"} by email`;
     const word = to.trim().toLowerCase();

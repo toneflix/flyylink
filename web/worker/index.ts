@@ -36,8 +36,6 @@ export interface Env {
   /** The lifetime price from before monthly and annual plans; PADDLE_PRICE_LIFETIME replaces it. */
   PADDLE_PRICE_ID?: string;
   PADDLE_SANDBOX?: string;
-  /** Trial length in days, set in the dashboard. */
-  TRIAL_DAYS?: string;
   MAIL_FROM: string;
   /** The site's address, for links and images in emails. */
   SITE_URL: string;
@@ -63,7 +61,6 @@ function router(env: Env): Router {
   const mailer = env.MAIL_MODE === "log" ? new LogMailer() : new SendPulseMailer(env.SENDPULSE_API_KEY, env.MAIL_FROM);
   const emails = new Emails(env.SITE_URL);
   const settings = new Settings(env.LICENCES, {
-    trial_days: String(Number(env.TRIAL_DAYS) || Licensing.defaultTrialDays),
     max_computers: String(Licensing.maxComputers),
     removals_per_month: String(Licensing.removalsPerMonth),
     review_emails: env.REVIEW_EMAILS ?? "",

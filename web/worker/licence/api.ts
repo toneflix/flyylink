@@ -37,7 +37,7 @@ export class LicenceApi {
       .post("/api/code", (request) => this.sendCode(request))
       .post("/api/activate", (request) => this.activate(request))
       .post("/api/refresh", (request) => this.refresh(request))
-      .post("/api/trial", (request) => this.trial(request))
+      .post("/api/trial", () => this.trial())
       .post("/api/session", (request) => this.signIn(request))
       .post("/api/session/end", (request) => this.signOut(request))
       .get("/api/account", (request) => this.account(request))
@@ -74,10 +74,9 @@ export class LicenceApi {
     return Response.json({ token });
   }
 
-  private async trial(request: Request): Promise<Response> {
-    const { machine } = await readJson<{ machine?: unknown }>(request);
-
-    return Response.json({ token: await this.licensing.trial(requireString(machine, "machine", 128), now()) });
+  /** Older apps ask for a trial of their own; trials now start with a Paddle checkout. */
+  private trial(): Response {
+    throw new HttpError(402, "trial_over");
   }
 
   private async signIn(request: Request): Promise<Response> {

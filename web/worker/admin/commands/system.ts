@@ -71,10 +71,10 @@ export class SystemCommands extends CommandGroup {
       ["Accounts", `${totals.accounts} (${totals.newAccounts} in the last 30 days)`],
       ["Licensed accounts", String(totals.licensed)],
       ["Active licences", `${totals.monthly} monthly, ${totals.annual} annual, ${totals.lifetime} lifetime, ${totals.free} free (${totals.newLicences} new in the last 30 days)`],
+      ["In a Paddle trial", String(totals.trialing)],
       ["Ended subscriptions", String(totals.ended)],
       ["Revoked licences", String(totals.revoked)],
       ["Computers", `${totals.macs} Mac, ${totals.pcs} PC (${totals.activeComputers} seen in the last 30 days)`],
-      ["Trials", `${totals.trials} (${totals.newTrials} started in the last 30 days)`],
     ]);
   }
 }

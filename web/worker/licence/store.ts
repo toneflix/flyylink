@@ -29,6 +29,8 @@ export interface Licence {
   ends_at: number | null;
   /** 1 while a subscription will renew at `ends_at`. */
   renews: number;
+  /** 1 while a subscription is in its Paddle trial and nothing has been paid yet. */
+  trial: number;
   customer_id: string | null;
   created_at: number;
 }
@@ -40,6 +42,8 @@ export interface Subscription {
   customerId: string;
   plan: Plan;
   status: LicenceStatus;
+  /** Paddle's trial hasn't turned into a paid period yet. */
+  trial: boolean;
   endsAt: number | null;
   renews: boolean;
   /** When Paddle sent the event, so an older event never undoes a newer one. */
@@ -52,11 +56,6 @@ export interface AccountSummary {
   created_at: number;
   licensed: number;
   computers: number;
-}
-
-export interface Trial {
-  machine: string;
-  started_at: number;
 }
 
 /** A page of rows and how many there are in all. */
@@ -103,18 +102,18 @@ export class LicenceStore {
 
   /** Adds or updates a subscription's licence. A revoked one stays revoked. */
   async saveSubscription(subscription: Subscription, now: number): Promise<void> {
-    const { accountId, orderId, customerId, plan, status, endsAt, renews, syncedAt } = subscription;
+    const { accountId, orderId, customerId, plan, status, trial, endsAt, renews, syncedAt } = subscription;
 
     await this.db
       .prepare(
-        "INSERT INTO licences (id, account_id, provider, order_id, status, plan, ends_at, renews, customer_id, synced_at, created_at) " +
-          "VALUES (?, ?, 'paddle', ?, ?, ?, ?, ?, ?, ?, ?) " +
-          "ON CONFLICT (provider, order_id) DO UPDATE SET plan = excluded.plan, ends_at = excluded.ends_at, renews = excluded.renews, " +
+        "INSERT INTO licences (id, account_id, provider, order_id, status, plan, trial, ends_at, renews, customer_id, synced_at, created_at) " +
+          "VALUES (?, ?, 'paddle', ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+          "ON CONFLICT (provider, order_id) DO UPDATE SET plan = excluded.plan, trial = excluded.trial, ends_at = excluded.ends_at, renews = excluded.renews, " +
           "customer_id = excluded.customer_id, synced_at = excluded.synced_at, " +
           "status = CASE WHEN licences.status = 'revoked' THEN 'revoked' ELSE excluded.status END " +
           "WHERE licences.synced_at IS NULL OR licences.synced_at <= excluded.synced_at",
       )
-      .bind(crypto.randomUUID(), accountId, orderId, status, plan, endsAt, renews ? 1 : 0, customerId, syncedAt, now)
+      .bind(crypto.randomUUID(), accountId, orderId, status, plan, trial ? 1 : 0, endsAt, renews ? 1 : 0, customerId, syncedAt, now)
       .run();
   }
 
@@ -181,13 +180,6 @@ export class LicenceStore {
       .prepare("SELECT * FROM computers WHERE machine = ? AND secret_hash = ? AND removed_at IS NULL")
       .bind(machine, secretHash)
       .first();
-  }
-
-  async trialStart(machine: string, now: number): Promise<number> {
-    await this.db.prepare("INSERT INTO trials (machine, started_at) VALUES (?, ?) ON CONFLICT (machine) DO NOTHING").bind(machine, now).run();
-    const row = await this.db.prepare("SELECT started_at FROM trials WHERE machine = ?").bind(machine).first<{ started_at: number }>();
-
-    return row!.started_at;
   }
 
   async findAccounts(filter: { search: string; licence: string }, paging: Paging): Promise<Found<AccountSummary>> {
@@ -265,14 +257,6 @@ export class LicenceStore {
     ]);
   }
 
-  findTrial(machine: string): Promise<Trial | null> {
-    return this.db.prepare("SELECT * FROM trials WHERE machine = ?").bind(machine).first<Trial>();
-  }
-
-  async setTrialStart(machine: string, startedAt: number): Promise<void> {
-    await this.db.prepare("UPDATE trials SET started_at = ? WHERE machine = ?").bind(startedAt, machine).run();
-  }
-
   /** Counts for `stats`. */
   async totals(since: number): Promise<Record<string, number>> {
     const count = async (sql: string, ...binds: unknown[]) =>
@@ -292,8 +276,7 @@ export class LicenceStore {
       macs: await count("SELECT COUNT(*) AS n FROM computers WHERE removed_at IS NULL AND platform = 'mac'"),
       pcs: await count("SELECT COUNT(*) AS n FROM computers WHERE removed_at IS NULL AND platform = 'windows'"),
       activeComputers: await count("SELECT COUNT(*) AS n FROM computers WHERE removed_at IS NULL AND seen_at >= ?", since),
-      trials: await count("SELECT COUNT(*) AS n FROM trials"),
-      newTrials: await count("SELECT COUNT(*) AS n FROM trials WHERE started_at >= ?", since),
+      trialing: await count(`SELECT COUNT(*) AS n FROM licences WHERE ${Plans.current()} AND trial = 1`),
     };
   }
 }
