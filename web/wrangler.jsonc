@@ -29,5 +29,7 @@
     "SITE_URL": "https://flyylink.toneflix.net",
   },
   "keep_vars": true,
+  // Keeps the worker's logs in the dashboard, such as a Paddle webhook it turned away.
+  "observability": { "enabled": true },
   "previews": {},
 }

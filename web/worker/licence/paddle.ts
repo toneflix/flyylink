@@ -1,7 +1,7 @@
 import { HttpError } from "../http";
 import { hmac, sameText } from "./crypto";
 import { Plans } from "./plans";
-import type { LicenceStore } from "./store";
+import type { Account, LicenceStore } from "./store";
 
 const provider = "paddle";
 const maxSkew = 5 * 60;
@@ -11,20 +11,24 @@ interface PaddleItem {
   price_id?: string;
 }
 
+/** A subscription, transaction or adjustment, as webhooks and the API both describe it. */
+interface PaddleEntity {
+  id: string;
+  status?: string;
+  action?: string;
+  customer_id?: string;
+  transaction_id?: string;
+  subscription_id?: string | null;
+  items?: PaddleItem[];
+  current_billing_period?: { ends_at?: string } | null;
+  scheduled_change?: { action?: string } | null;
+  updated_at?: string;
+}
+
 interface PaddleEvent {
   event_type: string;
   occurred_at?: string;
-  data: {
-    id: string;
-    status?: string;
-    action?: string;
-    customer_id?: string;
-    transaction_id?: string;
-    subscription_id?: string | null;
-    items?: PaddleItem[];
-    current_billing_period?: { ends_at?: string } | null;
-    scheduled_change?: { action?: string } | null;
-  };
+  data: PaddleEntity;
 }
 
 export interface PaddleConfig {
@@ -41,6 +45,19 @@ export class PaddleApi {
     const { email } = await this.call<{ email: string }>("GET", `/customers/${customerId}`);
 
     return email.trim().toLowerCase();
+  }
+
+  async customerIds(email: string): Promise<string[]> {
+    return (await this.call<{ id: string }[]>("GET", `/customers?email=${encodeURIComponent(email)}`)).map((customer) => customer.id);
+  }
+
+  /** The customer's subscriptions that still let computers in, trials included. */
+  subscriptions(customerId: string): Promise<PaddleEntity[]> {
+    return this.call("GET", `/subscriptions?customer_id=${customerId}&status=active,trialing,past_due`);
+  }
+
+  purchases(customerId: string): Promise<PaddleEntity[]> {
+    return this.call("GET", `/transactions?customer_id=${customerId}&status=completed`);
   }
 
   /** A link to Paddle's page where the customer cancels a subscription or changes how they pay. */
@@ -82,28 +99,40 @@ export class PaddleWebhook {
     await this.verify(request.headers.get("Paddle-Signature") ?? "", body, now);
 
     const event = JSON.parse(body) as PaddleEvent;
-    if (event.event_type === "transaction.completed") await this.purchased(event, now);
-    else if (event.event_type.startsWith("subscription.")) await this.subscribed(event, now);
-    else if (event.event_type === "adjustment.created" || event.event_type === "adjustment.updated") await this.adjusted(event);
+    if (event.event_type === "transaction.completed") await this.purchased(event.data, now);
+    else if (event.event_type.startsWith("subscription.")) await this.subscribed(event.data, event.occurred_at, now);
+    else if (event.event_type === "adjustment.created" || event.event_type === "adjustment.updated") await this.adjusted(event.data);
 
     return new Response(null, { status: 204 });
   }
 
-  private async purchased(event: PaddleEvent, now: number): Promise<void> {
-    const { id, customer_id: customerId, items = [] } = event.data;
-    if (!customerId || !items.some((item) => this.plans.planFor(PaddleWebhook.priceId(item)) === "lifetime")) return;
-
-    const account = await this.store.accountFor(await this.api.customerEmail(customerId), now);
-    await this.store.addLicence(account.id, provider, id, now);
+  /** Reads the account's plans straight from Paddle, for when a webhook was missed or turned away. */
+  async catchUp(account: Account, now: number): Promise<void> {
+    for (const customerId of await this.api.customerIds(account.email)) {
+      for (const subscription of await this.api.subscriptions(customerId)) await this.subscribed(subscription, subscription.updated_at, now, account);
+      for (const transaction of await this.api.purchases(customerId)) await this.purchased(transaction, now, account);
+    }
   }
 
-  private async subscribed(event: PaddleEvent, now: number): Promise<void> {
-    const { id, status = "", customer_id: customerId, items = [], current_billing_period: period, scheduled_change: change } = event.data;
+  private async purchased(data: PaddleEntity, now: number, account?: Account): Promise<void> {
+    const { id, customer_id: customerId, items = [] } = data;
+    if (!customerId || !items.some((item) => this.plans.planFor(PaddleWebhook.priceId(item)) === "lifetime")) return;
+
+    const accountId = account?.id ?? (await this.accountFor(customerId, now));
+    await this.store.addLicence(accountId, provider, id, now);
+  }
+
+  private async subscribed(data: PaddleEntity, occurredAt: string | undefined, now: number, account?: Account): Promise<void> {
+    const { id, status = "", customer_id: customerId, items = [], current_billing_period: period, scheduled_change: change } = data;
     const plan = items.map((item) => this.plans.planFor(PaddleWebhook.priceId(item))).find((found) => found !== null);
-    if (!customerId || !plan || plan === "lifetime") return;
+    if (!customerId || !plan || plan === "lifetime") {
+      if (!plan) console.warn(`Paddle subscription ${id} has no price FlyyLink sells: ${items.map(PaddleWebhook.priceId).join(", ")}`);
+
+      return;
+    }
 
     const known = await this.store.findLicenceByOrder(provider, id);
-    const accountId = known?.account_id ?? (await this.store.accountFor(await this.api.customerEmail(customerId), now)).id;
+    const accountId = known?.account_id ?? account?.id ?? (await this.accountFor(customerId, now));
     const unpaidTrial = known?.trial === 1;
     const trial = status === "trialing" || (status === "past_due" && unpaidTrial);
     const active = Plans.covers(status, unpaidTrial);
@@ -118,19 +147,23 @@ export class PaddleWebhook {
         trial,
         endsAt: period?.ends_at ? PaddleWebhook.seconds(period.ends_at) : (known?.ends_at ?? now),
         renews: active && change?.action !== "cancel",
-        syncedAt: event.occurred_at ? PaddleWebhook.seconds(event.occurred_at) : now,
+        syncedAt: occurredAt ? PaddleWebhook.seconds(occurredAt) : now,
       },
       now,
     );
   }
 
-  private async adjusted(event: PaddleEvent): Promise<void> {
-    const { action, status, transaction_id: transactionId, subscription_id: subscriptionId } = event.data;
+  private async adjusted(data: PaddleEntity): Promise<void> {
+    const { action, status, transaction_id: transactionId, subscription_id: subscriptionId } = data;
     if (status !== "approved" || (action !== "refund" && action !== "chargeback")) return;
 
     for (const order of [transactionId, subscriptionId]) {
       if (order) await this.store.setLicenceStatus(provider, order, "revoked");
     }
+  }
+
+  private async accountFor(customerId: string, now: number): Promise<string> {
+    return (await this.store.accountFor(await this.api.customerEmail(customerId), now)).id;
   }
 
   private async verify(header: string, body: string, now: number): Promise<void> {
