@@ -30,87 +30,87 @@ export const features: Feature[] = [
   {
     icon: Bell,
     title: "Notifications",
-    body: "Reply from your keyboard. Your computer's show on your phone.",
+    body: "See your phone's notifications on your computer and reply right from your keyboard. Your computer's show up on your phone too.",
   },
   {
     icon: MessageSquare,
     title: "Texts",
-    body: "Read and reply.",
+    body: "Read your texts and reply to them from your computer.",
   },
   {
     icon: Phone,
     title: "Calls",
-    body: "Answer on your computer.",
+    body: "See who's calling and answer without reaching for your phone.",
   },
   {
     icon: FolderUp,
     title: "Files",
-    body: "Any size, from any app.",
+    body: "Send files of any size both ways, straight from any app.",
   },
   {
     icon: Radar,
     title: "FlyyDrop",
-    body: "Send to anyone nearby.",
+    body: "Share with people nearby, even if you've never paired with them.",
   },
   {
     icon: MonitorSmartphone,
     title: "Screen mirroring",
-    body: "Use your phone from your computer.",
+    body: "See your phone's screen on your computer and use it with your mouse and keyboard.",
   },
   {
     icon: Images,
     title: "Photos",
-    body: "Your latest shots, on your computer.",
+    body: "See the latest photos from your phone on your computer.",
   },
   {
     icon: FolderOpen,
     title: "Phone storage",
-    body: "Every folder, in Finder or File Explorer.",
+    body: "Browse your phone's folders in Finder or File Explorer, like any other drive.",
   },
   {
     icon: Clipboard,
     title: "Clipboard",
-    body: "Copy on one, paste on the other.",
+    body: "Copy something on your phone and paste it on your computer, or the other way round.",
   },
   {
     icon: MapPin,
     title: "Find your phone",
-    body: "Ring it, even on silent.",
+    body: "Lost it in the couch again? Make it ring, even when it's on silent.",
   },
   {
     icon: Music,
     title: "Music, battery and signal",
-    body: "Play, pause, skip, and check the battery and signal.",
+    body: "Control what's playing on your phone and keep an eye on its battery and signal.",
   },
   {
     icon: MousePointer2,
     title: "Computer remote",
-    body: "Your phone is a touchpad, keyboard and slide clicker.",
+    body: "Use your phone as a touchpad, a keyboard or a clicker for your slides.",
   },
   {
     icon: Tv,
     title: "TV remote",
-    body: "Your phone or computer is the remote. Type and point, too.",
+    body: "Control your TV from your phone or computer, and type with a real keyboard.",
   },
   {
     icon: Cast,
     title: "Play on TV",
-    body: "Photos, videos and music on your smart TV.",
+    body: "Show your photos, videos and music on your smart TV.",
   },
   {
     icon: Smartphone,
     title: "Several phones",
-    body: "Pair as many as you like.",
+    body: "Connect as many phones as you like and switch between them.",
   },
   {
     icon: Laptop,
     title: "Computer to computer",
-    body: "Share files and the clipboard between Macs and PCs.",
+    body: "Send files and share your clipboard between your Macs and PCs.",
   },
   {
     icon: Wifi,
-    title: "No Wi-Fi? Still works.",
-    body: "Connects through your phone's hotspot.",
+    title: "No Wi-Fi? No problem.",
+    body: "FlyyLink works over your phone's hotspot too.",
   },
 ];
 
@@ -122,7 +122,7 @@ export const platforms = [
 ];
 
 export const steps = [
-  { title: "Install", body: "Phone, computer or TV." },
-  { title: "Same Wi-Fi", body: "Or join your phone's hotspot." },
-  { title: "Pair once", body: "Check the code matches." },
+  { title: "Install FlyyLink", body: "Get it on your phone and your computer or TV." },
+  { title: "Join the same Wi-Fi", body: "Or connect your computer to your phone's hotspot." },
+  { title: "Pair them", body: "Check the code matches on both screens, and you're done." },
 ];

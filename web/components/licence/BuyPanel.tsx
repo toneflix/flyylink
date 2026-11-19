@@ -6,9 +6,9 @@ import { LicenceClient, type Plan } from "./api";
 import { PaddleCheckout, type PlanPrice } from "./paddle";
 
 const plans: Record<Plan, { name: string; per: string; perks: string[] }> = {
-  monthly: { name: "Monthly", per: "a month", perks: ["Up to 5 Macs and PCs", "Phones are always free", "Cancel any time"] },
-  annual: { name: "Annual", per: "a year", perks: ["Up to 5 Macs and PCs", "Phones are always free", "Cancel any time"] },
-  lifetime: { name: "Lifetime", per: "once", perks: ["Up to 5 Macs and PCs", "Phones are always free", "Every future update"] },
+  monthly: { name: "Monthly", per: "a month", perks: ["Use it on up to 5 Macs and PCs", "Phones are always free", "Cancel whenever you like"] },
+  annual: { name: "Annual", per: "a year", perks: ["Use it on up to 5 Macs and PCs", "Phones are always free", "Cancel whenever you like"] },
+  lifetime: { name: "Lifetime", per: "once", perks: ["Use it on up to 5 Macs and PCs", "Phones are always free", "Every future update included"] },
 };
 
 /** How much a year on the annual plan saves over twelve months, as a whole percentage. */
