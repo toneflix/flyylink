@@ -78,7 +78,7 @@ public sealed class TvRemoteWindow : Window
         var unplug = new LucideIcon { Icon = Lucide.Unplug, Size = 36, HorizontalAlignment = HorizontalAlignment.Center };
         unplug.SetValue(LucideIcon.ForegroundProperty, Application.Current.Resources["FlyyLinkAccentBrush"]);
         gone.Children.Add(unplug);
-        gone.Children.Add(new TextBlock { Text = "TV not connected", FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
+        gone.Children.Add(new TextBlock { Text = "Your TV isn't connected", FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center });
 
         var root = new Grid { Padding = new Thickness(20), Children = { controls, gone } };
         root.SetValue(Panel.BackgroundProperty, Application.Current.Resources["FlyyLinkPanelBrush"]);
@@ -209,7 +209,7 @@ public sealed class TvRemoteWindow : Window
 
         var icon = new LucideIcon { Icon = Lucide.MousePointer2, Size = 22, HorizontalAlignment = HorizontalAlignment.Center };
         icon.SetValue(LucideIcon.ForegroundProperty, Application.Current.Resources["FlyyLinkAccentBrush"]);
-        var hint = new TextBlock { Text = "Keys go to the TV", FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center };
+        var hint = new TextBlock { Text = "Your typing goes to the TV", FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center };
         hint.SetValue(TextBlock.ForegroundProperty, Application.Current.Resources["FlyyLinkSubBrush"]);
         pad.Children.Add(new StackPanel
         {

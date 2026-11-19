@@ -114,7 +114,7 @@
                 </StackPanel>
 
                 <StackPanel Spacing="10" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind Store.ViewedFailed, Mode=OneWay}">
-                    <TextBlock Text="Couldn't load this one" FontSize="13" Foreground="White" />
+                    <TextBlock Text="We couldn't load this one" FontSize="13" Foreground="White" />
                     <Button Content="Try again" HorizontalAlignment="Center" CornerRadius="10" Click="Retry_Click" />
                 </StackPanel>
 

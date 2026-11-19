@@ -79,7 +79,7 @@
                     <Border Width="64" Height="64" CornerRadius="32" Background="{ThemeResource FlyyLinkTintBrush}" HorizontalAlignment="Center">
                         <views:LucideIcon Icon="MessagesSquare" Size="28" Foreground="{ThemeResource FlyyLinkAccentBrush}" />
                     </Border>
-                    <TextBlock Text="Pick a conversation" Style="{StaticResource FlyyLinkTitle}" HorizontalAlignment="Center" />
+                    <TextBlock Text="Choose a conversation" Style="{StaticResource FlyyLinkTitle}" HorizontalAlignment="Center" />
                 </StackPanel>
 
                 <Grid Visibility="{x:Bind Store.HasSelection, Mode=OneWay}">

@@ -167,13 +167,13 @@ final class LicenceModel: ObservableObject {
 
     private static func describe(_ code: String) -> String {
         switch code {
-        case "bad_email": return "Check the email address."
+        case "bad_email": return "Please check the email address."
         case "bad_code": return "That code didn't work. Ask for a new one."
-        case "too_many_codes": return "Too many codes. Try again in an hour."
-        case "no_licence": return "This email has no FlyyLink plan."
-        case "computer_limit": return "You're on 5 computers already. Remove one in your account."
-        case "offline": return "Couldn't reach FlyyLink. Check your connection."
-        default: return "Something went wrong. Try again."
+        case "too_many_codes": return "That's a lot of codes. Please try again in an hour."
+        case "no_licence": return "We couldn't find a FlyyLink plan for this email."
+        case "computer_limit": return "You're already using FlyyLink on 5 computers. Remove one in your account to add this one."
+        case "offline": return "We couldn't reach FlyyLink. Please check your internet connection."
+        default: return "Something went wrong. Please try again."
         }
     }
 }

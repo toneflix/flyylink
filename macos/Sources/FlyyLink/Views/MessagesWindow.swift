@@ -119,10 +119,10 @@ private struct EmptyDetail: View {
         VStack(spacing: 12) {
             Image(lucide: .messagesSquare, size: 40, weight: .light)
                 .foregroundStyle(Theme.accent)
-            Text(hasPhone ? "Pick a conversation" : "Your phone isn't connected")
+            Text(hasPhone ? "Choose a conversation" : "Your phone isn't connected")
                 .font(.system(size: 17, weight: .semibold))
             if !hasPhone {
-                Text("Open FlyyLink on your phone, on the same Wi-Fi.")
+                Text("Open FlyyLink on your phone and make sure it's on the same Wi-Fi.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }

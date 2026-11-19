@@ -69,7 +69,7 @@ final class PhoneHotspot: @unchecked Sendable {
         guard attempt == self.attempt else { return }
 
         guard let wifi = CWWiFiClient.shared().interface(), let device = wifi.interfaceName else {
-            onStatus(.failed("This Mac has no Wi-Fi"))
+            onStatus(.failed("This Mac doesn't have Wi-Fi"))
             return
         }
 

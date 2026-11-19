@@ -256,12 +256,12 @@ public sealed class LicenceModel : Observable
 
     private static string Describe(string code) => code switch
     {
-        "bad_email" => "Check the email address.",
+        "bad_email" => "Please check the email address.",
         "bad_code" => "That code didn't work. Ask for a new one.",
-        "too_many_codes" => "Too many codes. Try again in an hour.",
-        "no_licence" => "This email has no FlyyLink plan.",
-        "computer_limit" => "You're on 5 computers already. Remove one in your account.",
-        "offline" => "Couldn't reach FlyyLink. Check your connection.",
-        _ => "Something went wrong. Try again.",
+        "too_many_codes" => "That's a lot of codes. Please try again in an hour.",
+        "no_licence" => "We couldn't find a FlyyLink plan for this email.",
+        "computer_limit" => "You're already using FlyyLink on 5 computers. Remove one in your account to add this one.",
+        "offline" => "We couldn't reach FlyyLink. Please check your internet connection.",
+        _ => "Something went wrong. Please try again.",
     };
 }

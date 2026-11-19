@@ -53,12 +53,12 @@ public sealed record FlyyDropSend(string Id, FlyyDropStage Stage, TransferProgre
         FlyyDropStage.Waiting => "Waiting for them to accept…",
         FlyyDropStage.Sending => Progress is { } progress ? $"Sending · {(int)(progress.Fraction * 100)}%" : "Sending…",
         FlyyDropStage.Sent => "Sent",
-        FlyyDropStage.NoAnswer => "No answer",
-        FlyyDropStage.Failed => "Didn't finish",
+        FlyyDropStage.NoAnswer => "They didn't answer",
+        FlyyDropStage.Failed => "It didn't finish. Please try again.",
         _ => Reason switch
         {
-            FlyyDrop.Reason.Unavailable => "Not taking FlyyDrops right now",
-            FlyyDrop.Reason.Busy => "Busy with another request",
+            FlyyDrop.Reason.Unavailable => "They're not taking FlyyDrops right now",
+            FlyyDrop.Reason.Busy => "They're busy with another request",
             _ => "Declined",
         },
     };

@@ -64,7 +64,7 @@ struct TvRemoteWindow: View {
         VStack(spacing: 10) {
             Image(lucide: .unplug, size: 36, weight: .light)
                 .foregroundStyle(Theme.accent)
-            Text("TV not connected").font(.system(size: 15, weight: .semibold))
+            Text("Your TV isn't connected").font(.system(size: 15, weight: .semibold))
         }
         .frame(maxWidth: .infinity, minHeight: 240)
     }
@@ -158,7 +158,7 @@ private struct TvTouchpad: View {
                     .foregroundStyle(Theme.accent)
                 Text(holding ? "Press ⌘ to let go" : "Click to use the pointer")
                     .font(.system(size: 12, weight: .medium))
-                Text("Keys go to the TV")
+                Text("Your typing goes to the TV")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }

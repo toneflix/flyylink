@@ -60,7 +60,7 @@ internal sealed class PhoneHotspot(Func<IReadOnlyDictionary<string, string>> nam
             var adapters = await WiFiAdapter.FindAllAdaptersAsync();
             if (adapters.Count == 0)
             {
-                onStatus(new Status.Failed("This PC has no Wi-Fi"));
+                onStatus(new Status.Failed("This PC doesn't have Wi-Fi"));
                 return;
             }
 

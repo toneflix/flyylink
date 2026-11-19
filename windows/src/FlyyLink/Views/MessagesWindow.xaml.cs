@@ -164,7 +164,7 @@ public sealed partial class MessagesWindow : Window
         dialog.Opened += (_, _) => (number is null ? (Control)to.Box : body).Focus(FocusState.Programmatic);
 
         if (await dialog.ShowAsync() == ContentDialogResult.Primary && !Store.Compose(to.Number, body.Text))
-            await Dialog("Not sent", "OK", new TextBlock { Text = "Check the number, message and phone connection.", TextWrapping = TextWrapping.Wrap }, withCancel: false).ShowAsync();
+            await Dialog("Not sent", "OK", new TextBlock { Text = "Please check the number, the message and your phone's connection.", TextWrapping = TextWrapping.Wrap }, withCancel: false).ShowAsync();
     }
 
     // Calling

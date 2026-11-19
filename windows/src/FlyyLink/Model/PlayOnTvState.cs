@@ -43,7 +43,7 @@ public sealed class PlayOnTvState : Observable, IDisposable
 
     public Lucide PickedIcon => KindIcon(picked?.Mime);
 
-    public string PickStatus => Tvs.Count > 0 ? "Pick a TV" : Searching ? "Looking for TVs…" : "No TVs found";
+    public string PickStatus => Tvs.Count > 0 ? "Choose a TV" : Searching ? "Looking for TVs…" : "We couldn't find any TVs";
 
     public bool ShowsSearchAgain => Tvs.Count == 0 && !Searching;
 

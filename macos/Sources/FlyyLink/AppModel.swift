@@ -823,7 +823,7 @@ final class AppModel: ObservableObject {
         nearby.search(.hotspot)
 
         guard let id = hotspotPhoneId else {
-            hotspotStatus = "Turn on your phone's hotspot and pick it in the Wi-Fi menu once."
+            hotspotStatus = "Turn on your phone's hotspot and choose it from the Wi-Fi menu once."
             return
         }
 

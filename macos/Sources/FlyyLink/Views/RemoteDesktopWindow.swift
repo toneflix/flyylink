@@ -53,7 +53,7 @@ struct RemoteDesktopWindow: View {
         switch desktop.phase {
         case .ended:
             return "\(desktop.deviceName) stopped sharing. It needs Screen Recording access and \"Let my devices control this Mac\" on."
-        case .idle: return "Start from View screen in the FlyyLink menu."
+        case .idle: return "Start it from View screen in the FlyyLink menu."
         default: return "Connecting…"
         }
     }

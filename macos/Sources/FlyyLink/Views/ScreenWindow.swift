@@ -56,8 +56,8 @@ struct ScreenWindow: View {
 
     private var statusHint: String {
         switch mirror.phase {
-        case .ended: return "The phone stopped sharing or disconnected."
-        case .idle: return "Start from Mirror in the FlyyLink menu."
+        case .ended: return "Your phone stopped sharing its screen or disconnected."
+        case .idle: return "Start it from Mirror in the FlyyLink menu."
         default: return "Tap the notification on your phone, then \"Start now\"."
         }
     }

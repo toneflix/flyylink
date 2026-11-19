@@ -186,7 +186,7 @@ internal sealed class SharePlugin(string folder, TransferStore store, ToastCente
             ?? (file.Offset == 0 ? ReserveFile(Share.SafeName(file.Name)) : null);
         if (target is not (string path, FileStream sink))
         {
-            OnActivity?.Invoke(new Activity(ActivityKind.Failed, file.Name, "Could not save to Downloads"));
+            OnActivity?.Invoke(new Activity(ActivityKind.Failed, file.Name, "We couldn't save it to Downloads"));
             return;
         }
 
