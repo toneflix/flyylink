@@ -34,10 +34,10 @@ export interface CheckoutConfig {
 const messages: Record<string, string> = {
   bad_email: "That email doesn't look right.",
   bad_code: "That code didn't work. Ask for a new one.",
-  too_many_codes: "Too many codes. Try again in an hour.",
-  removal_limit: "You've removed 3 computers this month. Try again later.",
+  too_many_codes: "That's a lot of codes. Please try again in an hour.",
+  removal_limit: "You've already removed 3 computers this month. You can remove more next month.",
   signed_out: "You're signed out.",
-  no_subscription: "You have no plan to manage.",
+  no_subscription: "You don't have a plan to manage yet.",
 };
 
 /** Calls the licence API on this site. Errors carry the server's code, worded for people. */

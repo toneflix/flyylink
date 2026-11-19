@@ -4,8 +4,8 @@ import { Showcase } from "@/components/Showcase";
 import { features, platforms, steps } from "@/content/features";
 
 const promises = [
-  { icon: ServerOff, text: "Nothing goes through us" },
-  { icon: EyeOff, text: "No ads or tracking" },
+  { icon: ServerOff, text: "Nothing goes through our servers" },
+  { icon: EyeOff, text: "No ads, no tracking" },
   { icon: Lock, text: "Encrypted end to end" },
 ];
 
@@ -20,7 +20,7 @@ export default function Home() {
               Android, <em>meet your computer.</em>
             </h1>
             <p className="lead">
-              Texts, calls, notifications, files and photos from your phone, on your Mac or PC.
+              Your texts, calls, notifications, files and photos, right on your Mac or PC.
             </p>
             <DownloadButtons />
             <p className="hero-note">Free on Android. <a href="/buy">Try it free</a> on your Mac or PC.</p>
@@ -39,7 +39,7 @@ export default function Home() {
         <div className="container">
           <div className="section-head">
             <span className="eyebrow">What it does</span>
-            <h2>Put the phone down. Keep up anyway.</h2>
+            <h2>Put your phone down and still keep up.</h2>
           </div>
 
           <div className="features">
@@ -59,8 +59,8 @@ export default function Home() {
       <section className="container">
         <Showcase
           eyebrow="Messages and calls"
-          title="Texts and calls on your computer."
-          points={["Reply from your keyboard", "Answer or decline calls", "Talk through your Mac"]}
+          title="Text and talk from your computer."
+          points={["Reply to texts from your keyboard", "Answer or decline calls", "Talk through your computer"]}
           media={
             <div className="stack">
               <img src="/screens/call-card.png" alt="An incoming call card on the Mac with answer and decline buttons" />
@@ -72,16 +72,16 @@ export default function Home() {
         <Showcase
           reverse
           eyebrow="FlyyDrop"
-          title="Send to anyone nearby."
-          points={["Phones, Macs and PCs", "You choose who can send to you"]}
+          title="Share with anyone nearby."
+          points={["Works with phones, Macs and PCs", "You decide who can send you things"]}
           media={<img className="bleed" src="/screens/flyydrop.png" alt="An Android phone being asked to accept three photos sent with FlyyDrop" />}
         />
 
         <Showcase
           gold
           eyebrow="All your devices"
-          title="All your phones and computers."
-          points={["Pair as many as you like", "Switch with a swipe"]}
+          title="All your phones and computers, together."
+          points={["Connect as many as you like", "Swipe to switch between them"]}
           media={<img className="tall" src="/screens/mac-panel.png" alt="The FlyyLink panel on a Mac with two phones paired" />}
         />
 
@@ -89,7 +89,7 @@ export default function Home() {
           eyebrow="Screen mirroring"
           title="Use your phone from your computer."
           body="FlyyLink uses Android's AccessibilityService API to pass your clicks and typing to the phone. It's off until you agree and turn it on, works only while you mirror, and collects or shares no data."
-          points={["With sound", "Mouse and keyboard"]}
+          points={["Sound comes through too", "Use your mouse and keyboard"]}
           reverse
           media={<img className="tall" src="/screens/android-home.png" alt="FlyyLink on Android, showing a paired MacBook Pro" />}
         />
@@ -97,8 +97,8 @@ export default function Home() {
         <Showcase
           gold
           eyebrow="TV"
-          title="Your phone is the TV remote."
-          points={["Buttons or touchpad", "Type with your keyboard", "Play photos, videos and music on any smart TV"]}
+          title="Your phone is now the TV remote."
+          points={["Use buttons or swipe on a touchpad", "Type searches with your keyboard", "Play photos, videos and music on any smart TV"]}
           media={<img className="bleed" src="/screens/tv-remote.png" alt="The FlyyLink TV remote on an Android phone, with a song playing on the living room TV" />}
         />
       </section>
@@ -127,7 +127,7 @@ export default function Home() {
         <div className="container">
           <div className="section-head">
             <span className="eyebrow">Get started</span>
-            <h2>Up and running in a minute.</h2>
+            <h2>You'll be set up in a minute.</h2>
           </div>
 
           <div className="steps">

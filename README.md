@@ -14,25 +14,25 @@
 
 ## What it does
 
-- **Notifications.** Reply from your keyboard. Your computer's show on your phone.
-- **Texts and calls.** Read, reply, answer.
-- **Files.** Any size, from any app.
-- **FlyyDrop.** Send to anyone nearby.
-- **Screen mirroring.** Use your phone from your computer.
-- **Photos.** Your latest shots, on your computer.
-- **Phone storage.** Every folder, in Finder or File Explorer.
-- **Clipboard.** Copy on one, paste on the other.
-- **Find your phone.** Ring it, even on silent.
-- **Media, battery and signal.** Play, pause, skip, and check the battery and signal.
-- **Computer remote.** Your phone is a touchpad, keyboard and slide clicker.
-- **TV remote.** Your phone or computer is the remote. Type and point, too.
-- **Play on TV.** Photos, videos and music on your smart TV.
-- **Several devices.** Pair as many phones and computers as you like.
-- **No shared Wi-Fi?** Connects through your phone's hotspot.
+- **Notifications.** See your phone's notifications on your computer and reply right from your keyboard. Your computer's show up on your phone too.
+- **Texts and calls.** Read and reply to texts, and answer calls without reaching for your phone.
+- **Files.** Send files of any size both ways, straight from any app.
+- **FlyyDrop.** Share with people nearby, even if you've never paired with them.
+- **Screen mirroring.** See your phone's screen on your computer and use it with your mouse and keyboard.
+- **Photos.** See the latest photos from your phone on your computer.
+- **Phone storage.** Browse your phone's folders in Finder or File Explorer, like any other drive.
+- **Clipboard.** Copy something on your phone and paste it on your computer, or the other way round.
+- **Find your phone.** Make it ring, even when it's on silent.
+- **Music, battery and signal.** Control what's playing on your phone and keep an eye on its battery and signal.
+- **Computer remote.** Use your phone as a touchpad, a keyboard or a clicker for your slides.
+- **TV remote.** Control your TV from your phone or computer, and type with a real keyboard.
+- **Play on TV.** Show your photos, videos and music on your smart TV.
+- **Several devices.** Connect as many phones and computers as you like.
+- **No Wi-Fi? No problem.** FlyyLink works over your phone's hotspot too.
 
 ## Privacy
 
-Nothing goes through us, and no tracking. Your devices talk to each other directly, encrypted.
+Your devices talk to each other directly, and everything between them is encrypted. Nothing goes through our servers, and there are no ads or tracking.
 
 ## Get it
 
@@ -47,14 +47,14 @@ Get the phone app on [Google Play](https://play.google.com/store/apps/details?id
 
 ### Setting up
 
-1. Put your devices on the same Wi-Fi, or join your phone's hotspot.
-2. Open FlyyLink on each.
-3. Tap **Pair** and check the code matches.
-4. On the phone, allow notification access and any extras you want.
+1. Put your devices on the same Wi-Fi, or connect your computer to your phone's hotspot.
+2. Open FlyyLink on each of them.
+3. Tap **Pair** and check the code matches on both screens.
+4. On your phone, allow notification access and turn on any other features you want.
 
-If the connection drops when the phone is idle (common on Tecno, Infinix, itel and Xiaomi), let FlyyLink run in the background in your battery settings.
+If the connection drops while your phone is idle (this happens a lot on Tecno, Infinix, itel and Xiaomi phones), let FlyyLink run in the background in your battery settings.
 
-Close KDE Connect while setting up; both use the same network port.
+If you use KDE Connect, close it while you set up FlyyLink, because they both use the same network port.
 
 ## For developers
 
