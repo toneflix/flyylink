@@ -1,7 +1,10 @@
 package com.toneflix.flyylink.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -18,11 +21,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -81,6 +88,7 @@ fun ComputerRemoteScreen(
     remote: ComputerRemote,
     mode: ComputerRemoteMode,
     onModeChange: (ComputerRemoteMode) -> Unit,
+    onFullScreen: () -> Unit,
     onClose: () -> Unit,
 ) {
     val devices by DeviceStore.states.collectAsStateWithLifecycle()
@@ -116,7 +124,7 @@ fun ComputerRemoteScreen(
 
         when (mode) {
             ComputerRemoteMode.TOUCHPAD -> {
-                PointerPad(remote, Modifier.weight(1f))
+                PointerPad(remote, Modifier.weight(1f), onFullScreen)
                 MediaKeys(remote)
             }
             ComputerRemoteMode.KEYBOARD -> {
@@ -153,16 +161,10 @@ private fun Blocked(isMac: Boolean) {
     }
 }
 
-/**
- * A laptop touchpad: slide to move, tap to click, two fingers to scroll, two-finger tap to right-click, and hold
- * still to start dragging. Faster slides move further, like a real touchpad. The buttons along the bottom click and
- * can be held while another finger moves.
- */
+/** The touchpad with click and right-click buttons along the bottom, which can be held while another finger moves. */
 @Composable
-private fun PointerPad(remote: ComputerRemote, modifier: Modifier) {
+private fun PointerPad(remote: ComputerRemote, modifier: Modifier, onFullScreen: (() -> Unit)? = null) {
     val colors = MaterialTheme.colorScheme
-    val haptics = LocalHapticFeedback.current
-    val scope = rememberCoroutineScope()
     var dragging by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(28.dp)
 
@@ -173,95 +175,13 @@ private fun PointerPad(remote: ComputerRemote, modifier: Modifier) {
             .background(colors.surface)
             .border(1.dp, if (dragging) colors.primary else colors.outlineVariant, shape),
     ) {
-        Box(
-            Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .pointerInput(remote) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        var fingers = 1
-                        var travelled = 0f
-                        var pending = Offset.Zero
-                        var sentAt = down.uptimeMillis
-                        var now = down.uptimeMillis
-                        var hold: Job? = scope.launch {
-                            delay(HOLD_MS)
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            remote.button(MouseButton.LEFT, true)
-                            dragging = true
-                        }
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            TouchpadSurface(remote, Modifier.fillMaxSize(), onDragging = { dragging = it }) {
+                TouchpadHint(R.string.computer_remote_touchpad_hint)
+            }
 
-                        fun send(force: Boolean) {
-                            val gap = if (fingers > 1) SCROLL_EVERY_MS else MOVE_EVERY_MS
-                            val elapsed = now - sentAt
-                            if (pending == Offset.Zero || (!force && elapsed < gap)) return
-
-                            val dx = (pending.x / density).toDouble()
-                            val dy = (pending.y / density).toDouble()
-                            if (fingers > 1) {
-                                remote.scroll(-dx * SCROLL_GAIN, dy * SCROLL_GAIN)
-                            } else {
-                                val gain = pointerGain(dx, dy, elapsed)
-                                remote.move(dx * gain, dy * gain)
-                            }
-                            pending = Offset.Zero
-                            sentAt = now
-                        }
-
-                        do {
-                            val event = awaitPointerEvent()
-                            val pressed = event.changes.filter { it.pressed }
-                            now = event.changes.maxOf { it.uptimeMillis }
-
-                            if (pressed.size > fingers) pending = Offset.Zero
-                            fingers = maxOf(fingers, pressed.size)
-
-                            if (pressed.isNotEmpty()) {
-                                val step = pressed.fold(Offset.Zero) { sum, change -> sum + change.positionChange() } / pressed.size.toFloat()
-                                travelled += step.getDistance()
-                                pending += step
-                            }
-                            if (fingers > 1 || travelled > viewConfiguration.touchSlop) {
-                                hold?.cancel()
-                                hold = null
-                            }
-                            event.changes.forEach { it.consume() }
-                            send(force = false)
-                        } while (pressed.isNotEmpty())
-
-                        hold?.cancel()
-                        send(force = true)
-
-                        val tapped = travelled < viewConfiguration.touchSlop && now - down.uptimeMillis < TAP_MS
-                        when {
-                            dragging -> {
-                                remote.button(MouseButton.LEFT, false)
-                                dragging = false
-                            }
-                            tapped -> {
-                                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                remote.click(if (fingers > 1) MouseButton.RIGHT else MouseButton.LEFT)
-                            }
-                        }
-                    }
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(
-                    painterResource(R.drawable.lucide_mouse_pointer_2),
-                    contentDescription = null,
-                    tint = colors.onSurfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.size(28.dp),
-                )
-                Text(
-                    stringResource(R.string.computer_remote_touchpad_hint),
-                    fontSize = 13.sp,
-                    color = colors.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                )
+            onFullScreen?.let {
+                CornerButton(R.drawable.lucide_maximize_2, R.string.computer_remote_full_screen, Modifier.align(Alignment.TopEnd), it)
             }
         }
 
@@ -272,6 +192,168 @@ private fun PointerPad(remote: ComputerRemote, modifier: Modifier) {
             MouseButtonArea(remote, MouseButton.RIGHT, R.string.computer_remote_right_click, Modifier.weight(1f))
         }
     }
+}
+
+/**
+ * The whole screen as a touchpad, to use without looking. The hint fades after a moment, and the corner button or Back
+ * leaves.
+ */
+@Composable
+fun FullScreenTouchpad(remote: ComputerRemote, onExit: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    var dragging by remember { mutableStateOf(false) }
+    var hinting by remember { mutableStateOf(true) }
+    val hintAlpha by animateFloatAsState(if (hinting) 1f else 0f, tween(600), label = "hint")
+
+    BackHandler(onBack = onExit)
+    LaunchedEffect(Unit) {
+        delay(HINT_MS)
+        hinting = false
+    }
+
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(colors.background)
+            .border(2.dp, if (dragging) colors.primary else Color.Transparent),
+    ) {
+        TouchpadSurface(remote, Modifier.fillMaxSize().systemGestureExclusion(), onDragging = { dragging = it }) {
+            Box(Modifier.graphicsLayer { alpha = hintAlpha }) {
+                TouchpadHint(R.string.computer_remote_full_screen_hint)
+            }
+        }
+
+        CornerButton(
+            R.drawable.lucide_minimize_2,
+            R.string.computer_remote_exit_full_screen,
+            Modifier.align(Alignment.TopEnd).safeDrawingPadding(),
+            onExit,
+        )
+    }
+}
+
+@Composable
+private fun TouchpadHint(@StringRes text: Int) {
+    val colors = MaterialTheme.colorScheme
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Icon(
+            painterResource(R.drawable.lucide_mouse_pointer_2),
+            contentDescription = null,
+            tint = colors.onSurfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.size(28.dp),
+        )
+        Text(
+            stringResource(text),
+            fontSize = 13.sp,
+            color = colors.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+    }
+}
+
+/** A small, quiet icon button tucked into a corner of the touchpad. */
+@Composable
+private fun CornerButton(@DrawableRes icon: Int, @StringRes label: Int, modifier: Modifier, onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = modifier.padding(6.dp)) {
+        Icon(
+            painterResource(icon),
+            contentDescription = stringResource(label),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+/**
+ * A laptop touchpad: slide to move, tap to click, two fingers to scroll, two-finger tap to right-click, and hold
+ * still to start dragging. Faster slides move further, like a real touchpad.
+ */
+@Composable
+private fun TouchpadSurface(
+    remote: ComputerRemote,
+    modifier: Modifier,
+    onDragging: (Boolean) -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+
+    Box(
+        modifier.pointerInput(remote) {
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                var fingers = 1
+                var travelled = 0f
+                var pending = Offset.Zero
+                var sentAt = down.uptimeMillis
+                var now = down.uptimeMillis
+                var dragging = false
+                var hold: Job? = scope.launch {
+                    delay(HOLD_MS)
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    remote.button(MouseButton.LEFT, true)
+                    dragging = true
+                    onDragging(true)
+                }
+
+                fun send(force: Boolean) {
+                    val gap = if (fingers > 1) SCROLL_EVERY_MS else MOVE_EVERY_MS
+                    val elapsed = now - sentAt
+                    if (pending == Offset.Zero || (!force && elapsed < gap)) return
+
+                    val dx = (pending.x / density).toDouble()
+                    val dy = (pending.y / density).toDouble()
+                    if (fingers > 1) {
+                        remote.scroll(-dx * SCROLL_GAIN, dy * SCROLL_GAIN)
+                    } else {
+                        val gain = pointerGain(dx, dy, elapsed)
+                        remote.move(dx * gain, dy * gain)
+                    }
+                    pending = Offset.Zero
+                    sentAt = now
+                }
+
+                do {
+                    val event = awaitPointerEvent()
+                    val pressed = event.changes.filter { it.pressed }
+                    now = event.changes.maxOf { it.uptimeMillis }
+
+                    if (pressed.size > fingers) pending = Offset.Zero
+                    fingers = maxOf(fingers, pressed.size)
+
+                    if (pressed.isNotEmpty()) {
+                        val step = pressed.fold(Offset.Zero) { sum, change -> sum + change.positionChange() } / pressed.size.toFloat()
+                        travelled += step.getDistance()
+                        pending += step
+                    }
+                    if (fingers > 1 || travelled > viewConfiguration.touchSlop) {
+                        hold?.cancel()
+                        hold = null
+                    }
+                    event.changes.forEach { it.consume() }
+                    send(force = false)
+                } while (pressed.isNotEmpty())
+
+                hold?.cancel()
+                send(force = true)
+
+                val tapped = travelled < viewConfiguration.touchSlop && now - down.uptimeMillis < TAP_MS
+                when {
+                    dragging -> {
+                        remote.button(MouseButton.LEFT, false)
+                        onDragging(false)
+                    }
+                    tapped -> {
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        remote.click(if (fingers > 1) MouseButton.RIGHT else MouseButton.LEFT)
+                    }
+                }
+            }
+        },
+        contentAlignment = Alignment.Center,
+    ) { content() }
 }
 
 /** Speeds up quick slides so the pointer crosses a big screen in one swipe, and keeps slow ones precise. */
@@ -481,3 +563,4 @@ private fun SlideKey(@DrawableRes icon: Int, @StringRes label: Int, gold: Boolea
 private const val HOLD_MS = 450L
 private const val SCROLL_EVERY_MS = 50L
 private const val SCROLL_GAIN = 2.0
+private const val HINT_MS = 2500L

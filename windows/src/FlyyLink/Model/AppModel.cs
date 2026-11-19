@@ -865,6 +865,9 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
     public bool ShowsFlyyDropAsk => FlyyDropAsk is not null;
 
+    /// Every FlyyDrop waiting for the user to answer, oldest first.
+    public IReadOnlyList<FlyyDropAsk> FlyyDropAsks => flyyDropAsks;
+
     /// Who may FlyyDrop to this PC without being paired. "Everyone for 10 minutes" turns itself off.
     public FlyyDrop.Receiving FlyyDropReceiving
     {
@@ -922,7 +925,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
     public void DeclineFlyyDrop(string id) => flyyDrop.Decline(id);
 
-    /// Someone nearby asked to FlyyDrop, so the panel should open.
+    /// The FlyyDrop notification was clicked, so the panel should open.
     public event Action? FlyyDropRequested;
 
     private void FlyyDropAsked(FlyyDropAsk ask)
@@ -942,7 +945,6 @@ public sealed class AppModel : Observable, IDeviceDelegate
                 else FlyyDropRequested?.Invoke();
             }),
             tag: FlyyDropTag(ask.Id), group: FlyyDropGroup);
-        FlyyDropRequested?.Invoke();
     }
 
     private void FlyyDropAskEnded(string id)
@@ -988,6 +990,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
     {
         Raise(nameof(FlyyDropAsk));
         Raise(nameof(ShowsFlyyDropAsk));
+        Raise(nameof(FlyyDropAsks));
     }
 
     private void RaiseFlyyDropReceiving()
@@ -1368,11 +1371,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
     // IDeviceDelegate, called on network threads.
 
-    void IDeviceDelegate.DevicePairRequested(Device device, string code) => ui.TryEnqueue(() =>
-    {
-        Publish();
-        PairRequested?.Invoke();
-    });
+    void IDeviceDelegate.DevicePairRequested(Device device, string code) => ui.TryEnqueue(Publish);
 
     void IDeviceDelegate.DevicePairStateChanged(Device device, PairState state)
     {
@@ -1394,9 +1393,6 @@ public sealed class AppModel : Observable, IDeviceDelegate
     }
 
     void IDeviceDelegate.DeviceDisconnected(Device device) => ui.TryEnqueue(() => Remove(device));
-
-    /// A phone asked to pair, so the panel should open.
-    public event Action? PairRequested;
 
     /// Messages should open, writing to this number when one is given.
     public event Action<string?>? MessagesRequested;

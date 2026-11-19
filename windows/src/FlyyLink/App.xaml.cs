@@ -15,6 +15,7 @@ public partial class App : Application
     private GlobalShortcuts? shortcuts;
     private PanelWindow? panel;
     private CallWindow? call;
+    private RequestWindow? requests;
     private MessagesWindow? messages;
     private PhotosWindow? photos;
     private ScreenWindow? screen;
@@ -53,11 +54,11 @@ public partial class App : Application
             if (change.PropertyName == nameof(AppModel.UsesShortcuts)) shortcuts.Use(model.UsesShortcuts);
             if (change.PropertyName == nameof(AppModel.Focused)) ShowPhoneOnTray();
         };
-        model.PairRequested += () => panel.ShowNear(tray.Bounds);
         model.FlyyDropRequested += () => panel.ShowNear(tray.Bounds);
         panel.QuitRequested += Quit;
         model.UpdateInstalling += Quit;
         call = new CallWindow(model);
+        requests = new RequestWindow(model);
         model.MessagesRequested += number => (messages ??= new MessagesWindow(model)).Present(number);
         model.DialerRequested += () => (messages ??= new MessagesWindow(model)).Present(dial: true);
         model.MirrorRequested += () => (screen ??= new ScreenWindow(model.Mirror)).Present();
@@ -205,6 +206,7 @@ public partial class App : Application
         tray?.Dispose();
         panel?.Shutdown();
         call?.Close();
+        requests?.Close();
         messages?.Close();
         photos?.Close();
         screen?.Close();

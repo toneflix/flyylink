@@ -1,8 +1,20 @@
 import SwiftUI
 import FlyyLinkKit
 
-/// Asks to confirm a pairing by comparing the code shown on both screens.
+/// The pairing prompt as a card in the menu bar panel.
 struct PairingCard: View {
+    let device: DeviceState
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        PairingPrompt(device: device, model: model)
+            .frame(maxWidth: .infinity)
+            .card(padding: 20)
+    }
+}
+
+/// Asks to confirm a pairing by comparing the code shown on both screens.
+struct PairingPrompt: View {
     let device: DeviceState
     @ObservedObject var model: AppModel
 
@@ -50,8 +62,6 @@ struct PairingCard: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity)
-        .card(padding: 20)
     }
 }
 
