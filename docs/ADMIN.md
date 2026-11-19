@@ -52,7 +52,7 @@ On a terminal, missing input is asked for and listings let you pick a row and an
 | Notices   | `notify:send <to>`, `notify:continue <id>`, `notify:list`                                 |
 | Operators | `operators:add`, `operators:list`, `operators:revoke`, `audit:list`, `stats`              |
 
-`users:delete` revokes the account's Paddle orders for good: a late webhook or a later sign-in won't bring them back, but a new purchase will. It doesn't cancel anything in Paddle, so cancel a running subscription there.
+`users:delete` cancels the user's Paddle subscriptions straight away, then deletes them. Their Paddle orders don't come back from a late webhook or a later sign-in, but a new purchase works as usual. If Paddle won't cancel a subscription, the user isn't deleted.
 
 ## Settings
 

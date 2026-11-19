@@ -118,7 +118,7 @@ export const AdminCommands = [
   {
     name: "users:delete",
     title: "Delete a user",
-    description: "Delete an account with its licences, computers and sessions",
+    description: "Cancel an account's Paddle subscriptions, then delete it with its licences, computers and sessions",
     arguments: [email],
     options: [force("Delete")],
     confirm: { question: "Delete {email} with its licences and computers? This can't be undone.", option: "force" },

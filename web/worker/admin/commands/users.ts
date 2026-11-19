@@ -1,5 +1,6 @@
 import { SignInCodes } from "../../licence/codes";
 import type { Licensing } from "../../licence/licensing";
+import type { PaddleApi } from "../../licence/paddle";
 import type { Account, LicenceStore } from "../../licence/store";
 import { CommandGroup, type CommandContext } from "./group";
 
@@ -8,6 +9,7 @@ export class UserCommands extends CommandGroup {
   constructor(
     private readonly store: LicenceStore,
     private readonly licensing: Licensing,
+    private readonly paddle: PaddleApi,
   ) {
     super();
   }
@@ -116,9 +118,21 @@ export class UserCommands extends CommandGroup {
     const account = await this.account(input.argument("email"), reply);
     if (!account) return;
 
+    const subscriptions = (await this.store.licences(account.id)).filter((licence) => licence.provider === "paddle" && licence.plan !== "lifetime");
+    for (const { order_id: subscription } of subscriptions) {
+      try {
+        await this.paddle.cancel(subscription);
+      } catch {
+        reply.error(`Paddle wouldn't cancel ${subscription}, so ${account.email} wasn't deleted. Try again, or cancel it in Paddle first.`);
+
+        return;
+      }
+    }
+
     await this.store.deleteAccount(account, now);
 
-    reply.success(`Deleted ${account.email} with its licences, computers and sessions. Its Paddle orders won't come back. If they still have a subscription, cancel it in Paddle.`);
+    const cancelled = subscriptions.length === 0 ? "" : ` Their Paddle subscription${subscriptions.length === 1 ? " was" : "s were"} cancelled.`;
+    reply.success(`Deleted ${account.email} with their licences, computers and sessions.${cancelled}`);
   }
 
   private async removeComputer({ input, reply, now }: CommandContext): Promise<void> {

@@ -163,6 +163,35 @@ describe("users and licences", () => {
     expect((await obi.run("users:delete", { email: "ada@example.com" }, { force: true })).exit).toBe(0);
     expect((await obi.run("users:list")).listing!.total).toBe(0);
   });
+
+  it("cancels the user's Paddle subscriptions when it deletes them", async () => {
+    const obi = await firstOperator();
+    const calls: string[] = [];
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      calls.push(`${init?.method ?? "GET"} ${new URL(String(input)).pathname}`);
+
+      return Response.json({ data: { status: "active" } });
+    });
+    await obi.run("licences:grant", { email: "ada@example.com" });
+    await env.LICENCES.prepare(
+      "INSERT INTO licences (id, account_id, provider, order_id, status, plan, created_at) SELECT 'l2', id, 'paddle', 'sub_1', 'active', 'monthly', 0 FROM accounts WHERE email = 'ada@example.com'",
+    ).run();
+
+    expect((await obi.run("users:delete", { email: "ada@example.com" }, { force: true })).exit).toBe(0);
+    expect(calls).toEqual(["GET /subscriptions/sub_1", "POST /subscriptions/sub_1/cancel"]);
+  });
+
+  it("keeps the user when Paddle won't cancel their subscription", async () => {
+    const obi = await firstOperator();
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response(null, { status: 500 }));
+    await obi.run("licences:grant", { email: "ada@example.com" });
+    await env.LICENCES.prepare(
+      "INSERT INTO licences (id, account_id, provider, order_id, status, plan, created_at) SELECT 'l2', id, 'paddle', 'sub_1', 'active', 'monthly', 0 FROM accounts WHERE email = 'ada@example.com'",
+    ).run();
+
+    expect((await obi.run("users:delete", { email: "ada@example.com" }, { force: true })).exit).toBe(1);
+    expect((await obi.run("users:list")).listing!.total).toBe(1);
+  });
 });
 
 describe("settings", () => {

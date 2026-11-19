@@ -60,6 +60,14 @@ export class PaddleApi {
     return this.call("GET", `/transactions?customer_id=${customerId}&status=completed`);
   }
 
+  /** Cancels a subscription straight away. One Paddle already ended counts as cancelled. */
+  async cancel(subscriptionId: string): Promise<void> {
+    const { status } = await this.call<{ status: string }>("GET", `/subscriptions/${subscriptionId}`);
+    if (status === "canceled") return;
+
+    await this.call("POST", `/subscriptions/${subscriptionId}/cancel`, { effective_from: "immediately" });
+  }
+
   /** A link to Paddle's page where the customer cancels a subscription or changes how they pay. */
   async portal(customerId: string, subscriptionId: string): Promise<string> {
     const { urls } = await this.call<{ urls: { general: { overview: string } } }>("POST", `/customers/${customerId}/portal-sessions`, {
