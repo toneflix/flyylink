@@ -1,10 +1,12 @@
 /** Builds the FlyyLink Android screens as HTML, mirroring the Compose layouts in android/app. */
 class AndroidApp {
-  constructor(assets, { dark = false, time = '19:31', roomy = false } = {}) {
+  /** A plain app has no system status bar and no cast icon, for stores that reject Google look-alikes. */
+  constructor(assets, { dark = false, time = '19:31', roomy = false, plain = false } = {}) {
     this.assets = assets;
     this.dark = dark;
     this.time = time;
     this.roomy = roomy;
+    this.plain = plain;
   }
 
   icon(name) {
@@ -16,6 +18,8 @@ class AndroidApp {
   }
 
   statusBar() {
+    if (this.plain) return '<div class="status"></div>';
+
     const bars = [5, 7, 9, 12].map((h) => `<i style="height:${h}px"></i>`).join('');
 
     return `<div class="status"><span class="time">${this.time}</span><span class="icons">${this.icon('wifi')}<span class="signal">${bars}</span><span class="battery"></span></span></div>`;
@@ -63,7 +67,7 @@ class AndroidApp {
   }
 
   tiles() {
-    const tiles = [['file-up', 'Send files'], ['clipboard', 'Clipboard'], ['link', 'Open link'], ['cast', 'Mirror']];
+    const tiles = [['file-up', 'Send files'], ['clipboard', 'Clipboard'], ['link', 'Open link'], [this.plain ? 'smartphone' : 'cast', 'Mirror']];
 
     return `<div class="tiles">${tiles.map(([icon, label]) => `<div class="tile"><span class="chip">${this.icon(icon)}</span><span class="label">${label}</span></div>`).join('')}</div>`;
   }

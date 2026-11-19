@@ -1,9 +1,11 @@
 /** A phone frame holding one app screen, scaled from dp to canvas pixels. */
 class Phone {
-  constructor(screenWidth, screenHeight, dpWidth = 412) {
+  /** A plain frame has no camera, so it doesn't look like a particular brand's phone. */
+  constructor(screenWidth, screenHeight, dpWidth = 412, plain = false) {
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
     this.dpWidth = dpWidth;
+    this.plain = plain;
   }
 
   get scale() {
@@ -28,7 +30,7 @@ class Phone {
   }
 
   punchHole() {
-    return '<div class="camera"></div>';
+    return this.plain ? '' : '<div class="camera"></div>';
   }
 }
 
@@ -39,7 +41,7 @@ class Tablet extends Phone {
   }
 
   bezel() {
-    return '<div class="camera"></div>';
+    return this.plain ? '' : '<div class="camera"></div>';
   }
 
   punchHole() {
@@ -53,7 +55,8 @@ class Tablet extends Phone {
  */
 class StoreShot {
   constructor({ id, lines, amazonLines = lines, dark = false, screen, extra = () => '' }, store = 'play') {
-    this.id = store === 'amazon' ? `amazon-phone-${id}` : id;
+    this.plain = store === 'amazon';
+    this.id = this.plain ? `amazon-phone-${id}` : id;
     this.lines = store === 'amazon' ? amazonLines : lines;
     this.dark = dark;
     this.screen = screen;
@@ -64,11 +67,11 @@ class StoreShot {
   }
 
   app(assets) {
-    return new AndroidApp(assets, { dark: this.dark });
+    return new AndroidApp(assets, { dark: this.dark, plain: this.plain });
   }
 
   device() {
-    return new Phone(800, 1456);
+    return new Phone(800, 1456, 412, this.plain);
   }
 
   render(assets) {
@@ -104,24 +107,25 @@ class TabletShot extends StoreShot {
   }
 
   app(assets) {
-    return new AndroidApp(assets, { dark: this.dark, roomy: true });
+    return new AndroidApp(assets, { dark: this.dark, roomy: true, plain: this.plain });
   }
 
   device() {
-    return new Tablet(900, 1440, this.dpWidth);
+    return new Tablet(900, 1440, this.dpWidth, this.plain);
   }
 }
 
 /** The 1024x500 feature graphic: Play's feature graphic, or the Amazon Appstore promo image without Google marks. */
 class FeatureGraphic {
-  constructor(id = 'feature-graphic', title = 'Your Android phone,') {
+  constructor(id = 'feature-graphic', title = 'Your Android phone,', plain = false) {
     this.id = id;
     this.title = title;
+    this.plain = plain;
   }
 
   render(assets) {
-    const app = new AndroidApp(assets);
-    const phone = new Phone(232, 520);
+    const app = new AndroidApp(assets, { plain: this.plain });
+    const phone = new Phone(232, 520, 412, this.plain);
     const screen = app.screen(app.home([app.hero('MacBook Pro', 'Syncing'), app.tiles(), app.flyyDropCard()]));
 
     return `<div class="canvas feature">
@@ -244,7 +248,7 @@ const TABLET_SHOTS = Object.keys(TabletShot.FORMATS).flatMap((format) => SCREENS
 
 const GRAPHICS = [
   new FeatureGraphic(),
-  new FeatureGraphic('amazon-promo', 'Your phone,'),
+  new FeatureGraphic('amazon-promo', 'Your phone,', true),
   ...SHOTS,
   ...AMAZON_SHOTS,
   ...TABLET_SHOTS,
