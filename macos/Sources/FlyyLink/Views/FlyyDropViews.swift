@@ -2,8 +2,20 @@ import SwiftUI
 import UniformTypeIdentifiers
 import FlyyLinkKit
 
-/// Someone nearby wants to FlyyDrop: who, what, and Accept or Decline.
+/// A FlyyDrop request as a card in the menu bar panel.
 struct FlyyDropAskCard: View {
+    let ask: FlyyDropAsk
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        FlyyDropPrompt(ask: ask, model: model)
+            .frame(maxWidth: .infinity)
+            .card(padding: 20)
+    }
+}
+
+/// Who wants to FlyyDrop what, with Accept and Decline.
+struct FlyyDropPrompt: View {
     let ask: FlyyDropAsk
     @ObservedObject var model: AppModel
 
@@ -58,8 +70,6 @@ struct FlyyDropAskCard: View {
                     .keyboardShortcut(.defaultAction)
             }
         }
-        .frame(maxWidth: .infinity)
-        .card(padding: 20)
     }
 
     private var icon: Lucide {
