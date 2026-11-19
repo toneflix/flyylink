@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { site } from "@/content/site";
+import { AccountLink } from "./AccountLink";
 
 export function Header() {
   return (
@@ -14,7 +15,7 @@ export function Header() {
           <Link href="/#features">Features</Link>
           <Link href="/#privacy">Privacy</Link>
           <Link href="/#download">Download</Link>
-          <Link href="/buy">Buy</Link>
+          <AccountLink />
         </nav>
       </div>
     </header>
