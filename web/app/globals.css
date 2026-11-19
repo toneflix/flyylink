@@ -894,3 +894,54 @@ h3 {
   padding: 8px 14px;
   font-size: 14px;
 }
+
+/* Loaders */
+.spinner {
+  flex: none;
+  animation: spin 0.8s linear infinite;
+}
+
+.bone {
+  display: block;
+  max-width: 100%;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.bones {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+}
+
+.bone-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+
+  .bone {
+    animation: none;
+  }
+}

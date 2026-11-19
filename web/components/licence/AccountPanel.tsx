@@ -3,6 +3,7 @@
 import { CreditCard, Laptop, LogOut, Monitor } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { type AccountInfo, LicenceClient, LicenceError, type LicenceInfo } from "./api";
+import { AccountSkeleton, Spinner } from "./Loaders";
 
 const client = new LicenceClient();
 
@@ -25,7 +26,9 @@ function planLine(licence: LicenceInfo | null): string {
 export function AccountPanel() {
   const [step, setStep] = useState<Step>({ name: "loading" });
   const [error, setError] = useState<string>();
-  const [busy, setBusy] = useState(false);
+  /** What the person is waiting on, such as "send" or a computer's id, so that button shows a spinner. */
+  const [pending, setPending] = useState<string | null>(null);
+  const busy = pending !== null;
 
   const load = useCallback(async () => {
     try {
@@ -39,8 +42,8 @@ export function AccountPanel() {
     load();
   }, [load]);
 
-  async function run(action: () => Promise<void>) {
-    setBusy(true);
+  async function run(key: string, action: () => Promise<void>) {
+    setPending(key);
     setError(undefined);
 
     try {
@@ -48,7 +51,7 @@ export function AccountPanel() {
     } catch (e) {
       setError(e instanceof LicenceError ? e.message : "Something went wrong. Try again.");
     } finally {
-      setBusy(false);
+      setPending(null);
     }
   }
 
@@ -58,19 +61,19 @@ export function AccountPanel() {
 
     if (step.name === "email") {
       const email = String(field.get("email"));
-      run(async () => {
+      run("submit", async () => {
         await client.sendCode(email);
         setStep({ name: "code", email });
       });
     } else if (step.name === "code") {
-      run(async () => {
+      run("submit", async () => {
         await client.signIn(step.email, String(field.get("code")));
         await load();
       });
     }
   }
 
-  if (step.name === "loading") return <div className="licence-panel" />;
+  if (step.name === "loading") return <AccountSkeleton />;
 
   if (step.name === "email" || step.name === "code") {
     return (
@@ -85,6 +88,7 @@ export function AccountPanel() {
           </>
         )}
         <button className="button button-primary" disabled={busy}>
+          {pending === "submit" && <Spinner />}
           {step.name === "email" ? "Send code" : "Sign in"}
         </button>
         {error && <p className="form-error">{error}</p>}
@@ -101,8 +105,8 @@ export function AccountPanel() {
           <h2>{info.email}</h2>
           <p className="price-note">{planLine(info.licence)}</p>
         </div>
-        <button className="button button-ghost" onClick={() => run(async () => { await client.signOut(); setStep({ name: "email" }); })}>
-          <LogOut size={16} />
+        <button className="button button-ghost" disabled={busy} onClick={() => run("signOut", async () => { await client.signOut(); setStep({ name: "email" }); })}>
+          {pending === "signOut" ? <Spinner size={16} /> : <LogOut size={16} />}
           Sign out
         </button>
       </div>
@@ -114,8 +118,8 @@ export function AccountPanel() {
       )}
 
       {info.licence?.manageable && (
-        <button className="button button-ghost" disabled={busy} onClick={() => run(async () => { window.location.assign(await client.billing()); })}>
-          <CreditCard size={16} />
+        <button className="button button-ghost" disabled={busy} onClick={() => run("billing", async () => { window.location.assign(await client.billing()); })}>
+          {pending === "billing" ? <Spinner size={16} /> : <CreditCard size={16} />}
           Manage plan
         </button>
       )}
@@ -137,8 +141,9 @@ export function AccountPanel() {
                 <button
                   className="button button-ghost"
                   disabled={busy || info.removalsLeft === 0}
-                  onClick={() => run(async () => { await client.remove(computer.machine); await load(); })}
+                  onClick={() => run(computer.machine, async () => { await client.remove(computer.machine); await load(); })}
                 >
+                  {pending === computer.machine && <Spinner size={16} />}
                   Remove
                 </button>
               </li>

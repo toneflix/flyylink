@@ -3,6 +3,7 @@
 import { Check, ShoppingBag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { LicenceClient, type Plan } from "./api";
+import { BuySkeleton } from "./Loaders";
 import { PaddleCheckout, type PlanPrice } from "./paddle";
 
 const plans: Record<Plan, { name: string; per: string; perks: string[] }> = {
@@ -31,6 +32,7 @@ export function BuyPanel() {
   const [limit, setLimit] = useState<number>();
   const [boughtBy, setBoughtBy] = useState<string | null>(null);
   const [error, setError] = useState<string>();
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     new LicenceClient()
@@ -45,7 +47,8 @@ export function BuyPanel() {
         return checkout.current.prices();
       })
       .then(setPrices)
-      .catch(() => setError("Buying isn't open yet. Check back soon."));
+      .catch(() => setError("Buying isn't open yet. Check back soon."))
+      .finally(() => setLoaded(true));
   }, []);
 
   if (boughtBy !== null) {
@@ -58,6 +61,8 @@ export function BuyPanel() {
       </div>
     );
   }
+
+  if (!loaded) return <BuySkeleton />;
 
   const saving = annualSaving(prices);
   const details = plans[plan];
