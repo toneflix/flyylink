@@ -61,7 +61,9 @@ final class AppModel: ObservableObject {
     }
 
     /// FlyyDrops from nearby devices waiting for an answer, oldest first.
-    @Published private(set) var flyyDropAsks: [FlyyDropAsk] = []
+    @Published private(set) var flyyDropAsks: [FlyyDropAsk] = [] {
+        didSet { showRequests() }
+    }
 
     /// Our FlyyDrops, by the id of the device they go to.
     @Published private(set) var flyyDropSends: [String: FlyyDropSend] = [:]
@@ -177,7 +179,7 @@ final class AppModel: ObservableObject {
     let desktop = RemoteDesktop()
     private let desktopWindow: RemoteDesktopWindowController
     private lazy var remoteWindow = TvRemoteWindowController(model: self)
-    private lazy var pairingWindow = PairingWindowController(model: self)
+    private lazy var requestWindow = RequestWindowController(model: self)
     private var desktopSize: AnyCancellable?
     private let nearby: NearbyFinder
     private let hotspot = PhoneHotspot()
@@ -933,9 +935,17 @@ final class AppModel: ObservableObject {
             }
             .sorted { $0.name < $1.name }
 
-        pairingWindow.update(devices)
+        showRequests()
         updateWidget()
         drives.show(pairedPhones.filter(\.sharesFiles).map { (id: $0.id, name: $0.name) })
+    }
+
+    /// Pops up pairing and FlyyDrop requests in their own window.
+    private func showRequests() {
+        let pairing = devices.filter { $0.pairState == .requestedByPeer }.map { Request.pairing(deviceId: $0.id) }
+        let drops = flyyDropAsks.map { Request.flyyDrop(askId: $0.id) }
+
+        requestWindow.update(pairing + drops)
     }
 
     /// Opens the phone's storage in Finder.
