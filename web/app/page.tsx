@@ -165,7 +165,7 @@ export default function Home() {
       <section className="cta">
         <div className="container">
           <img src="/icon.svg" alt="" width={96} height={96} />
-          <h2>Give it a try.</h2>
+          <h2>Try it for free.</h2>
           <DownloadButtons />
         </div>
       </section>
