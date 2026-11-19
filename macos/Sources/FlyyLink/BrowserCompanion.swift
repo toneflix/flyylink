@@ -53,7 +53,7 @@ final class BrowserCompanion: @unchecked Sendable {
     /// Sends the latest state to every browser when it changed.
     @MainActor
     func refresh() {
-        guard let state = state?() else { return }
+        guard let state = self.state?() else { return }
 
         let line = BrowserEvents.state(state)
         guard line != lastState else { return }
@@ -84,7 +84,7 @@ final class BrowserCompanion: @unchecked Sendable {
 
     @MainActor
     private func connected(_ connection: BrowserConnection) {
-        if let state = state?() { connection.send(BrowserEvents.state(state)) }
+        if let state = self.state?() { connection.send(BrowserEvents.state(state)) }
     }
 
     @MainActor

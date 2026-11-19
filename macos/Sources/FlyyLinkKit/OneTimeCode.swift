@@ -24,15 +24,15 @@ public enum OneTimeCode {
         let message = "\(title)\n\(text)"
         let lower = message.lowercased() as NSString
 
-        let positions = keywords.flatMap { positions(of: $0, in: lower) }
-        guard !positions.isEmpty else { return nil }
+        let places = keywords.flatMap { positions(of: $0, in: lower) }
+        guard !places.isEmpty else { return nil }
 
-        let candidates = candidates(in: message).filter { !looksLikeSomethingElse(message as NSString, $0) }
-        guard !candidates.isEmpty else { return nil }
+        let codes = candidates(in: message).filter { !looksLikeSomethingElse(message as NSString, $0) }
+        guard !codes.isEmpty else { return nil }
 
-        let distance = { (candidate: Candidate) in positions.map { abs($0 - candidate.index) }.min() ?? .max }
+        let distance = { (candidate: Candidate) in places.map { abs($0 - candidate.index) }.min() ?? .max }
 
-        return candidates.enumerated()
+        return codes.enumerated()
             .min { a, b in (distance(a.element), a.offset) < (distance(b.element), b.offset) }?
             .element.code
     }

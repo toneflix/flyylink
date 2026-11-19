@@ -39,7 +39,7 @@ public enum Browser {
             trimmed = String(trimmed.dropFirst(scheme.count))
             trimmed = trimmed.removingPercentEncoding ?? trimmed
         }
-        trimmed = String(trimmed.split(whereSeparator: { "?;,".contains($0) }, omittingEmptySubsequences: false).first ?? "")
+        trimmed = String(trimmed.split(omittingEmptySubsequences: false, whereSeparator: { "?;,".contains($0) }).first ?? "")
 
         var number = ""
         for character in trimmed {
