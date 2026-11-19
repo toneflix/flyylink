@@ -121,13 +121,8 @@ export default function PrivacyPage() {
       </ul>
 
       <h2>5. Your licence</h2>
-      <p>The Android app is free and never contacts us. The Mac and Windows apps need a licence after a {site.trialDays}-day trial.</p>
+      <p>The Android app is free and never contacts us. The Mac and Windows apps need a licence.</p>
       <ul>
-        <li>
-          <strong>Trial.</strong> When the trial starts, the computer app sends us a one-way scrambled code made from
-          your computer&apos;s hardware ID, so the trial can&apos;t simply be restarted. We can&apos;t work out the
-          hardware ID from it.
-        </li>
         <li>
           <strong>Buying.</strong> Paddle.com sells FlyyLink for us as the merchant of record. Paddle handles your
           payment details, address and tax under{" "}
@@ -140,7 +135,7 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Your computers.</strong> For each computer you sign in on, we keep its name, whether it is a Mac or
-          PC, the scrambled hardware code, and when it was added and last checked its licence. The app checks in about
+          PC, a one-way scrambled code made from its hardware ID (we can&apos;t work out the ID from it), and when it was added and last checked its licence. The app checks in about
           once a day, which shares your IP address with Cloudflare, who host our website. You can see and remove your
           computers on the <a href="/account">account page</a>.
         </li>

@@ -6,7 +6,7 @@ interface PaddleEvent {
 }
 
 interface LineItem {
-  price: { id: string };
+  price: { id: string; trialPeriod?: TrialPeriod | null };
   totals: { total: string };
   formattedTotals: { total: string };
 }
@@ -26,10 +26,16 @@ declare global {
   }
 }
 
-/** A plan's price in the visitor's currency. `amount` is in the currency's smallest unit. */
+interface TrialPeriod {
+  interval: "day" | "week" | "month" | "year";
+  frequency: number;
+}
+
+/** A plan's price in the visitor's currency. `amount` is in the currency's smallest unit. `trial` is set on the price in Paddle, such as "7 days". */
 export interface PlanPrice {
   label: string;
   amount: number;
+  trial?: string;
 }
 
 let loading: Promise<PaddleGlobal> | undefined;
@@ -54,7 +60,7 @@ export class PaddleCheckout {
       this.plans().flatMap((plan) => {
         const item = byPrice.get(this.config.prices[plan]!);
 
-        return item ? [[plan, { label: item.formattedTotals.total, amount: Number(item.totals.total) }]] : [];
+        return item ? [[plan, { label: item.formattedTotals.total, amount: Number(item.totals.total), trial: PaddleCheckout.trial(item.price.trialPeriod) }]] : [];
       }),
     );
   }
@@ -65,6 +71,12 @@ export class PaddleCheckout {
 
     this.onDone = onDone;
     (await this.load()).Checkout.open({ items: [{ priceId, quantity: 1 }] });
+  }
+
+  private static trial(period: TrialPeriod | null | undefined): string | undefined {
+    if (!period) return undefined;
+
+    return `${period.frequency} ${period.interval}${period.frequency === 1 ? "" : "s"}`;
   }
 
   private load(): Promise<PaddleGlobal> {

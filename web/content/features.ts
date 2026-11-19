@@ -117,8 +117,8 @@ export const features: Feature[] = [
 export const platforms = [
   { name: "Android", href: site.playStore, needs: "Android 8.0 or later", detail: "Free on phones, tablets and TVs", playStore: true },
   { name: "Amazon Fire", href: site.amazonAppstore, needs: "Fire OS 7 or later", detail: "Free on Fire TV and tablets" },
-  { name: "Mac", href: "/download/mac", needs: "macOS 13 Ventura or later", detail: `${site.trialDays} days free, then pay once` },
-  { name: "Windows", href: "/download/windows", needs: "Windows 10 (1809) or later", detail: `${site.trialDays} days free, then pay once` },
+  { name: "Mac", href: "/download/mac", needs: "macOS 13 Ventura or later", detail: "Free trial, then a plan" },
+  { name: "Windows", href: "/download/windows", needs: "Windows 10 (1809) or later", detail: "Free trial, then a plan" },
 ];
 
 export const steps = [

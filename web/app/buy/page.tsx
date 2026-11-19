@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { BuyPanel } from "@/components/licence/BuyPanel";
-import { site } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "Buy",
@@ -12,7 +11,7 @@ export default function BuyPage() {
     <main className="licence-page">
       <div className="container">
         <h1>Buy FlyyLink</h1>
-        <p className="lead">{site.trialDays} days free on your Mac or PC. Then pay monthly, yearly or once.</p>
+        <p className="lead">Pay monthly, yearly or once.</p>
         <BuyPanel />
         <p className="price-note">
           Already have a plan? <a href="/account">Manage your computers</a>.
