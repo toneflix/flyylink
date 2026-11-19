@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds FlyyLink.app, with its Share extension, battery widget and Finder extension, in macos/build. Notification Center and the
+# Builds FlyyLink.app, with its Share extension, battery widget, Finder extension and browser host, in macos/build. Notification Center and the
 # Share menu only work for a bundled app, so use this instead of `swift run` to try them.
 #
 # Without settings it signs ad hoc for this Mac. The release workflow sets:
@@ -30,6 +30,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Framewor
 cp Bundle/Info.plist "$APP/Contents/Info.plist"
 cp Bundle/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp "$BIN" "$APP/Contents/MacOS/FlyyLink"
+cp "$BIN_DIR/FlyyLinkBrowserHost" "$APP/Contents/MacOS/FlyyLinkBrowserHost"
 # Keep the framework's symlinks, or its signature breaks.
 ditto "$BIN_DIR/Sparkle.framework" "$APP/Contents/Frameworks/Sparkle.framework"
 
@@ -142,6 +143,7 @@ sign "$APP/Contents/Frameworks/Sparkle.framework"
 sign --entitlements Share/Share.entitlements "$SHARE"
 sign --entitlements Widget/Widget.entitlements "$WIDGET"
 sign --entitlements Files/Files.entitlements "$FILES"
+sign "$APP/Contents/MacOS/FlyyLinkBrowserHost"
 sign --entitlements Bundle/FlyyLink.entitlements "$APP"
 codesign --verify --deep --strict "$APP"
 

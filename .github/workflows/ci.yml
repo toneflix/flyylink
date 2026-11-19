@@ -18,6 +18,7 @@ jobs:
       android: ${{ steps.filter.outputs.android }}
       macos: ${{ steps.filter.outputs.macos }}
       windows: ${{ steps.filter.outputs.windows }}
+      browser: ${{ steps.filter.outputs.browser }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v3
@@ -32,6 +33,9 @@ jobs:
               - '.github/workflows/ci.yml'
             windows:
               - 'windows/**'
+              - '.github/workflows/ci.yml'
+            browser:
+              - 'browser/**'
               - '.github/workflows/ci.yml'
 
   android:
@@ -106,3 +110,25 @@ jobs:
         with:
           name: FlyyLink-windows-setup
           path: windows/publish/FlyyLink-Setup-*.exe
+
+  browser:
+    needs: changes
+    if: needs.changes.outputs.browser == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: browser
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Tests
+        run: npm test
+      - name: Build for Chrome, Edge and Firefox
+        run: npm run store
+      - name: Upload add-on
+        uses: actions/upload-artifact@v7
+        with:
+          name: FlyyLink-browser
+          path: browser/dist/*.zip

@@ -63,6 +63,9 @@ final class NotificationPlugin: NSObject, Plugin, UNUserNotificationCenterDelega
     /// Called after a phone notification is shown, on any thread.
     var onShown: (() -> Void)?
 
+    /// Called on any thread with each new phone notification and the phone's name, before it shows.
+    var onArrived: ((PhoneNotification, String) -> Void)?
+
     /// Sends replies, buttons and dismissals to a phone. Set by the app model, so they also reach phones
     /// that another computer passed on.
     var send: (String, NetworkPacket) -> Bool
@@ -146,6 +149,7 @@ final class NotificationPlugin: NSObject, Plugin, UNUserNotificationCenterDelega
         let isRepeat = lock.withLock { shown.updateValue(summary, forKey: identifier) == summary }
         guard !isRepeat else { return }
 
+        onArrived?(note, deviceName)
         let content = UNMutableNotificationContent()
         content.title = note.title.isEmpty ? note.appName : note.title
         content.subtitle = note.title.isEmpty ? deviceName : "\(note.appName) · \(deviceName)"

@@ -52,6 +52,14 @@ class FlyyLinkApp : Application() {
             NotificationManager.IMPORTANCE_DEFAULT,
         )
 
-        getSystemService(NotificationManager::class.java).createNotificationChannels(listOf(channel, find, transfers, screen, hotspot, flyyDrop, computers))
+        // Quiet, since it only carries the computer's media controls.
+        val computerMedia = NotificationChannel(
+            ComputerMedia.CHANNEL_ID,
+            getString(R.string.channel_computer_media),
+            NotificationManager.IMPORTANCE_LOW,
+        )
+
+        getSystemService(NotificationManager::class.java)
+            .createNotificationChannels(listOf(channel, find, transfers, screen, hotspot, flyyDrop, computers, computerMedia))
     }
 }

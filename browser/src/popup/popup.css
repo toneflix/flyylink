@@ -1,0 +1,82 @@
+body { width: 360px; min-height: 220px; }
+
+.header { display: flex; align-items: center; gap: 10px; padding: 14px 14px 10px 16px; }
+.mark svg { width: 26px; height: 26px; display: block; }
+.who { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.who strong { font-size: 15px; }
+.who span { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+main { padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 16px; }
+.loading { display: flex; flex-direction: column; gap: 10px; }
+
+/* Something to do before the add-on can work. */
+.empty { text-align: center; padding: 18px 8px 8px; }
+.empty .art {
+  width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 22px; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--cyan) 14%, transparent); color: var(--cyan-ink);
+}
+.empty .art svg { width: 28px; height: 28px; }
+.empty h1 { margin: 0 0 6px; font-size: 17px; }
+.empty p { margin: 0 auto 16px; color: var(--muted); max-width: 280px; }
+
+/* Which phone things go to. */
+.devices { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; }
+.chip {
+  all: unset; cursor: pointer; flex: none; display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px 0 10px;
+  border-radius: 999px; border: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--muted);
+}
+.chip svg { width: 16px; height: 16px; }
+.chip[aria-pressed="true"] { border-color: transparent; background: color-mix(in srgb, var(--cyan) 16%, transparent); color: var(--cyan-ink); }
+
+/* The code that just arrived on the phone. */
+.code {
+  display: flex; align-items: center; gap: 12px; padding: 14px 14px 14px 16px; border-radius: var(--radius);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 22%, var(--surface)), var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, var(--line));
+}
+.code .digits { flex: 1; min-width: 0; }
+.code .value { display: block; font-size: 26px; font-weight: 750; letter-spacing: .12em; font-variant-numeric: tabular-nums; }
+.code .from { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+
+/* The things to do with this page. */
+.tiles { display: grid; gap: 8px; }
+.tile {
+  all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  border-radius: var(--radius); background: var(--surface-2); transition: background .12s ease;
+}
+.tile:hover { background: var(--surface-3); }
+.tile[aria-busy="true"] { cursor: progress; opacity: .7; }
+.tile .glyph {
+  flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center;
+  background: var(--surface); color: var(--cyan-ink);
+}
+.tile .glyph.gold { color: var(--gold-2); }
+.tile .words { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.tile .words strong { font-size: 14px; font-weight: 650; }
+.tile .words span { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Recent downloads. */
+.downloads { display: flex; flex-direction: column; }
+.download { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+.download:first-of-type { border-top: 0; }
+.download .glyph { color: var(--muted); display: grid; }
+.download .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.download .size { color: var(--muted); font-size: 12px; }
+.download .button { height: 30px; padding: 0 12px; font-size: 12.5px; }
+
+.note { margin: 0; color: var(--muted); font-size: 12.5px; text-align: center; }
+
+.banner {
+  display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--radius);
+  background: color-mix(in srgb, var(--cyan) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--cyan) 30%, var(--line));
+}
+.banner p { margin: 0; font-size: 13px; }
+.banner .button { align-self: flex-start; height: 34px; }
+
+.status {
+  position: fixed; left: 16px; right: 16px; bottom: 12px; display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+  border-radius: 999px; background: var(--text); color: var(--surface); font-size: 13px; font-weight: 600;
+  box-shadow: 0 12px 30px -12px rgb(0 0 0 / .5); animation: rise .18s ease;
+}
+.status.bad { background: var(--danger); color: #fff; }
+.status svg { width: 16px; height: 16px; flex: none; }

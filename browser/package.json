@@ -1,0 +1,10 @@
+{
+  "name": "flyylink-browser",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "store": "node scripts/build.mjs --store",
+    "test": "node --test"
+  }
+}

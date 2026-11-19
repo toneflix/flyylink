@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlyyLink settings</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+  <link rel="stylesheet" href="options.css">
+  <script src="../shared/icons.js"></script>
+  <script src="../shared/settings.js"></script>
+  <script src="options.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="mark" data-icon="mark"></span>
+      <h1>FlyyLink in your browser</h1>
+    </header>
+
+    <section>
+      <div class="row">
+        <span class="glyph" data-icon="key"></span>
+        <div class="words">
+          <strong>Codes from your phone</strong>
+          <span>When a sign-in code arrives on your phone, FlyyLink can put it in the box for you.</span>
+        </div>
+        <select name="codes">
+          <option value="auto">Fill it in</option>
+          <option value="ask">Ask first</option>
+          <option value="off">Leave it</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <span class="glyph" data-icon="phone"></span>
+        <div class="words">
+          <strong>Call and text from links</strong>
+          <span>Phone numbers and call links on pages open on your phone.</span>
+        </div>
+        <input type="checkbox" name="links" role="switch">
+      </div>
+
+      <div class="row">
+        <span class="glyph" data-icon="download"></span>
+        <div class="words">
+          <strong>Downloads</strong>
+          <span>Send files to your phone once they finish downloading.</span>
+        </div>
+        <select name="downloads">
+          <option value="ask">Ask each time</option>
+          <option value="always">Always send</option>
+          <option value="off">Never</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <span class="glyph" data-icon="music"></span>
+        <div class="words">
+          <strong>Control tabs from your phone</strong>
+          <span>Videos and music playing in tabs show up in your phone's media controls.</span>
+        </div>
+        <input type="checkbox" name="media" role="switch">
+      </div>
+
+      <div class="row">
+        <span class="glyph" data-icon="phone"></span>
+        <div class="words">
+          <strong>Pause during calls</strong>
+          <span>Tabs pause while you're on a call and pick up again after.</span>
+        </div>
+        <input type="checkbox" name="pauseForCalls" role="switch">
+      </div>
+    </section>
+
+    <p class="saved" id="saved" hidden>Saved</p>
+  </main>
+</body>
+</html>

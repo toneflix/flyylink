@@ -39,6 +39,9 @@ internal sealed class NotificationPlugin(ToastCenter toasts, DeviceRegistry devi
     /// Called after a phone notification is shown, on any thread.
     public Action? OnShown { get; set; }
 
+    /// Called on any thread with each new phone notification and the phone's name, before it shows.
+    public Action<PhoneNotification, string>? OnArrived { get; set; }
+
     /// Sends replies, buttons and dismissals to a phone. Set by the app model, so they also reach phones
     /// that another computer passed on.
     public Func<string, NetworkPacket, bool> Send { get; set; } = (id, packet) => devices[id]?.Send(packet) == true;
@@ -75,6 +78,7 @@ internal sealed class NotificationPlugin(ToastCenter toasts, DeviceRegistry devi
             shown[identifier] = summary;
         }
 
+        OnArrived?.Invoke(note, deviceName);
         _ = ShowAsync(note, packet, deviceId, deviceName, iconsFrom);
     }
 

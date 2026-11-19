@@ -1,0 +1,72 @@
+{
+  "manifest_version": 3,
+  "name": "FlyyLink",
+  "short_name": "FlyyLink",
+  "version": "1.0.0",
+  "description": "Use your phone from the browser: fill sign-in codes, call and text from links, send pages and files, and control tabs from your phone.",
+  "homepage_url": "https://flyylink.toneflix.net",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAr0TSQkDPH6BgRl7jIe21GW3/5wsfyo5Zx3A8hz7VSltRjjEOYBcSRPo+IWFdMH9xU1S618eLpR3o3v/VzbDNkLG6K0ke0fQEIm1ipUTSn4pBecJOTiJtm0F1K9cxyWPhTvN7E1HD9+Opi9CswZOYehHW59cxFSM+I2atLqyJUU1xut29pnJwKLBp6t2sWaAIPNmK8QjIk2daXgEBcFTxgRmbokFg2w7nRnrDF6PHZb2curQW9CPg2vomqoLoTNtefi2W8nI6nkF8ElWaP0GLYTj3oQ/VGCMGWoos0y6/TOP9XfCwwdmF7C1Wn433FxkuzF12w4zi1xfqoMuAfq6EMwIDAQAB",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "FlyyLink",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "background/main.js",
+    "type": "module"
+  },
+  "permissions": [
+    "nativeMessaging",
+    "contextMenus",
+    "downloads",
+    "notifications",
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "page/media-session.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "shared/numbers.js",
+        "shared/page.js",
+        "shared/otp.js",
+        "shared/icons.js",
+        "shared/settings.js",
+        "content/media.js",
+        "content/card.js",
+        "content/main.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}

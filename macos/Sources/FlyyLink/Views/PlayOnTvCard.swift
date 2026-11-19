@@ -98,7 +98,7 @@ private struct NowPlayingOnTv: View {
                 TvChip(icon: kindIcon(session.kind))
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(session.file.name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                    Text(session.name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
                     Text("On \(session.tv.name)").font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
                 }
 
