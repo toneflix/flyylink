@@ -35,8 +35,9 @@ export default function TermsPage() {
           all our orders. Paddle provides all customer service inquiries and handles returns.
         </li>
         <li>
-          A licence is for one person. It covers that person&apos;s own computers, up to 5 at a time, and includes
-          future updates. You can swap computers on the <a href="/account">account page</a> up to 3 times a month.
+          A licence is for one person. It covers that person&apos;s own computers, up to the number shown when you buy,
+          and includes future updates. You can swap computers on the <a href="/account">account page</a> a few times a
+          month; it shows how many swaps you have left.
         </li>
         <li>Do not share, sell or transfer your licence, or let others sign in with it.</li>
         <li>

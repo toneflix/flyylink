@@ -7,6 +7,8 @@ struct LicenceServer {
     /// An error code from the server, such as "bad_code" or "computer_limit".
     struct Failure: Error {
         let code: String
+        /// How many computers the licence covers, sent with "computer_limit".
+        var limit: Int? = nil
     }
 
     struct Activation: Decodable {
@@ -32,6 +34,7 @@ struct LicenceServer {
 
     private struct ErrorReply: Decodable {
         let error: String?
+        let limit: Int?
     }
 
     func sendCode(to email: String) async throws {
@@ -70,7 +73,8 @@ struct LicenceServer {
         let (data, response) = try await URLSession.shared.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
-            throw Failure(code: (try? JSONDecoder().decode(ErrorReply.self, from: data))?.error ?? "server_error")
+            let reply = try? JSONDecoder().decode(ErrorReply.self, from: data)
+            throw Failure(code: reply?.error ?? "server_error", limit: reply?.limit)
         }
 
         return data
