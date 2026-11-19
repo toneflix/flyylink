@@ -6,10 +6,14 @@ import { LicenceClient, type Plan } from "./api";
 import { PaddleCheckout, type PlanPrice } from "./paddle";
 
 const plans: Record<Plan, { name: string; per: string; perks: string[] }> = {
-  monthly: { name: "Monthly", per: "a month", perks: ["Use it on up to 5 Macs and PCs", "Phones are always free", "Cancel whenever you like"] },
-  annual: { name: "Annual", per: "a year", perks: ["Use it on up to 5 Macs and PCs", "Phones are always free", "Cancel whenever you like"] },
-  lifetime: { name: "Lifetime", per: "once", perks: ["Use it on up to 5 Macs and PCs", "Phones are always free", "Every future update included"] },
+  monthly: { name: "Monthly", per: "a month", perks: ["Phones are always free", "Cancel whenever you like"] },
+  annual: { name: "Annual", per: "a year", perks: ["Phones are always free", "Cancel whenever you like"] },
+  lifetime: { name: "Lifetime", per: "once", perks: ["Phones are always free", "Every future update included"] },
 };
+
+function computersPerk(limit: number): string {
+  return limit === 1 ? "Use it on one Mac or PC" : `Use it on up to ${limit} Macs and PCs`;
+}
 
 /** How much a year on the annual plan saves over twelve months, as a whole percentage. */
 function annualSaving(prices: Partial<Record<Plan, PlanPrice>>): number {
@@ -24,6 +28,7 @@ export function BuyPanel() {
   const [onSale, setOnSale] = useState<Plan[]>([]);
   const [plan, setPlan] = useState<Plan>("annual");
   const [prices, setPrices] = useState<Partial<Record<Plan, PlanPrice>>>({});
+  const [limit, setLimit] = useState<number>();
   const [boughtBy, setBoughtBy] = useState<string | null>(null);
   const [error, setError] = useState<string>();
 
@@ -32,6 +37,7 @@ export function BuyPanel() {
       .checkout()
       .then((config) => {
         checkout.current = new PaddleCheckout(config);
+        setLimit(config.limit);
         const available = checkout.current.plans();
         setOnSale(available);
         setPlan((chosen) => (available.includes(chosen) ? chosen : available[0]));
@@ -56,6 +62,7 @@ export function BuyPanel() {
   const saving = annualSaving(prices);
   const details = plans[plan];
   const price = prices[plan];
+  const perks = limit ? [computersPerk(limit), ...details.perks] : details.perks;
 
   return (
     <div className="licence-panel">
@@ -78,7 +85,7 @@ export function BuyPanel() {
       {price?.trial && <p className="price-note">Your first {price.trial} are free</p>}
 
       <ul className="checks">
-        {details.perks.map((perk) => (
+        {perks.map((perk) => (
           <li key={perk}>
             <Check size={18} />
             {perk}

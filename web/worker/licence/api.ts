@@ -45,11 +45,11 @@ export class LicenceApi {
       .post("/api/account/billing", (request) => this.billing(request));
   }
 
-  private checkoutConfig(): Response {
+  private async checkoutConfig(): Promise<Response> {
     const prices: Partial<Record<Plan, string>> = this.plans.onSale();
     if (!this.checkout.clientToken || Object.keys(prices).length === 0) throw new HttpError(503, "not_open");
 
-    return Response.json({ ...this.checkout, prices });
+    return Response.json({ ...this.checkout, prices, limit: await this.licensing.limit() });
   }
 
   private async sendCode(request: Request): Promise<Response> {

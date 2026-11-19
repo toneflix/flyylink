@@ -99,7 +99,13 @@ describe("checkout", () => {
   it("offers the plans that have a price", async () => {
     delete env.PADDLE_PRICE_ANNUAL;
 
-    expect(await (await call("/api/checkout")).json()).toEqual({ clientToken: "test_token", sandbox: false, prices: { monthly: "pri_month", lifetime: "pri_life" } });
+    expect(await (await call("/api/checkout")).json()).toEqual({ clientToken: "test_token", sandbox: false, prices: { monthly: "pri_month", lifetime: "pri_life" }, limit: 5 });
+  });
+
+  it("shows how many computers a licence covers right now", async () => {
+    await env.LICENCES.prepare("INSERT INTO settings (key, value, updated_at) VALUES ('max_computers', '3', 0)").run();
+
+    expect(((await (await call("/api/checkout")).json()) as { limit: unknown }).limit).toBe(3);
   });
 
   it("treats the old PADDLE_PRICE_ID as the lifetime price", async () => {

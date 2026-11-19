@@ -222,7 +222,7 @@ public sealed class LicenceModel : Observable
             }
             catch (LicenceServerException e)
             {
-                problem = Describe(e.Code);
+                problem = Describe(e.Code, e.Limit);
             }
             catch (Exception e) when (e is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
             {
@@ -254,14 +254,21 @@ public sealed class LicenceModel : Observable
         Raise(nameof(CodeHint));
     });
 
-    private static string Describe(string code) => code switch
+    private static string Describe(string code, int? limit = null) => code switch
     {
         "bad_email" => "Please check the email address.",
         "bad_code" => "That code didn't work. Ask for a new one.",
         "too_many_codes" => "That's a lot of codes. Please try again in an hour.",
         "no_licence" => "We couldn't find a FlyyLink plan for this email.",
-        "computer_limit" => "You're already using FlyyLink on 5 computers. Remove one in your account to add this one.",
+        "computer_limit" => $"You're already using FlyyLink on {Computers(limit)}. Remove one in your account to add this one.",
         "offline" => "We couldn't reach FlyyLink. Please check your internet connection.",
         _ => "Something went wrong. Please try again.",
+    };
+
+    private static string Computers(int? limit) => limit switch
+    {
+        null => "all the computers your plan covers",
+        1 => "a computer",
+        _ => $"{limit} computers",
     };
 }

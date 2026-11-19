@@ -9,7 +9,7 @@ The Android app is free. The Mac and Windows apps need a licence: monthly, annua
 - **Plans** are in `web/worker/licence/plans.ts`. A plan is on sale when its Paddle price is set, and the buy page shows the prices Paddle gives for the visitor's country.
 - **Sign-in** uses a code emailed through SendPulse (Nodemailer with `nodemailer-sendpulse-transport`), on the site and in the computer apps.
 - **Computers** that sign in get a token signed with `LICENCE_SIGNING_KEY`, which the app checks offline and renews every few hours.
-- **Rules** (5 computers, 3 removals a month, 30 days offline plus 7 of grace) are in `web/worker/licence/licensing.ts`. The first two can be changed with `flyylink-cli settings:set`. A subscription's token asks to renew when its Paddle period ends.
+- **Rules** (computers per licence, removals a month, 30 days offline plus 7 of grace) are in `web/worker/licence/licensing.ts`. The first two are the `max_computers` and `removals_per_month` settings (5 and 3 by default), changed with `flyylink-cli settings:set`; the buy page, account page and apps show whatever they are set to. A subscription's token asks to renew when its Paddle period ends.
 
 ## Setup, once
 

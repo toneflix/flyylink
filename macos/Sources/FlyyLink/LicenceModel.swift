@@ -151,7 +151,7 @@ final class LicenceModel: ObservableObject {
             do {
                 try await action()
             } catch let failure as LicenceServer.Failure {
-                error = Self.describe(failure.code)
+                error = Self.describe(failure.code, limit: failure.limit)
             } catch {
                 self.error = Self.describe("offline")
             }
@@ -165,13 +165,15 @@ final class LicenceModel: ObservableObject {
         status = LicenceRules.evaluate(store.record, machine: machine, publicKey: publicKey, now: Date())
     }
 
-    private static func describe(_ code: String) -> String {
+    private static func describe(_ code: String, limit: Int? = nil) -> String {
         switch code {
         case "bad_email": return "Please check the email address."
         case "bad_code": return "That code didn't work. Ask for a new one."
         case "too_many_codes": return "That's a lot of codes. Please try again in an hour."
         case "no_licence": return "We couldn't find a FlyyLink plan for this email."
-        case "computer_limit": return "You're already using FlyyLink on 5 computers. Remove one in your account to add this one."
+        case "computer_limit":
+            let computers = limit.map { $0 == 1 ? "a computer" : "\($0) computers" } ?? "all the computers your plan covers"
+            return "You're already using FlyyLink on \(computers). Remove one in your account to add this one."
         case "offline": return "We couldn't reach FlyyLink. Please check your internet connection."
         default: return "Something went wrong. Please try again."
         }

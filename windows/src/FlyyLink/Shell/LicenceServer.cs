@@ -4,9 +4,12 @@ using System.Text.Json.Serialization;
 namespace FlyyLink.Shell;
 
 /// An error from the licence server, such as "bad_code" or "computer_limit".
-internal sealed class LicenceServerException(string code) : Exception(code)
+internal sealed class LicenceServerException(string code, int? limit = null) : Exception(code)
 {
     public string Code { get; } = code;
+
+    /// How many computers the licence covers, sent with "computer_limit".
+    public int? Limit { get; } = limit;
 }
 
 /// Talks to the licence API on the FlyyLink website.
@@ -29,7 +32,7 @@ internal sealed class LicenceServer
 
     private sealed record TokenReply([property: JsonPropertyName("token")] string Token);
 
-    private sealed record ErrorReply([property: JsonPropertyName("error")] string? Error);
+    private sealed record ErrorReply([property: JsonPropertyName("error")] string? Error, [property: JsonPropertyName("limit")] int? Limit);
 
 
     public async Task SendCodeAsync(string email) => await PostAsync<object>("/api/code", new { email });
@@ -51,7 +54,7 @@ internal sealed class LicenceServer
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadFromJsonAsync<ErrorReply>().ConfigureAwait(false);
-            throw new LicenceServerException(error?.Error ?? "server_error");
+            throw new LicenceServerException(error?.Error ?? "server_error", error?.Limit);
         }
 
         return response.StatusCode == System.Net.HttpStatusCode.NoContent ? default! : (await response.Content.ReadFromJsonAsync<T>())!;
