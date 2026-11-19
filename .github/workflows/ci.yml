@@ -22,6 +22,8 @@ jobs:
         run: ./gradlew :protocol:test
       - name: Build app
         run: ./gradlew :app:assembleDebug
+      - name: Build the shrunk release app
+        run: ./gradlew :app:assembleRelease
 
   macos:
     runs-on: macos-15

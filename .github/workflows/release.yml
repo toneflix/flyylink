@@ -111,6 +111,7 @@ jobs:
           mkdir -p dist
           cp app/build/outputs/apk/release/app-release.apk "dist/FlyyLink-$VERSION.apk"
           cp app/build/outputs/bundle/release/app-release.aab "dist/FlyyLink-$VERSION.aab"
+          cp app/build/outputs/mapping/release/mapping.txt dist/mapping.txt
 
       - uses: actions/upload-artifact@v7
         with:
@@ -480,6 +481,7 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.toneflix.flyylink
           releaseFiles: dist/FlyyLink-*.aab
+          mappingFile: dist/mapping.txt
           tracks: ${{ needs.android.outputs.tracks }}
           status: completed
           whatsNewDirectory: ${{ steps.notes.outputs.dir }}
