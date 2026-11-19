@@ -1,6 +1,6 @@
 # Licences
 
-The Android app is free. The Mac and Windows apps need a licence: monthly, annual or lifetime. Monthly and annual can start with a free trial, which Paddle runs. How the apps check it is in [ARCHITECTURE.md](ARCHITECTURE.md#licence).
+The Android app is free on phones, tablets and TVs. The Mac and Windows apps need a licence: monthly, annual or lifetime. Monthly and annual can start with a free trial, which Paddle runs. How the apps check it is in [ARCHITECTURE.md](ARCHITECTURE.md#licence).
 
 ## How it works
 

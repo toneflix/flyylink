@@ -25,7 +25,7 @@ export default function TermsPage() {
 
       <h2>2. Buying FlyyLink</h2>
       <p>
-        The Android app is free. The Mac and Windows apps need a licence: a monthly or annual subscription, or a
+        The Android app is free on phones, tablets and TVs. The Mac and Windows apps need a licence: a monthly or annual subscription, or a
         lifetime licence bought once. A subscription can start with a free trial. Unless you cancel before the trial
         ends, it becomes a paid subscription and you are charged then.
       </p>
