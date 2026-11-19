@@ -23,6 +23,8 @@ interface PaddleEntity {
   current_billing_period?: { ends_at?: string } | null;
   scheduled_change?: { action?: string } | null;
   updated_at?: string;
+  /** Refunds and chargebacks, on transactions listed with `include=adjustments`. */
+  adjustments?: { action?: string; status?: string }[];
 }
 
 interface PaddleEvent {
@@ -56,8 +58,11 @@ export class PaddleApi {
     return this.call("GET", `/subscriptions?customer_id=${customerId}&status=active,trialing,past_due`);
   }
 
-  purchases(customerId: string): Promise<PaddleEntity[]> {
-    return this.call("GET", `/transactions?customer_id=${customerId}&status=completed`);
+  /** The customer's completed transactions that weren't refunded or charged back. */
+  async purchases(customerId: string): Promise<PaddleEntity[]> {
+    const transactions = await this.call<PaddleEntity[]>("GET", `/transactions?customer_id=${customerId}&status=completed&include=adjustments`);
+
+    return transactions.filter((transaction) => !transaction.adjustments?.some(PaddleWebhook.reverses));
   }
 
   /** A link to Paddle's page where the customer cancels a subscription or changes how they pay. */
@@ -153,9 +158,14 @@ export class PaddleWebhook {
     );
   }
 
+  /** Whether an adjustment takes the payment back, which revokes what it paid for. */
+  static reverses(adjustment: { action?: string; status?: string }): boolean {
+    return adjustment.status === "approved" && (adjustment.action === "refund" || adjustment.action === "chargeback");
+  }
+
   private async adjusted(data: PaddleEntity): Promise<void> {
-    const { action, status, transaction_id: transactionId, subscription_id: subscriptionId } = data;
-    if (status !== "approved" || (action !== "refund" && action !== "chargeback")) return;
+    const { transaction_id: transactionId, subscription_id: subscriptionId } = data;
+    if (!PaddleWebhook.reverses(data)) return;
 
     for (const order of [transactionId, subscriptionId]) {
       if (order) await this.store.setLicenceStatus(provider, order, "revoked");

@@ -71,7 +71,7 @@ beforeEach(async () => {
     if (url.endsWith("/customers/ctm_1")) return Response.json({ data: { email: "Ada@Example.com" } });
     if (url.endsWith(`/customers?email=${encodeURIComponent(email)}`)) return Response.json({ data: [{ id: "ctm_1" }] });
     if (url.endsWith("/subscriptions?customer_id=ctm_1&status=active,trialing,past_due")) return Response.json({ data: listed.subscriptions });
-    if (url.endsWith("/transactions?customer_id=ctm_1&status=completed")) return Response.json({ data: listed.transactions });
+    if (url.endsWith("/transactions?customer_id=ctm_1&status=completed&include=adjustments")) return Response.json({ data: listed.transactions });
     if (url.endsWith("/customers/ctm_1/portal-sessions")) {
       portals.push(JSON.parse(String(init?.body)));
 
@@ -276,6 +276,12 @@ describe("missed webhooks", () => {
     listed.transactions = [{ id: "txn_1", customer_id: "ctm_1", items: [{ price: { id: "pri_life" } }] }];
 
     expect((await activate()).status).toBe(200);
+  });
+
+  it("skips a lifetime purchase that was refunded", async () => {
+    listed.transactions = [{ id: "txn_1", customer_id: "ctm_1", items: [{ price: { id: "pri_life" } }], adjustments: [{ action: "refund", status: "approved" }] }];
+
+    expect((await activate()).status).toBe(402);
   });
 
   it("still says there's no plan when Paddle has none", async () => {
