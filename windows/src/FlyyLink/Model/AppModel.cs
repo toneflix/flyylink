@@ -865,6 +865,9 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
     public bool ShowsFlyyDropAsk => FlyyDropAsk is not null;
 
+    /// Every FlyyDrop waiting for the user to answer, oldest first.
+    public IReadOnlyList<FlyyDropAsk> FlyyDropAsks => flyyDropAsks;
+
     /// Who may FlyyDrop to this PC without being paired. "Everyone for 10 minutes" turns itself off.
     public FlyyDrop.Receiving FlyyDropReceiving
     {
@@ -922,7 +925,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
     public void DeclineFlyyDrop(string id) => flyyDrop.Decline(id);
 
-    /// Someone nearby asked to FlyyDrop, so the panel should open.
+    /// The FlyyDrop notification was clicked, so the panel should open.
     public event Action? FlyyDropRequested;
 
     private void FlyyDropAsked(FlyyDropAsk ask)
@@ -942,7 +945,6 @@ public sealed class AppModel : Observable, IDeviceDelegate
                 else FlyyDropRequested?.Invoke();
             }),
             tag: FlyyDropTag(ask.Id), group: FlyyDropGroup);
-        FlyyDropRequested?.Invoke();
     }
 
     private void FlyyDropAskEnded(string id)
@@ -988,6 +990,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
     {
         Raise(nameof(FlyyDropAsk));
         Raise(nameof(ShowsFlyyDropAsk));
+        Raise(nameof(FlyyDropAsks));
     }
 
     private void RaiseFlyyDropReceiving()
