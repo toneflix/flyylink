@@ -1368,11 +1368,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
     // IDeviceDelegate, called on network threads.
 
-    void IDeviceDelegate.DevicePairRequested(Device device, string code) => ui.TryEnqueue(() =>
-    {
-        Publish();
-        PairRequested?.Invoke();
-    });
+    void IDeviceDelegate.DevicePairRequested(Device device, string code) => ui.TryEnqueue(Publish);
 
     void IDeviceDelegate.DevicePairStateChanged(Device device, PairState state)
     {
@@ -1394,9 +1390,6 @@ public sealed class AppModel : Observable, IDeviceDelegate
     }
 
     void IDeviceDelegate.DeviceDisconnected(Device device) => ui.TryEnqueue(() => Remove(device));
-
-    /// A phone asked to pair, so the panel should open.
-    public event Action? PairRequested;
 
     /// Messages should open, writing to this number when one is given.
     public event Action<string?>? MessagesRequested;
