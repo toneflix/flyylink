@@ -6,7 +6,7 @@ import type { PaddleApi, PaddleWebhook } from "./paddle";
 import type { Plan, Plans } from "./plans";
 import type { ReviewAccess } from "./review";
 import type { Sessions } from "./sessions";
-import type { LicenceStore } from "./store";
+import type { Account, LicenceStore } from "./store";
 
 export interface CheckoutConfig {
   clientToken: string;
@@ -92,7 +92,7 @@ export class LicenceApi {
 
   private async account(request: Request): Promise<Response> {
     const account = await this.sessions.account(request, now());
-
+    await this.catchUp(account);
     const licence = await this.licensing.licence(account);
 
     return Response.json({
@@ -127,7 +127,21 @@ export class LicenceApi {
     const entered = requireString(code, "code", 64);
     if (!(await this.review.accepts(address, entered))) await this.codes.verify(address, entered, now());
 
-    return this.store.accountFor(address, now());
+    const account = await this.store.accountFor(address, now());
+    await this.catchUp(account);
+
+    return account;
+  }
+
+  /** Asks Paddle for an unlicensed account's plans, so a missed webhook doesn't keep someone who paid locked out. */
+  private async catchUp(account: Account): Promise<void> {
+    if (await this.store.currentLicence(account.id)) return;
+
+    try {
+      await this.paddle.catchUp(account, now());
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   private static machine(value: unknown): Machine {

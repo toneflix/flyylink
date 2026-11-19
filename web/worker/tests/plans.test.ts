@@ -11,6 +11,8 @@ const code = "review-code-1234";
 
 let env: Env;
 let portals: unknown[];
+/** What Paddle's API lists for ctm_1 when asked, as if its webhooks never arrived. */
+let listed: { subscriptions: unknown[]; transactions: unknown[] };
 
 async function signingKey(): Promise<string> {
   const pair = (await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"])) as CryptoKeyPair;
@@ -63,9 +65,13 @@ async function signedIn(): Promise<Record<string, string>> {
 
 beforeEach(async () => {
   portals = [];
+  listed = { subscriptions: [], transactions: [] };
   vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = String(input);
     if (url.endsWith("/customers/ctm_1")) return Response.json({ data: { email: "Ada@Example.com" } });
+    if (url.endsWith(`/customers?email=${encodeURIComponent(email)}`)) return Response.json({ data: [{ id: "ctm_1" }] });
+    if (url.endsWith("/subscriptions?customer_id=ctm_1&status=active,trialing,past_due")) return Response.json({ data: listed.subscriptions });
+    if (url.endsWith("/transactions?customer_id=ctm_1&status=completed")) return Response.json({ data: listed.transactions });
     if (url.endsWith("/customers/ctm_1/portal-sessions")) {
       portals.push(JSON.parse(String(init?.body)));
 
@@ -254,6 +260,25 @@ describe("lifetime", () => {
   it("ignores the transactions that pay for a subscription", async () => {
     await paddle("transaction.completed", { id: "txn_2", customer_id: "ctm_1", subscription_id: "sub_1", items: [{ price: { id: "pri_month" } }] });
 
+    expect((await activate()).status).toBe(402);
+  });
+});
+
+describe("missed webhooks", () => {
+  it("finds a trial in Paddle when the webhook never arrived", async () => {
+    listed.subscriptions = [subscription("trialing", "pri_month", new Date(Date.now() + 7 * day * 1000))];
+
+    expect((await activate()).status).toBe(200);
+    expect(await (await call("/api/account", undefined, await signedIn())).json()).toMatchObject({ licensed: true, licence: { plan: "monthly", trial: true } });
+  });
+
+  it("finds a lifetime purchase in Paddle when the webhook never arrived", async () => {
+    listed.transactions = [{ id: "txn_1", customer_id: "ctm_1", items: [{ price: { id: "pri_life" } }] }];
+
+    expect((await activate()).status).toBe(200);
+  });
+
+  it("still says there's no plan when Paddle has none", async () => {
     expect((await activate()).status).toBe(402);
   });
 });
