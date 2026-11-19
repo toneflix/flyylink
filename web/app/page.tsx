@@ -23,7 +23,7 @@ export default function Home() {
               Texts, calls, notifications, files and photos from your phone, on your Mac or PC.
             </p>
             <DownloadButtons />
-            <p className="hero-note">Free on Android. <a href="/buy">Free trial</a> on Mac and PC.</p>
+            <p className="hero-note">Free on Android. <a href="/buy">Try it free</a> on your Mac or PC.</p>
           </div>
 
           <div className="hero-visual" aria-hidden="true">
@@ -165,7 +165,7 @@ export default function Home() {
       <section className="cta">
         <div className="container">
           <img src="/icon.svg" alt="" width={96} height={96} />
-          <h2>Try it for free.</h2>
+          <h2>Try it for free</h2>
           <DownloadButtons />
         </div>
       </section>

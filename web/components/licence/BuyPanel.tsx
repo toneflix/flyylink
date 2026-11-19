@@ -75,7 +75,7 @@ export function BuyPanel() {
         {price && <p className="price">{price.label}</p>}
         {price && <p className="price-note">{details.per}</p>}
       </div>
-      {price?.trial && <p className="price-note">First {price.trial} free</p>}
+      {price?.trial && <p className="price-note">Your first {price.trial} are free</p>}
 
       <ul className="checks">
         {details.perks.map((perk) => (
@@ -92,7 +92,7 @@ export function BuyPanel() {
         onClick={() => checkout.current?.open(plan, (email) => setBoughtBy(email ?? ""))}
       >
         <ShoppingBag size={18} />
-        {plan === "lifetime" ? "Buy FlyyLink" : price?.trial ? "Start free trial" : "Subscribe"}
+        {plan === "lifetime" ? "Buy FlyyLink" : price?.trial ? "Try it free" : "Subscribe"}
       </button>
       {error && <p className="form-error">{error}</p>}
     </div>

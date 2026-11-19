@@ -59,13 +59,13 @@ final class LicenceModel: ObservableObject {
     var body: String {
         switch status {
         case .locked(.offline): return "FlyyLink needs to check your licence."
-        case .locked(.signedOut): return "Start a free trial on the website, then sign in with the same email."
-        default: return "Use the email from your FlyyLink plan."
+        case .locked(.signedOut): return "Start your free trial on our website, then sign in here with the same email."
+        default: return "Sign in with the email you used for your plan."
         }
     }
 
     /// The website button: a trial for someone new, otherwise the plans.
-    var buyTitle: String { status == .locked(.signedOut) ? "Start free trial" : "Buy FlyyLink" }
+    var buyTitle: String { status == .locked(.signedOut) ? "Try it free" : "Buy FlyyLink" }
 
     var canRetry: Bool { status == .locked(.offline) }
 

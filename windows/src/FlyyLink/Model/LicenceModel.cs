@@ -78,12 +78,12 @@ public sealed class LicenceModel : Observable
     public string Body => status switch
     {
         LicenceStatus.Locked { Reason: LicenceLock.Offline } => "FlyyLink needs to check your licence.",
-        LicenceStatus.Locked { Reason: LicenceLock.SignedOut } => "Start a free trial on the website, then sign in with the same email.",
-        _ => "Use the email from your FlyyLink plan.",
+        LicenceStatus.Locked { Reason: LicenceLock.SignedOut } => "Start your free trial on our website, then sign in here with the same email.",
+        _ => "Sign in with the email you used for your plan.",
     };
 
     /// The website button: a trial for someone new, otherwise the plans.
-    public string BuyTitle => status is LicenceStatus.Locked { Reason: LicenceLock.SignedOut } ? "Start free trial" : "Buy FlyyLink";
+    public string BuyTitle => status is LicenceStatus.Locked { Reason: LicenceLock.SignedOut } ? "Try it free" : "Buy FlyyLink";
 
     public bool CanRetry => status is LicenceStatus.Locked { Reason: LicenceLock.Offline };
 

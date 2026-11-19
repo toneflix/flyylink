@@ -17,7 +17,7 @@ function planLine(licence: LicenceInfo | null): string {
   if (licence.plan === "lifetime" || licence.endsAt === null) return "Lifetime licence";
 
   const name = licence.plan === "monthly" ? "Monthly plan" : "Annual plan";
-  if (licence.trial) return `${name}, free until ${date(licence.endsAt)}`;
+  if (licence.trial) return `${name}, free trial until ${date(licence.endsAt)}`;
 
   return `${name}, ${licence.renews ? "renews" : "ends"} ${date(licence.endsAt)}`;
 }
