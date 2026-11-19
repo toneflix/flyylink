@@ -1,133 +1,76 @@
-using System.Diagnostics;
-using System.Net.Http.Json;
 using System.Reflection;
-using System.Text.Json.Serialization;
-using FlyyLink.Plugins;
-using Microsoft.Windows.AppNotifications.Builder;
+using Microsoft.Win32;
 
 namespace FlyyLink.Shell;
 
-/// Looks for a newer Windows release on the website and installs it when the user agrees.
-internal sealed class Updater(ToastCenter toasts)
+/// Keeps FlyyLink up to date with WinSparkle, which reads the signed update feed on the website and installs new versions.
+internal sealed class Updater
 {
-    private const string Feed = "https://flyylink.toneflix.net/updates/windows.json";
-    private static readonly TimeSpan FirstCheck = TimeSpan.FromMinutes(2);
+    private const string Feed = "https://flyylink.toneflix.net/updates/windows/appcast.xml";
+    private const string DownloadPage = "https://flyylink.toneflix.net/#download";
+    private const string SettingsKey = @"Software\FlyyLink\WinSparkle";
     private static readonly TimeSpan CheckEvery = TimeSpan.FromHours(12);
 
     /// The running app's version.
     public static Version Current { get; } = Trim(Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0, 0));
 
-    private static readonly HttpClient Http = CreateClient();
+    /// The version shown to the user, like 1.2.3.
+    public static string CurrentText => Current.ToString(3);
 
-    private Version? offered;
+    /// The key update files are signed with. Builds without it don't update themselves.
+    private static readonly string? PublicKey = typeof(Updater).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == "UpdatePublicKey")?.Value;
+
+    // Kept in fields so they live as long as WinSparkle holds them.
+    private readonly WinSparkle.CanShutdownCallback canShutdown = () => 1;
+    private readonly WinSparkle.ShutdownRequestCallback shutdownRequest;
+
+    private bool running;
+
+    public Updater() => shutdownRequest = () => OnInstalling?.Invoke();
 
     /// Called on a background thread once the installer is running, so the app can quit and let it replace the files.
     public Action? OnInstalling { get; set; }
 
-    /// The version shown to the user, like 1.2.3.
-    public static string CurrentText => Current.ToString(3);
-
-    /// Checks shortly after launch, then twice a day, offering each new version once.
-    public void Start() => _ = Task.Run(async () =>
+    /// Checks in the background on launch and every 12 hours, unless the user turned that off in WinSparkle's window.
+    public void Start()
     {
-        await Task.Delay(FirstCheck);
-        while (true)
-        {
-            await CheckAsync(manual: false);
-            await Task.Delay(CheckEvery);
-        }
-    });
+        if (running || string.IsNullOrEmpty(PublicKey)) return;
 
-    /// `manual` also says when FlyyLink is up to date or the check failed.
-    public async Task CheckAsync(bool manual)
-    {
-        Release? newest;
-        try
-        {
-            newest = await NewestAsync();
-        }
-        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
-        {
-            if (manual) Say("Couldn't check for updates", "Check your internet connection and try again.");
-            return;
-        }
+        WinSparkle.SetAppcastUrl(Feed);
+        if (WinSparkle.SetEdDsaPublicKey(PublicKey) != 1) return;
 
-        if (newest is null)
-        {
-            if (manual) Say("FlyyLink is up to date", $"You have version {CurrentText}.");
-            return;
-        }
+        WinSparkle.SetAppDetails("Toneflix", "FlyyLink", CurrentText);
+        WinSparkle.SetRegistryPath(SettingsKey);
+        if (!HasCheckSetting()) WinSparkle.SetAutomaticCheckForUpdates(1);
+        WinSparkle.SetUpdateCheckInterval((int)CheckEvery.TotalSeconds);
+        WinSparkle.SetCanShutdownCallback(canShutdown);
+        WinSparkle.SetShutdownRequestCallback(shutdownRequest);
+        WinSparkle.Init();
 
-        if (!manual && newest.Version == offered) return;
-
-        offered = newest.Version;
-        Offer(newest);
+        running = true;
     }
 
-    private sealed record Release(Version Version, string Installer, string Page);
-
-    private static async Task<Release?> NewestAsync()
+    /// Shows WinSparkle's window, which says whether FlyyLink is up to date. Builds that can't update open the download page.
+    public void Check()
     {
-        var feed = await Http.GetFromJsonAsync<FeedEntry>(Feed);
-        if (feed is null || !Version.TryParse(feed.Version, out var version)) return null;
-
-        version = Trim(version);
-
-        return version > Current ? new Release(version, feed.Installer, feed.Notes) : null;
+        if (running) WinSparkle.CheckUpdateWithUI();
+        else Explorer.Open(DownloadPage);
     }
 
-    private void Offer(Release release) => toasts.Show(
-        key => new AppNotificationBuilder()
-            .AddText($"FlyyLink {release.Version.ToString(3)} is available")
-            .AddText($"You have {CurrentText}. FlyyLink restarts to update.")
-            .AddButton(ToastCenter.Button("Update now", "update", key))
-            .AddButton(ToastCenter.Button("What's new", "notes", key)),
-        (action, input) =>
-        {
-            if (action == "update") _ = InstallAsync(release);
-            else if (action == "notes") Explorer.Open(release.Page);
-        },
-        tag: "update",
-        group: "flyylink");
-
-    private async Task InstallAsync(Release release)
+    public void Stop()
     {
-        var path = Path.Combine(Path.GetTempPath(), $"FlyyLink-Setup-{release.Version.ToString(3)}.exe");
+        if (!running) return;
 
-        try
-        {
-            await using (var source = await Http.GetStreamAsync(release.Installer))
-            await using (var file = File.Create(path))
-            {
-                await source.CopyToAsync(file);
-            }
-
-            // The installer closes FlyyLink, swaps the files and starts the new version.
-            Process.Start(new ProcessStartInfo(path, "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART") { UseShellExecute = true });
-            OnInstalling?.Invoke();
-        }
-        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
-        {
-            Say("Couldn't update FlyyLink", e.Message);
-        }
+        WinSparkle.Cleanup();
+        running = false;
     }
 
-    private void Say(string title, string text) => toasts.Show(key => new AppNotificationBuilder().AddText(title).AddText(text), tag: "update", group: "flyylink");
+    private static bool HasCheckSetting()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(SettingsKey);
+
+        return key?.GetValue("CheckForUpdates") is not null;
+    }
 
     private static Version Trim(Version version) => new(version.Major, version.Minor, Math.Max(version.Build, 0));
-
-    private static HttpClient CreateClient()
-    {
-        var client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-        client.DefaultRequestHeaders.UserAgent.ParseAdd($"FlyyLink-Windows/{CurrentText}");
-
-        return client;
-    }
-
-    private sealed class FeedEntry
-    {
-        [JsonPropertyName("version")] public string Version { get; set; } = "";
-        [JsonPropertyName("installer")] public string Installer { get; set; } = "";
-        [JsonPropertyName("notes")] public string Notes { get; set; } = "";
-    }
 }

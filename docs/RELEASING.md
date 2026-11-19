@@ -57,7 +57,7 @@ One-time setup:
 
 ## Where files go
 
-Every file is uploaded to the `flyylink-releases` R2 bucket. The website serves it at `/download/<platform>` and `/releases/<file>`, and serves the update feeds: `/updates/mac/appcast.xml` for the Mac and `/updates/windows.json` for Windows, which installed copies check twice a day.
+Every file is uploaded to the `flyylink-releases` R2 bucket. The website serves it at `/download/<platform>` and `/releases/<file>`, and serves the update feeds: `/updates/mac/appcast.xml` for the Mac and `/updates/windows/appcast.xml` for Windows, which installed copies check twice a day. Both are signed with the Sparkle key, and Windows updates through [WinSparkle](https://winsparkle.org). Windows builds from before WinSparkle still read `/updates/windows.json`.
 
 The Windows installer isn't signed, so on first install Windows SmartScreen asks: pick "More info", then "Run anyway".
 
@@ -70,8 +70,8 @@ Set these under GitHub > Settings > Secrets and variables > Actions. `.github/wo
 | Android         | `ANDROID_KEYSTORE` (base64 `.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` if the key has its own                                         |                      |
 | Google Play     | `PLAY_SERVICE_ACCOUNT_JSON` (service account JSON key)                                                                                                                      |                      |
 | Amazon Appstore | `AMAZON_CLIENT_ID`, `AMAZON_CLIENT_SECRET`                                                                                                                                  | `AMAZON_APP_ID`      |
-| Mac             | `MACOS_CERT_P12` (base64 Developer ID Application `.p12`), `MACOS_CERT_PASSWORD`, `NOTARY_KEY` (`.p8` contents), `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`, `SPARKLE_PRIVATE_KEY` | `SPARKLE_PUBLIC_KEY` |
-| Mac and Windows |                                                                                                                                                                             | `LICENCE_PUBLIC_KEY` |
+| Mac             | `MACOS_CERT_P12` (base64 Developer ID Application `.p12`), `MACOS_CERT_PASSWORD`, `NOTARY_KEY` (`.p8` contents), `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`                        |                      |
+| Mac and Windows | `SPARKLE_PRIVATE_KEY`                                                                                                                                                       | `SPARKLE_PUBLIC_KEY`, `LICENCE_PUBLIC_KEY` |
 | Website upload  | `CLOUDFLARE_API_TOKEN` (Workers R2 Storage edit), `CLOUDFLARE_ACCOUNT_ID`                                                                                                   |                      |
 | Admin CLI       | `NPM_TOKEN` (npm automation token that can publish under `@toneflix`)                                                                                                       |                      |
 

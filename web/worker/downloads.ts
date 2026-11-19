@@ -27,8 +27,9 @@ const contentTypes: Record<string, string> = {
 };
 
 /**
- * Serves releases from R2. The release workflow uploads each file to `releases/`, the Mac update
- * feed to `updates/appcast.xml`, and records the newest build per platform in `latest.json`.
+ * Serves releases from R2. The release workflow uploads each file to `releases/`, the Mac and Windows
+ * update feeds to `updates/appcast.xml` and `updates/windows-appcast.xml`, and records the newest build
+ * per platform in `latest.json`. Windows builds from before WinSparkle read `/updates/windows.json`.
  */
 export class Downloads {
   constructor(private readonly bucket: R2Bucket) {}
@@ -38,6 +39,7 @@ export class Downloads {
       .get("/download/:platform", (request, { platform }) => this.download(request, platform))
       .get("/releases/:file", (request, { file }) => this.file(request, `releases/${file}`, true))
       .get("/updates/mac/appcast.xml", (request) => this.file(request, "updates/appcast.xml", false))
+      .get("/updates/windows/appcast.xml", (request) => this.file(request, "updates/windows-appcast.xml", false))
       .get("/updates/windows.json", (request) => this.windowsUpdate(request));
   }
 

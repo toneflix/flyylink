@@ -26,6 +26,10 @@
     <AssemblyMetadata Include="LicencePublicKey" Value="$(LicencePublicKey)" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(UpdatePublicKey)' != ''">
+    <AssemblyMetadata Include="UpdatePublicKey" Value="$(UpdatePublicKey)" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.260224002" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
@@ -34,6 +38,7 @@
     <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.11" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <PackageReference Include="WinSparkle" Version="0.9.4" />
   </ItemGroup>
 
   <ItemGroup>

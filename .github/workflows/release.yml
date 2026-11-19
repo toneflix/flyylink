@@ -26,10 +26,12 @@ name: Release
 # Mac secrets: MACOS_CERT_P12 (base64 Developer ID Application .p12), MACOS_CERT_PASSWORD,
 # NOTARY_KEY (App Store Connect API .p8 contents), NOTARY_KEY_ID, NOTARY_ISSUER_ID, SPARKLE_PRIVATE_KEY.
 # Mac variable: SPARKLE_PUBLIC_KEY. Without the Sparkle key and variable, the release works but can't auto-update.
+# Windows signs its updates for WinSparkle with the same key pair, and can't auto-update without it either.
 #
 # Website secrets: CLOUDFLARE_API_TOKEN (with R2 edit access) and CLOUDFLARE_ACCOUNT_ID. Every file is uploaded
 # to the flyylink-releases bucket, which the website serves at /download/<platform> and /releases/<file>.
-# The Mac app reads its update feed from /updates/mac/appcast.xml and the Windows app from /updates/windows.json.
+# The Mac app reads its update feed from /updates/mac/appcast.xml and the Windows app from /updates/windows/appcast.xml.
+# Windows builds from before WinSparkle read /updates/windows.json, which the website builds from latest.json.
 # Builds from before the move still read the GitHub releases, so those are published too.
 # Digits after the prefix keep the macos-appcast tag from starting a release.
 on:
@@ -257,6 +259,9 @@ jobs:
     defaults:
       run:
         working-directory: windows
+    env:
+      SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+      SPARKLE_PUBLIC_KEY: ${{ vars.SPARKLE_PUBLIC_KEY }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -273,11 +278,52 @@ jobs:
       - name: Build app and installer
         env:
           LICENCE_PUBLIC_KEY: ${{ vars.LICENCE_PUBLIC_KEY }}
-        run: ./scripts/package.ps1 -Version ${{ steps.version.outputs.number }}
+        run: |
+          if ($env:SPARKLE_PRIVATE_KEY -and $env:SPARKLE_PUBLIC_KEY) {
+            $env:UPDATE_PUBLIC_KEY = $env:SPARKLE_PUBLIC_KEY
+          } else {
+            Write-Output "::warning::No Sparkle key, so this build won't update itself."
+          }
+          ./scripts/package.ps1 -Version ${{ steps.version.outputs.number }}
+
+      # WinSparkle checks the installer against the public key built into the app before running it.
+      - name: Write the update feed
+        if: env.SPARKLE_PRIVATE_KEY != '' && env.SPARKLE_PUBLIC_KEY != ''
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.number }}
+        run: |
+          packages=$(dotnet nuget locals global-packages --list | sed 's/^global-packages: //' | tr -d '\r')
+          tool=$(find "$(cygpath -u "$packages")/winsparkle" -name winsparkle-tool.exe | sort -V | tail -1)
+          installer="publish/FlyyLink-Setup-$VERSION.exe"
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle.key"
+          # Prints: sparkle:edSignature="..." length="..."
+          signature=$("$tool" sign --verbose --private-key-file "$RUNNER_TEMP/sparkle.key" "$installer" | tr -d '\r')
+          rm "$RUNNER_TEMP/sparkle.key"
+          cat > publish/windows-appcast.xml <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+            <channel>
+              <title>FlyyLink</title>
+              <item>
+                <title>FlyyLink $VERSION</title>
+                <pubDate>$(LC_ALL=C date -u '+%a, %d %b %Y %H:%M:%S +0000')</pubDate>
+                <sparkle:version>$VERSION</sparkle:version>
+                <sparkle:minimumSystemVersion>10.0.17763</sparkle:minimumSystemVersion>
+                <link>$SITE_URL/#download</link>
+                <enclosure url="$SITE_URL/releases/FlyyLink-Setup-$VERSION.exe" type="application/octet-stream"
+                  sparkle:os="windows-x64" sparkle:installerArguments="/SILENT /SP- /SUPPRESSMSGBOXES /NORESTART" $signature />
+              </item>
+            </channel>
+          </rss>
+          EOF
+
       - uses: actions/upload-artifact@v7
         with:
           name: windows
-          path: windows/publish/FlyyLink-Setup-*.exe
+          path: |
+            windows/publish/FlyyLink-Setup-*.exe
+            windows/publish/windows-appcast.xml
 
   # Skipped apps are fine; a failed or cancelled one stops the release.
   publish:
@@ -380,6 +426,9 @@ jobs:
           # The feed goes up after the files it points to, and the download links last.
           if [ -f dist/appcast.xml ]; then
             put updates/appcast.xml dist/appcast.xml
+          fi
+          if [ -f dist/windows-appcast.xml ]; then
+            put updates/windows-appcast.xml dist/windows-appcast.xml
           fi
           put latest.json latest.json
 

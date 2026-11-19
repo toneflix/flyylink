@@ -7,7 +7,8 @@ param(
 $ErrorActionPreference = "Stop"
 
 # LICENCE_PUBLIC_KEY turns on the licence check; without it the build is unlimited.
-dotnet publish src/FlyyLink -c Release -r win-x64 -p:Platform=x64 --self-contained true -p:Version=$Version "-p:LicencePublicKey=$env:LICENCE_PUBLIC_KEY" -o publish/FlyyLink
+# UPDATE_PUBLIC_KEY turns on updates; without it the build doesn't update itself.
+dotnet publish src/FlyyLink -c Release -r win-x64 -p:Platform=x64 --self-contained true -p:Version=$Version "-p:LicencePublicKey=$env:LICENCE_PUBLIC_KEY" "-p:UpdatePublicKey=$env:UPDATE_PUBLIC_KEY" -o publish/FlyyLink
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $iscc = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"
