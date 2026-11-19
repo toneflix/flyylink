@@ -134,8 +134,10 @@ object MediaPlugin : Plugin {
     private fun update(controllers: List<MediaController>) {
         sessions.forEach { it.controller.unregisterCallback(it.callback) }
 
+        // FlyyLink's own session shows the computer's media, which the computer already has.
+        val own = context?.packageName
         val names = mutableSetOf<String>()
-        sessions = controllers.map { controller ->
+        sessions = controllers.filter { it.packageName != own }.map { controller ->
             val base = appName(controller.packageName)
             var name = base
             var copy = 1

@@ -200,6 +200,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".ComputerMedia$ButtonReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".LinkService$DisconnectReceiver"
             android:exported="false" />
 

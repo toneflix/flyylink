@@ -205,6 +205,11 @@
     <string name="channel_flyydrop">FlyyDrop requests</string>
     <string name="channel_computer_notifications">Computer notifications</string>
     <string name="computer_notification_from">%1$s · %2$s</string>
+    <string name="channel_computer_media">Music and videos on your computer</string>
+    <string name="media_play">Play</string>
+    <string name="media_pause">Pause</string>
+    <string name="media_next">Next</string>
+    <string name="media_previous">Previous</string>
     <string name="flyydrop">FlyyDrop</string>
     <string name="flyydrop_ask_title">%1$s wants to FlyyDrop</string>
     <string name="flyydrop_accept">Accept</string>

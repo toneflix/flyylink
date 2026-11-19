@@ -35,6 +35,8 @@ enum class AppForm(val deviceType: DeviceType) {
         when (this) {
             PHONE -> {
                 ComputerNotificationPlugin.start(context)
+                RemoteMediaPlugin.start(context)
+                ComputerMedia.start(context)
                 BatteryPlugin.start(context)
                 ConnectivityPlugin.start(context)
                 FindMyPhonePlugin.start(context)
