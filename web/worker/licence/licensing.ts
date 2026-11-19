@@ -34,7 +34,7 @@ export interface ComputerView {
 
 /**
  * The rules of a licence: a monthly, annual or lifetime plan covers an account's computers up to a limit,
- * phones are free, and computers can only be swapped a few times a month. The limits come from `Settings`;
+ * phones and TVs are free, and computers can only be swapped a few times a month. The limits come from `Settings`;
  * these are their defaults. Trials and payment retries are Paddle's, through the subscription's status.
  */
 export class Licensing {

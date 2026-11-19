@@ -6,9 +6,9 @@ import { LicenceClient, type Plan } from "./api";
 import { PaddleCheckout, type PlanPrice } from "./paddle";
 
 const plans: Record<Plan, { name: string; per: string; perks: string[] }> = {
-  monthly: { name: "Monthly", per: "a month", perks: ["Phones are always free", "Cancel whenever you like"] },
-  annual: { name: "Annual", per: "a year", perks: ["Phones are always free", "Cancel whenever you like"] },
-  lifetime: { name: "Lifetime", per: "once", perks: ["Phones are always free", "Every future update included"] },
+  monthly: { name: "Monthly", per: "a month", perks: ["Phones and TVs are always free", "Cancel whenever you like"] },
+  annual: { name: "Annual", per: "a year", perks: ["Phones and TVs are always free", "Cancel whenever you like"] },
+  lifetime: { name: "Lifetime", per: "once", perks: ["Phones and TVs are always free", "Every future update included"] },
 };
 
 function computersPerk(limit: number): string {

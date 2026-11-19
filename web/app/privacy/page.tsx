@@ -121,7 +121,7 @@ export default function PrivacyPage() {
       </ul>
 
       <h2>5. Your licence</h2>
-      <p>The Android app is free and never contacts us. The Mac and Windows apps need a licence.</p>
+      <p>The Android app is free on phones, tablets and TVs, and never contacts us. The Mac and Windows apps need a licence.</p>
       <ul>
         <li>
           <strong>Buying.</strong> Paddle.com sells FlyyLink for us as the merchant of record. Paddle handles your

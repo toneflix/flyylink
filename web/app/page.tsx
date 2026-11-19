@@ -23,7 +23,7 @@ export default function Home() {
               Your texts, calls, notifications, files and photos, right on your Mac or PC.
             </p>
             <DownloadButtons />
-            <p className="hero-note">Free on Android. <a href="/buy">Try it free</a> on your Mac or PC.</p>
+            <p className="hero-note">Free on Android phones and TVs. <a href="/buy">Try it free</a> on your Mac or PC.</p>
           </div>
 
           <div className="hero-visual" aria-hidden="true">
