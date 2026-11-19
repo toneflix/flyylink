@@ -1,6 +1,6 @@
 # Admin CLI
 
-`flyylink-cli` manages FlyyLink from your own machine: users, licences, trials, settings and notices. It talks to the website's worker at `/api/admin/run`, so nothing needs the Cloudflare dashboard or `wrangler d1 execute`.
+`flyylink-cli` manages FlyyLink from your own machine: users, licences, settings and notices. It talks to the website's worker at `/api/admin/run`, so nothing needs the Cloudflare dashboard or `wrangler d1 execute`.
 
 ## Install
 
@@ -48,7 +48,6 @@ On a terminal, missing input is asked for and listings let you pick a row and an
 | --------- | ----------------------------------------------------------------------------------------- |
 | Users     | `users:list`, `users:show`, `users:sign-out`, `users:delete`, `computers:remove`          |
 | Licences  | `licences:list`, `licences:grant`, `licences:revoke`, `licences:restore`                  |
-| Trials    | `trials:extend <machine> <days>`, `trials:reset <machine>`                                |
 | Settings  | `settings:list`, `settings:set <key> <value>`, `settings:unset <key>`                     |
 | Notices   | `notify:send <to>`, `notify:continue <id>`, `notify:list`                                 |
 | Operators | `operators:add`, `operators:list`, `operators:revoke`, `audit:list`, `stats`              |
@@ -59,19 +58,18 @@ Settings are stored in D1 and override the worker's defaults until unset.
 
 | Key                  | Default                    |
 | -------------------- | -------------------------- |
-| `trial_days`         | `TRIAL_DAYS`, or 14        |
 | `max_computers`      | 5                          |
 | `removals_per_month` | 3                          |
 | `review_emails`      | `REVIEW_EMAILS`            |
 
-`trial_days` changes the server only. The site's copy still uses the `TRIAL_DAYS` build variable, and the apps show 14 days until they first reach the server.
+Trial length is set on the Paddle prices, not here.
 
 ## Notices
 
 `notify:send <to>` takes `all`, `licensed`, `unlicensed`, or emails separated by commas. `--channel` picks how it goes:
 
 - `email` (default): the designed email template, sent through SendPulse in batches of 20. The CLI keeps going until everyone has it; if it stops, `notify:continue <id>` carries on.
-- `app`: a notification in the Mac and Windows apps, shown when each computer next checks its licence (every few hours). Licensed computers count as `licensed`; computers on a trial count as `unlicensed`. Notices older than 30 days, or sent before the app was installed, aren't shown. Phones never get them.
+- `app`: a notification in the Mac and Windows apps, shown when each computer next checks its licence (every few hours). Licensed computers count as `licensed`; signed-out computers count as `unlicensed`. Notices older than 30 days, or sent before the app was installed, aren't shown. Phones never get them.
 - `both`: each of the above.
 
 `--link` adds a button. `--dry-run` counts recipients without sending.

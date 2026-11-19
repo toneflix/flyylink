@@ -10,7 +10,7 @@ Cloudflare builds and deploys the site on every push to `main`. To set it up, op
 | -------------- | ------------------------------------------------------------------------------------ |
 | Project name   | `flyylink-web` (must match `name` in `wrangler.jsonc`)                               |
 | Build command  | `npm run build`                                                                      |
-| Deploy command | `npx wrangler d1 migrations apply flyylink-licences --remote && npx wrangler deploy --var TRIAL_DAYS:${TRIAL_DAYS:-14}` |
+| Deploy command | `npx wrangler d1 migrations apply flyylink-licences --remote && npx wrangler deploy`  |
 | Root directory | `web`                                                                                |
 
 Under **Advanced settings**, set **Build watch paths** to `web/*` so changes to the apps don't rebuild the site. Pull requests get a preview build automatically.

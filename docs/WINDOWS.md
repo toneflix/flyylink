@@ -8,7 +8,7 @@ On first launch Windows Firewall asks whether FlyyLink may use the network. Allo
 
 Phone notifications need Windows notifications turned on for FlyyLink.
 
-After 14 days the panel asks you to sign in with the email you bought FlyyLink with. See [LICENCES.md](LICENCES.md).
+The panel asks you to sign in with the email from your FlyyLink plan, or to start a free trial on the website. See [LICENCES.md](LICENCES.md).
 
 ## What works
 
