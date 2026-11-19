@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FlyyLink</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+  <link rel="stylesheet" href="popup.css">
+  <script src="../shared/icons.js"></script>
+  <script type="module" src="popup.js"></script>
+</head>
+<body>
+  <header class="header">
+    <span class="mark" data-icon="mark"></span>
+    <div class="who">
+      <strong>FlyyLink</strong>
+      <span id="computer"></span>
+    </div>
+    <button class="icon-button" id="settings" title="Settings" data-icon="settings"></button>
+  </header>
+
+  <main id="main">
+    <div class="loading">
+      <div class="skeleton" style="height: 34px; width: 70%"></div>
+      <div class="skeleton" style="height: 72px"></div>
+      <div class="skeleton" style="height: 72px"></div>
+    </div>
+  </main>
+
+  <div class="status" id="status" role="status" hidden></div>
+</body>
+</html>

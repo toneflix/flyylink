@@ -18,6 +18,7 @@ BRANDING = ROOT / "branding"
 RES = ROOT / "android/app/src/main/res"
 MAC = ROOT / "macos"
 WINDOWS = ROOT / "windows/src/FlyyLink"
+BROWSER = ROOT / "browser/src/icons"
 
 TILE_TOP = "#F6C101"
 TILE_BOTTOM = "#BB8C01"
@@ -237,6 +238,13 @@ private extension Color {{
 """
 
 
+def browser_icons(tile):
+    """The browser add-on's toolbar and store icons."""
+    BROWSER.mkdir(parents=True, exist_ok=True)
+    for size in (16, 32, 48, 128):
+        tile.resize((size, size), Image.LANCZOS).save(BROWSER / f"icon-{size}.png")
+
+
 def main():
     brand = Brand(Mark(BRANDING / "flyylink-logo.svg"))
     rasterizer = Rasterizer()
@@ -255,6 +263,7 @@ def main():
     windows_icon.resize((256, 256), Image.LANCZOS).save(WINDOWS / "Assets/FlyyLink.png")
     mark.save(WINDOWS / "Assets/Tray.ico", sizes=[(16, 16), (20, 20), (24, 24), (32, 32), (40, 40), (48, 48), (64, 64)])
     (WINDOWS / "Icons/FlyyLinkMark.cs").write_text(brand.csharp())
+    browser_icons(windows_icon)
 
     drawables = RES / "drawable"
     (drawables / "ic_launcher_foreground.xml").write_text(brand.vector(108, 50))

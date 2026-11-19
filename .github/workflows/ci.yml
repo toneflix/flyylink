@@ -69,3 +69,23 @@ jobs:
         with:
           name: FlyyLink-windows-setup
           path: windows/publish/FlyyLink-Setup-*.exe
+
+  browser:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: browser
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Tests
+        run: npm test
+      - name: Build for Chrome, Edge and Firefox
+        run: npm run store
+      - name: Upload add-on
+        uses: actions/upload-artifact@v7
+        with:
+          name: FlyyLink-browser
+          path: browser/dist/*.zip

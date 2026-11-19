@@ -1,0 +1,71 @@
+/* The add-on's own pages: the Toneflix colours FlyyLink uses everywhere, light and dark. */
+:root {
+  color-scheme: light dark;
+  --surface: #ffffff;
+  --surface-2: #f6f2e8;
+  --surface-3: #ece5d3;
+  --text: #17140d;
+  --muted: #5f5a4f;
+  --line: #e7e0cf;
+  --cyan: #00afff;
+  --cyan-ink: #0077b6;
+  --gold: #f6c101;
+  --gold-2: #bb8c01;
+  --on-gold: #241a00;
+  --danger: #c2410c;
+  --radius: 18px;
+  font: 14px/1.4 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #111418;
+    --surface-2: #1a1f25;
+    --surface-3: #242a31;
+    --text: #f2efe8;
+    --muted: #a5a39c;
+    --line: #2a3038;
+    --cyan-ink: #45ccff;
+    --danger: #fb923c;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; background: var(--surface); color: var(--text); }
+
+button { font: inherit; color: inherit; }
+
+.button {
+  all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 18px; border-radius: 999px; font-weight: 650; font-size: 14px; white-space: nowrap;
+  transition: transform .12s ease, filter .12s ease;
+}
+.button:hover { filter: brightness(1.04); }
+.button:active { transform: scale(.98); }
+.button:focus-visible, .tile:focus-visible, .chip:focus-visible, .icon-button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.button[disabled] { cursor: default; opacity: .55; transform: none; }
+.primary { background: linear-gradient(180deg, var(--gold), var(--gold-2)); color: var(--on-gold); box-shadow: 0 6px 16px -8px rgb(187 140 1 / .9); }
+.secondary { background: var(--surface-2); }
+
+.icon-button {
+  all: unset; cursor: pointer; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; color: var(--muted);
+}
+.icon-button:hover { background: var(--surface-2); color: var(--text); }
+
+.eyebrow { margin: 0 0 8px; color: var(--muted); font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+
+.spinner {
+  width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--cyan);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.skeleton { border-radius: 14px; background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2)); background-size: 200% 100%; animation: shimmer 1.2s ease infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+[hidden] { display: none !important; }
