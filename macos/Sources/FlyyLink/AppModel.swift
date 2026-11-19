@@ -177,6 +177,7 @@ final class AppModel: ObservableObject {
     let desktop = RemoteDesktop()
     private let desktopWindow: RemoteDesktopWindowController
     private lazy var remoteWindow = TvRemoteWindowController(model: self)
+    private lazy var pairingWindow = PairingWindowController(model: self)
     private var desktopSize: AnyCancellable?
     private let nearby: NearbyFinder
     private let hotspot = PhoneHotspot()
@@ -932,6 +933,7 @@ final class AppModel: ObservableObject {
             }
             .sorted { $0.name < $1.name }
 
+        pairingWindow.update(devices)
         updateWidget()
         drives.show(pairedPhones.filter(\.sharesFiles).map { (id: $0.id, name: $0.name) })
     }
