@@ -6,7 +6,7 @@
 
 <p align="center"><strong>Your Android phone and your computer, finally on speaking terms.</strong></p>
 
-<p align="center">For Android, Mac, Windows and TV. Free on Android and TV. Mac and PC: 14 days free, then pay once.</p>
+<p align="center">For Android, Mac, Windows and TV. Free on Android and TV. Try it free on your Mac or PC.</p>
 
 ---
 

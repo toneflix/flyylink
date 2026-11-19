@@ -760,10 +760,6 @@ public sealed partial class PanelWindow : Window
 
     private void Quit_Click(object sender, RoutedEventArgs e) => QuitRequested?.Invoke();
 
-    private void LicenceSignIn_Click(object sender, RoutedEventArgs e) => Model.Licence.OpenCard();
-
-    private void LicenceClose_Click(object sender, RoutedEventArgs e) => Model.Licence.CloseCard();
-
     private void LicenceBuy_Click(object sender, RoutedEventArgs e) => LicenceModel.Buy();
 
     private void LicenceAccount_Click(object sender, RoutedEventArgs e) => LicenceModel.ManageComputers();

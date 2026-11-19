@@ -11,6 +11,7 @@ export type Plan = "monthly" | "annual" | "lifetime";
 export interface LicenceInfo {
   plan: Plan;
   endsAt: number | null;
+  trial: boolean;
   renews: boolean;
   manageable: boolean;
 }

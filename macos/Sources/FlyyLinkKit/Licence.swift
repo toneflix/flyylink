@@ -4,7 +4,6 @@ import Foundation
 /// What the licence server signed. Times are Unix seconds. Mirrors Licence.cs.
 public struct LicenceClaims: Codable, Equatable, Sendable {
     public static let licence = "licence"
-    public static let trial = "trial"
 
     public let kind: String
     public let machine: String
@@ -49,20 +48,19 @@ public enum LicenceToken {
 
 /// Why the computer apps stopped connecting.
 public enum LicenceLock: String, Codable, Sendable {
-    /// The 14 days are up.
-    case trialOver
+    /// Not signed in yet. Trials start with a plan bought on the website.
+    case signedOut
     /// The token ran out without a renewal; going online once fixes it.
     case offline
     /// The computer was removed from the account on the website.
     case removed
-    /// The purchase was refunded.
+    /// The plan ended, the trial was cancelled or didn't convert, or the purchase was refunded.
     case revoked
 }
 
 public enum LicenceStatus: Equatable, Sendable {
     /// A build without a licence key, such as a local one: nothing is checked.
     case unlimited
-    case trial(daysLeft: Int)
     case licensed(email: String, shouldRenew: Bool)
     case locked(LicenceLock)
 
@@ -76,42 +74,27 @@ public enum LicenceStatus: Equatable, Sendable {
 /// What a computer app saved from the licence server.
 public struct LicenceRecord: Codable, Equatable, Sendable {
     public var licenceToken: String?
-    public var trialToken: String?
-    public var firstLaunch: Date
     public var serverLock: LicenceLock?
 
-    public init(licenceToken: String? = nil, trialToken: String? = nil, firstLaunch: Date, serverLock: LicenceLock? = nil) {
+    public init(licenceToken: String? = nil, serverLock: LicenceLock? = nil) {
         self.licenceToken = licenceToken
-        self.trialToken = trialToken
-        self.firstLaunch = firstLaunch
         self.serverLock = serverLock
     }
 }
 
 /// Decides, offline, whether this computer may use FlyyLink. Mirrors LicenceRules in Licence.cs.
 public enum LicenceRules {
-    public static let trialDays = 14
-
     public static func evaluate(_ record: LicenceRecord, machine: String, publicKey: String?, now: Date) -> LicenceStatus {
         guard let publicKey, !publicKey.isEmpty else { return .unlimited }
 
-        func valid(_ token: String?, kind: String) -> LicenceClaims? {
-            guard let claims = LicenceToken.verify(token, publicKey: publicKey), claims.kind == kind, claims.machine == machine else { return nil }
-
-            return claims
-        }
-
         let seconds = Int64(now.timeIntervalSince1970)
-        let licence = valid(record.licenceToken, kind: LicenceClaims.licence)
+        let licence = LicenceToken.verify(record.licenceToken, publicKey: publicKey).flatMap { claims in
+            claims.kind == LicenceClaims.licence && claims.machine == machine ? claims : nil
+        }
         if let licence, seconds < licence.expires { return .licensed(email: licence.email ?? "", shouldRenew: seconds >= licence.renew) }
         if let lock = record.serverLock { return .locked(lock) }
-        if licence != nil { return .locked(.offline) }
 
-        let trial = valid(record.trialToken, kind: LicenceClaims.trial)
-        let trialEnds = trial?.expires ?? Int64(record.firstLaunch.timeIntervalSince1970) + Int64(trialDays * 86400)
-        if seconds < trialEnds { return .trial(daysLeft: Int((Double(trialEnds - seconds) / 86400).rounded(.up))) }
-
-        return .locked(trial == nil ? .offline : .trialOver)
+        return .locked(licence == nil ? .signedOut : .offline)
     }
 }
 

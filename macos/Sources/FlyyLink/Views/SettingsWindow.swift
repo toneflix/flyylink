@@ -272,10 +272,7 @@ private struct AboutSettings: View {
                 }
             } else if licence.canSignIn {
                 SettingsRow(icon: .lock, title: "Licence") {
-                    Button("Sign in") {
-                        licence.openCard()
-                        MenuBarPanel.toggle()
-                    }
+                    Button("Sign in") { MenuBarPanel.toggle() }
                     .controlSize(.small)
                 }
             }

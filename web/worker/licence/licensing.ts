@@ -1,7 +1,7 @@
 import { HttpError } from "../http";
 import { randomToken, sha256 } from "./crypto";
 import type { Settings } from "../settings";
-import { type Plan, Plans } from "./plans";
+import type { Plan } from "./plans";
 import type { Account, Licence, LicenceStore } from "./store";
 import type { TokenSigner } from "./signer";
 
@@ -15,8 +15,10 @@ export interface Machine {
 
 export interface LicenceView {
   plan: Plan;
-  /** When the paid period ends, or null for a lifetime licence. */
+  /** When the paid period or the trial ends, or null for a lifetime licence. */
   endsAt: number | null;
+  /** Paddle's free trial, before the first payment. */
+  trial: boolean;
   renews: boolean;
   /** Whether the account page can send the person to Paddle to cancel or change how they pay. */
   manageable: boolean;
@@ -32,14 +34,12 @@ export interface ComputerView {
 
 /**
  * The rules of a licence: a monthly, annual or lifetime plan covers an account's computers up to a limit,
- * phones are free, and computers can only be swapped a few times a month. The limits and trial
- * length come from `Settings`; these are their defaults.
+ * phones are free, and computers can only be swapped a few times a month. The limits come from `Settings`;
+ * these are their defaults. Trials and payment retries are Paddle's, through the subscription's status.
  */
 export class Licensing {
   static readonly maxComputers = 5;
   static readonly removalsPerMonth = 3;
-  /** Used when neither the `trial_days` setting nor the `TRIAL_DAYS` variable is set. */
-  static readonly defaultTrialDays = 14;
   static readonly renewDays = 30;
   static readonly graceDays = 7;
 
@@ -85,15 +85,6 @@ export class Licensing {
     return this.token(licence, machine, now, account.email);
   }
 
-  /** The trial runs from the first time this computer asked, however often it asks again. */
-  async trial(machine: string, now: number): Promise<string> {
-    const started = await this.store.trialStart(machine, now);
-    const ends = started + (await this.settings.number("trial_days")) * day;
-    if (ends <= now) throw new HttpError(402, "trial_over");
-
-    return this.signer.sign({ v: 1, kind: "trial", machine, issued: now, renew: ends, expires: ends });
-  }
-
   async licence(account: Account): Promise<LicenceView | null> {
     const licence = await this.store.currentLicence(account.id);
     if (!licence) return null;
@@ -101,6 +92,7 @@ export class Licensing {
     return {
       plan: licence.plan,
       endsAt: licence.ends_at,
+      trial: licence.trial === 1,
       renews: licence.renews === 1,
       manageable: licence.provider === "paddle" && licence.plan !== "lifetime" && licence.customer_id !== null,
     };
@@ -123,9 +115,9 @@ export class Licensing {
     await this.store.removeComputer(account.id, machine, now);
   }
 
-  /** A licence token never asks to renew later than the licence's paid period runs. */
+  /** A subscription's token asks to renew when its Paddle period ends, or within a day once that has passed. */
   private token(licence: Licence, machine: string, now: number, email: string): Promise<string> {
-    const renew = Math.min(now + Licensing.renewDays * day, Plans.lapsesAt(licence.ends_at) ?? Infinity);
+    const renew = Math.min(now + Licensing.renewDays * day, Math.max(licence.ends_at ?? Infinity, now + day));
 
     return this.signer.sign({ v: 1, kind: "licence", machine, email, issued: now, renew, expires: renew + Licensing.graceDays * day });
   }

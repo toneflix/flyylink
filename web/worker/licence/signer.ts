@@ -1,6 +1,6 @@
 import { base64url, fromBase64 } from "./crypto";
 
-export type TokenKind = "licence" | "trial";
+export type TokenKind = "licence";
 
 /** What a computer app checks offline. Times are Unix seconds. */
 export interface TokenClaims {

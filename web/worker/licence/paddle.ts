@@ -5,8 +5,6 @@ import type { LicenceStore } from "./store";
 
 const provider = "paddle";
 const maxSkew = 5 * 60;
-/** Paddle subscription statuses that still let computers in. */
-const paying = ["active", "trialing", "past_due"];
 
 interface PaddleItem {
   price?: { id?: string };
@@ -69,7 +67,7 @@ export class PaddleApi {
 
 /**
  * Turns Paddle's webhooks into licences. A lifetime purchase adds one for good; a subscription keeps its
- * licence in step with the subscription; a refund or chargeback revokes either.
+ * licence in step with the subscription, trial included; a refund or chargeback revokes either.
  */
 export class PaddleWebhook {
   constructor(
@@ -106,7 +104,9 @@ export class PaddleWebhook {
 
     const known = await this.store.findLicenceByOrder(provider, id);
     const accountId = known?.account_id ?? (await this.store.accountFor(await this.api.customerEmail(customerId), now)).id;
-    const active = paying.includes(status);
+    const unpaidTrial = known?.trial === 1;
+    const trial = status === "trialing" || (status === "past_due" && unpaidTrial);
+    const active = Plans.covers(status, unpaidTrial);
 
     await this.store.saveSubscription(
       {
@@ -115,6 +115,7 @@ export class PaddleWebhook {
         customerId,
         plan,
         status: active ? "active" : "ended",
+        trial,
         endsAt: period?.ends_at ? PaddleWebhook.seconds(period.ends_at) : (known?.ends_at ?? now),
         renews: active && change?.action !== "cancel",
         syncedAt: event.occurred_at ? PaddleWebhook.seconds(event.occurred_at) : now,

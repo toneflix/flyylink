@@ -8,7 +8,6 @@ export interface SettingDefinition {
 
 /** The settings operators can change at runtime. Each one falls back to the worker's own default when unset. */
 export const SettingDefinitions = [
-  { key: "trial_days", label: "Trial length in days", type: "number", min: 1, max: 365 },
   { key: "max_computers", label: "Computers one licence covers", type: "number", min: 1, max: 100 },
   { key: "removals_per_month", label: "Computers an account can remove in 30 days", type: "number", min: 0, max: 100 },
   { key: "review_emails", label: "Reviewer emails that sign in with REVIEW_CODE, comma separated", type: "emails" },

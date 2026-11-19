@@ -181,20 +181,6 @@ export const AdminCommands = [
     options: [],
   },
   {
-    name: "trials:extend",
-    title: "Extend a trial",
-    description: "Give a computer's trial more days",
-    arguments: [machine, { name: "days", label: "Days to add", description: "How many days to add" }],
-    options: [],
-  },
-  {
-    name: "trials:reset",
-    title: "Restart a trial",
-    description: "Start a computer's trial again from today",
-    arguments: [machine],
-    options: [],
-  },
-  {
     name: "settings:list",
     title: "Show settings",
     description: "Show the settings and their values",
@@ -322,7 +308,7 @@ export const AdminCommands = [
   {
     name: "stats",
     title: "Show stats",
-    description: "Show accounts, licences, computers and trials",
+    description: "Show accounts, licences and computers",
     arguments: [],
     options: [],
   },

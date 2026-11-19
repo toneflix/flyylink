@@ -20,7 +20,6 @@ public sealed class LicenceModel : Observable
     private readonly string? publicKey = typeof(LicenceModel).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(a => a.Key == "LicencePublicKey")?.Value;
 
     private LicenceStatus status = new LicenceStatus.Unlimited();
-    private bool asked;
     private bool sentCode;
     private bool busy;
     private string email = "";
@@ -31,7 +30,6 @@ public sealed class LicenceModel : Observable
     {
         this.ui = ui;
         notices = new ServerNotices(server, toasts);
-        store.Open();
         Evaluate();
     }
 
@@ -49,11 +47,9 @@ public sealed class LicenceModel : Observable
             Raise(nameof(IsLocked));
             Raise(nameof(ShowsApp));
             Raise(nameof(ShowsCard));
-            Raise(nameof(ShowsTrialBanner));
-            Raise(nameof(TrialText));
             Raise(nameof(Title));
             Raise(nameof(Body));
-            Raise(nameof(CanClose));
+            Raise(nameof(BuyTitle));
             Raise(nameof(CanRetry));
             if (wasLocked != value.IsLocked) LockChanged?.Invoke();
         }
@@ -63,34 +59,31 @@ public sealed class LicenceModel : Observable
 
     public bool ShowsApp => !ShowsCard;
 
-    /// The sign-in card: always while locked, or after the user asks for it during the trial.
-    public bool ShowsCard => IsLocked || asked;
-
-    public bool ShowsTrialBanner => status is LicenceStatus.Trial && !asked;
-
-    public string TrialText => status is LicenceStatus.Trial { DaysLeft: var days } ? $"{days} {(days == 1 ? "day" : "days")} left in your trial" : "";
+    /// The sign-in card, shown in place of the panel while locked.
+    public bool ShowsCard => IsLocked;
 
     /// Who this PC is licensed to, for the settings menu.
     public string? LicensedTo => status is LicenceStatus.Licensed { Email: var to } ? to : null;
 
-    public bool CanSignIn => status is LicenceStatus.Trial or LicenceStatus.Locked;
+    public bool CanSignIn => IsLocked;
 
     public string Title => status switch
     {
-        LicenceStatus.Locked { Reason: LicenceLock.TrialOver } => "Your trial is over",
         LicenceStatus.Locked { Reason: LicenceLock.Offline } => "Go online to continue",
         LicenceStatus.Locked { Reason: LicenceLock.Removed } => "This PC was removed",
-        LicenceStatus.Locked { Reason: LicenceLock.Revoked } => "Your licence isn't active",
+        LicenceStatus.Locked { Reason: LicenceLock.Revoked } => "Your plan has ended",
         _ => "Sign in",
     };
 
     public string Body => status switch
     {
         LicenceStatus.Locked { Reason: LicenceLock.Offline } => "FlyyLink needs to check your licence.",
-        _ => "Use the email you bought FlyyLink with.",
+        LicenceStatus.Locked { Reason: LicenceLock.SignedOut } => "Start your free trial on our website, then sign in here with the same email.",
+        _ => "Sign in with the email you used for your plan.",
     };
 
-    public bool CanClose => !IsLocked;
+    /// The website button: a trial for someone new, otherwise the plans.
+    public string BuyTitle => status is LicenceStatus.Locked { Reason: LicenceLock.SignedOut } ? "Try it free" : "Buy FlyyLink";
 
     public bool CanRetry => status is LicenceStatus.Locked { Reason: LicenceLock.Offline };
 
@@ -151,21 +144,6 @@ public sealed class LicenceModel : Observable
         });
     }
 
-    public void OpenCard()
-    {
-        asked = true;
-        RaiseCard();
-    }
-
-    public void CloseCard()
-    {
-        asked = false;
-        sentCode = false;
-        Code = "";
-        Error = null;
-        RaiseCard();
-    }
-
     public void UseAnotherEmail()
     {
         sentCode = false;
@@ -190,20 +168,19 @@ public sealed class LicenceModel : Observable
     {
         var activation = await server.ActivateAsync(email.Trim(), code.Trim(), machine, Environment.MachineName);
         store.Activated(activation.Token, activation.Secret);
-        ui.TryEnqueue(CloseCard);
+        ui.TryEnqueue(UseAnotherEmail);
     });
 
     public static void Buy() => Explorer.Open($"{LicenceServer.Site}/buy");
 
     public static void ManageComputers() => Explorer.Open($"{LicenceServer.Site}/account");
 
-    /// Renews the licence or fetches the trial. False when the server couldn't be reached.
+    /// Renews the licence. False when the server couldn't be reached.
     private async Task<bool> SyncAsync()
     {
         try
         {
             if (store.Secret is string secret) store.Renewed(await server.RefreshAsync(machine, secret));
-            else if ((store.Record.ServerLock is null or LicenceLock.TrialOver) && LicenceToken.Verify(store.Record.TrialToken, publicKey!) is null) store.TrialStarted(await server.TrialAsync(machine));
 
             await notices.CheckAsync(machine, store.Secret);
 
@@ -218,9 +195,6 @@ public sealed class LicenceModel : Observable
                     break;
                 case "no_licence":
                     store.Locked(LicenceLock.Revoked);
-                    break;
-                case "trial_over":
-                    store.Locked(LicenceLock.TrialOver);
                     break;
             }
 
@@ -275,7 +249,6 @@ public sealed class LicenceModel : Observable
     {
         Raise(nameof(ShowsCard));
         Raise(nameof(ShowsApp));
-        Raise(nameof(ShowsTrialBanner));
         Raise(nameof(EntersEmail));
         Raise(nameof(EntersCode));
         Raise(nameof(CodeHint));

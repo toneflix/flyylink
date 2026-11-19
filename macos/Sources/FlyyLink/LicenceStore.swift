@@ -16,7 +16,7 @@ struct LicenceStore {
                 return record
             }
 
-            let fresh = LicenceRecord(firstLaunch: Date())
+            let fresh = LicenceRecord()
             UserDefaults.standard.set(try? JSONEncoder().encode(fresh), forKey: Self.recordKey)
 
             return fresh
@@ -63,12 +63,6 @@ struct LicenceStore {
 
     func renewed(token: String) {
         record.licenceToken = token
-    }
-
-    /// A trial the server extended unlocks a Mac whose trial had ended.
-    func trialStarted(token: String) {
-        record.trialToken = token
-        if record.serverLock == .trialOver { record.serverLock = nil }
     }
 
     /// The server turned this Mac away; forget its licence.

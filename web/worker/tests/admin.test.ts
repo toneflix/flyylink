@@ -189,24 +189,8 @@ describe("settings", () => {
   it("refuses values out of range", async () => {
     const obi = await firstOperator();
 
-    expect((await obi.run("settings:set", { key: "trial_days", value: "0" })).exit).toBe(1);
+    expect((await obi.run("settings:set", { key: "max_computers", value: "0" })).exit).toBe(1);
     expect((await obi.run("settings:set", { key: "colour", value: "1" })).exit).toBe(1);
-  });
-
-  it("extends a trial that has ended", async () => {
-    const obi = await firstOperator();
-
-    await obi.run("settings:set", { key: "trial_days", value: "1" });
-    await call("/api/trial", { machine: "machine-1" });
-    await obi.run("trials:extend", { machine: "machine-1", days: "1" });
-
-    vi.useFakeTimers({ now: Date.now() + 1.5 * 24 * 60 * 60 * 1000, toFake: ["Date"] });
-
-    try {
-      expect((await call("/api/trial", { machine: "machine-1" })).status).toBe(200);
-    } finally {
-      vi.useRealTimers();
-    }
   });
 });
 

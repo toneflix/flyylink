@@ -2,9 +2,7 @@ import { SignInCodes } from "../../licence/codes";
 import type { LicenceStatus, LicenceStore } from "../../licence/store";
 import { CommandGroup, type CommandContext } from "./group";
 
-const day = 24 * 60 * 60;
-
-/** Licences and computer trials. */
+/** Licences. */
 export class LicenceCommands extends CommandGroup {
   constructor(private readonly store: LicenceStore) {
     super();
@@ -16,8 +14,6 @@ export class LicenceCommands extends CommandGroup {
       "licences:grant": (context: CommandContext) => this.grant(context),
       "licences:revoke": (context: CommandContext) => this.setStatus(context, "revoked"),
       "licences:restore": (context: CommandContext) => this.setStatus(context, "active"),
-      "trials:extend": (context: CommandContext) => this.extendTrial(context),
-      "trials:reset": (context: CommandContext) => this.resetTrial(context),
     };
   }
 
@@ -84,39 +80,5 @@ export class LicenceCommands extends CommandGroup {
 
     if (status === "revoked") reply.success(`Revoked ${licence.email}'s licence. Their computers lock when their token next renews.`);
     else reply.success(`${licence.email}'s licence is active again.`);
-  }
-
-  private async extendTrial({ input, reply }: CommandContext): Promise<void> {
-    const days = input.argument("days");
-
-    if (!/^\d+$/.test(days) || Number(days) < 1 || Number(days) > 365) {
-      reply.error("<days> must be a whole number from 1 to 365.");
-
-      return;
-    }
-
-    const trial = await this.trial(input.argument("machine"), reply);
-    if (!trial) return;
-
-    await this.store.setTrialStart(trial.machine, trial.started_at + Number(days) * day);
-
-    reply.success(`Added ${days} day${days === "1" ? "" : "s"} to ${trial.machine}'s trial. The app picks it up when it next checks in.`);
-  }
-
-  private async resetTrial({ input, reply, now }: CommandContext): Promise<void> {
-    const trial = await this.trial(input.argument("machine"), reply);
-    if (!trial) return;
-
-    await this.store.setTrialStart(trial.machine, now);
-
-    reply.success(`${trial.machine}'s trial starts again from today.`);
-  }
-
-  private async trial(machine: string, reply: CommandContext["reply"]) {
-    const trial = await this.store.findTrial(machine);
-
-    if (!trial) reply.error(`No computer with the machine id ${machine} has started a trial.`);
-
-    return trial;
   }
 }

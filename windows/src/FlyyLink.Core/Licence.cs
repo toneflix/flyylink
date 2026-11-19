@@ -15,7 +15,6 @@ public sealed record LicenceClaims(
     [property: JsonPropertyName("expires")] long Expires)
 {
     public const string Licence = "licence";
-    public const string Trial = "trial";
 }
 
 /// Checks tokens from the licence server: `base64url(json).base64url(r||s)`, signed with ECDSA P-256.
@@ -52,8 +51,8 @@ public static class LicenceToken
 /// Why the computer apps stopped connecting.
 public enum LicenceLock
 {
-    /// The 14 days are up.
-    TrialOver,
+    /// Not signed in yet. Trials start with a plan bought on the website.
+    SignedOut,
 
     /// The token ran out without a renewal; going online once fixes it.
     Offline,
@@ -61,7 +60,7 @@ public enum LicenceLock
     /// The computer was removed from the account on the website.
     Removed,
 
-    /// The purchase was refunded.
+    /// The plan ended, the trial was cancelled or didn't convert, or the purchase was refunded.
     Revoked,
 }
 
@@ -69,8 +68,6 @@ public abstract record LicenceStatus
 {
     /// A build without a licence key, such as a local one: nothing is checked.
     public sealed record Unlimited : LicenceStatus;
-
-    public sealed record Trial(int DaysLeft) : LicenceStatus;
 
     public sealed record Licensed(string Email, bool ShouldRenew) : LicenceStatus;
 
@@ -80,34 +77,22 @@ public abstract record LicenceStatus
 }
 
 /// What a computer app saved from the licence server.
-public sealed record LicenceRecord(string? LicenceToken, string? TrialToken, DateTimeOffset FirstLaunch, LicenceLock? ServerLock);
+public sealed record LicenceRecord(string? LicenceToken, LicenceLock? ServerLock);
 
 /// Decides, offline, whether this computer may use FlyyLink. Mirrors LicenceRules.swift.
 public static class LicenceRules
 {
-    public const int TrialDays = 14;
-
     public static LicenceStatus Evaluate(LicenceRecord record, string machine, string? publicKey, DateTimeOffset now)
     {
         if (string.IsNullOrEmpty(publicKey)) return new LicenceStatus.Unlimited();
 
         var seconds = now.ToUnixTimeSeconds();
-        var licence = Valid(record.LicenceToken, LicenceClaims.Licence);
+        var licence = LicenceToken.Verify(record.LicenceToken, publicKey) is { } claims && claims.Kind == LicenceClaims.Licence && claims.Machine == machine ? claims : null;
         if (licence is not null && seconds < licence.Expires) return new LicenceStatus.Licensed(licence.Email ?? "", seconds >= licence.Renew);
         if (record.ServerLock is LicenceLock locked) return new LicenceStatus.Locked(locked);
-        if (licence is not null) return new LicenceStatus.Locked(LicenceLock.Offline);
 
-        var trial = Valid(record.TrialToken, LicenceClaims.Trial);
-        var trialEnds = trial?.Expires ?? record.FirstLaunch.AddDays(TrialDays).ToUnixTimeSeconds();
-        if (seconds < trialEnds) return new LicenceStatus.Trial(DaysLeft(trialEnds - seconds));
-
-        return new LicenceStatus.Locked(trial is null ? LicenceLock.Offline : LicenceLock.TrialOver);
-
-        LicenceClaims? Valid(string? token, string kind) =>
-            LicenceToken.Verify(token, publicKey) is { } claims && claims.Kind == kind && claims.Machine == machine ? claims : null;
+        return new LicenceStatus.Locked(licence is null ? LicenceLock.SignedOut : LicenceLock.Offline);
     }
-
-    private static int DaysLeft(long seconds) => (int)Math.Ceiling(seconds / 86400.0);
 }
 
 /// The computer's hardware ID, scrambled so the licence server never sees the real one.

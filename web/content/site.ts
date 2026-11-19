@@ -10,7 +10,5 @@ export const site = {
   legalAddress: "197, Ahoada Road, Omoku, Rivers State, Nigeria",
   contactEmail: "support@toneflix.net",
   jurisdiction: "the Federal Republic of Nigeria",
-  policyDate: "14 November 2026",
-  /** From the TRIAL_DAYS build variable, which the deploy also hands to the worker. */
-  trialDays: Number(process.env.NEXT_PUBLIC_TRIAL_DAYS) || 14,
+  policyDate: "19 November 2026",
 };

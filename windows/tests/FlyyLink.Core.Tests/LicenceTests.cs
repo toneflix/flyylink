@@ -9,8 +9,6 @@ public class LicenceTests
     private const string LicenceFixture = "eyJ2IjoxLCJraW5kIjoibGljZW5jZSIsIm1hY2hpbmUiOiJtMSIsImVtYWlsIjoiYnV5ZXJAZXhhbXBsZS5jb20iLCJpc3N1ZWQiOjEwMDAsInJlbmV3IjoyMDAwLCJleHBpcmVzIjozMDAwfQ.e6G63Vg1icZgrAkvoXYq0QMxJpBU4QGP0XMlmELrk-ITRSOjgGeIOjdzvGKebc33nWoBtOr0rJsZYpHSL0C14w";
     private const string TrialFixture = "eyJ2IjoxLCJraW5kIjoidHJpYWwiLCJtYWNoaW5lIjoibTEiLCJpc3N1ZWQiOjEwMDAsInJlbmV3Ijo1MDAwLCJleHBpcmVzIjo1MDAwfQ.p_7sfjcfFzFUMyBWR6VaSjy8ux7QFhPTc0EtkjZewOA8-iAMa-Kanv_SSsC8M8um3Nf86iZBUyq41CdmO1zikQ";
 
-    private static readonly DateTimeOffset FirstLaunch = DateTimeOffset.FromUnixTimeSeconds(1000);
-
     [Fact]
     public void ReadsASignedToken()
     {
@@ -32,7 +30,7 @@ public class LicenceTests
     [Fact]
     public void LicensedUntilItExpires()
     {
-        var record = new LicenceRecord(LicenceFixture, null, FirstLaunch, null);
+        var record = new LicenceRecord(LicenceFixture, null);
 
         Assert.Equal(new LicenceStatus.Licensed("buyer@example.com", false), Evaluate(record, 1500));
         Assert.Equal(new LicenceStatus.Licensed("buyer@example.com", true), Evaluate(record, 2500));
@@ -42,42 +40,33 @@ public class LicenceTests
     [Fact]
     public void TokenForAnotherComputerDoesNotCount()
     {
-        var record = new LicenceRecord(LicenceFixture, TrialFixture, FirstLaunch, null);
+        var record = new LicenceRecord(LicenceFixture, null);
 
-        Assert.Equal(new LicenceStatus.Trial(LicenceRules.TrialDays), LicenceRules.Evaluate(record, "m2", PublicKey, DateTimeOffset.FromUnixTimeSeconds(1500)));
+        Assert.Equal(new LicenceStatus.Locked(LicenceLock.SignedOut), LicenceRules.Evaluate(record, "m2", PublicKey, DateTimeOffset.FromUnixTimeSeconds(1500)));
     }
 
     [Fact]
-    public void TrialCountsDownThenLocks()
+    public void OldTrialTokenDoesNotCount()
     {
-        var record = new LicenceRecord(null, TrialFixture, FirstLaunch, null);
-
-        Assert.Equal(new LicenceStatus.Trial(1), Evaluate(record, 4000));
-        Assert.Equal(new LicenceStatus.Locked(LicenceLock.TrialOver), Evaluate(record, 5000));
+        Assert.Equal(new LicenceStatus.Locked(LicenceLock.SignedOut), Evaluate(new LicenceRecord(TrialFixture, null), 1500));
     }
 
     [Fact]
-    public void OfflineTrialRunsFromFirstLaunch()
+    public void LockedUntilSignedIn()
     {
-        var record = new LicenceRecord(null, null, FirstLaunch, null);
-
-        Assert.Equal(new LicenceStatus.Trial(14), Evaluate(record, 1001));
-        Assert.Equal(new LicenceStatus.Trial(1), Evaluate(record, 1000 + 13 * 86400 + 1));
-        Assert.Equal(new LicenceStatus.Locked(LicenceLock.Offline), Evaluate(record, 1000 + 14 * 86400));
+        Assert.Equal(new LicenceStatus.Locked(LicenceLock.SignedOut), Evaluate(new LicenceRecord(null, null), 1500));
     }
 
     [Fact]
-    public void ServerLockWinsOverTheTrial()
+    public void ServerLockWins()
     {
-        var record = new LicenceRecord(null, TrialFixture, FirstLaunch, LicenceLock.Removed);
-
-        Assert.Equal(new LicenceStatus.Locked(LicenceLock.Removed), Evaluate(record, 1500));
+        Assert.Equal(new LicenceStatus.Locked(LicenceLock.Revoked), Evaluate(new LicenceRecord(null, LicenceLock.Revoked), 1500));
     }
 
     [Fact]
     public void NoKeyMeansUnlimited()
     {
-        Assert.Equal(new LicenceStatus.Unlimited(), LicenceRules.Evaluate(new LicenceRecord(null, null, FirstLaunch, null), "m1", null, DateTimeOffset.UnixEpoch));
+        Assert.Equal(new LicenceStatus.Unlimited(), LicenceRules.Evaluate(new LicenceRecord(null, null), "m1", null, DateTimeOffset.UnixEpoch));
     }
 
     [Fact]

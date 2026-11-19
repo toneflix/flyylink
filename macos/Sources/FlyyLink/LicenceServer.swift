@@ -34,10 +34,6 @@ struct LicenceServer {
         let error: String?
     }
 
-    func trial(machine: String) async throws -> String {
-        try await post("/api/trial", ["machine": machine], as: TokenReply.self).token
-    }
-
     func sendCode(to email: String) async throws {
         _ = try await post("/api/code", ["email": email])
     }

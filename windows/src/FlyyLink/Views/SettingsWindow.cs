@@ -300,11 +300,7 @@ public sealed class SettingsWindow : Window
         else if (model.Licence.CanSignIn)
         {
             var signIn = new Button { Content = "Sign in" };
-            signIn.Click += (_, _) =>
-            {
-                model.Licence.OpenCard();
-                PanelRequested?.Invoke();
-            };
+            signIn.Click += (_, _) => PanelRequested?.Invoke();
             rows.Add(Row(Lucide.Lock, "Licence", null, signIn));
         }
         rows.Add(Row(Lucide.Laptop, "This PC", model.Identity.DeviceName, null));

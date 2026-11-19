@@ -120,11 +120,11 @@ describe("subscriptions", () => {
 
     const { token } = (await (await activate()).json()) as { token: string };
 
-    expect(claims(token).renew).toBe(Math.floor(ends.getTime() / 1000) + 3 * day);
+    expect(claims(token).renew).toBe(Math.floor(ends.getTime() / 1000));
 
     const account = await (await call("/api/account", undefined, await signedIn())).json();
 
-    expect(account).toMatchObject({ licensed: true, licence: { plan: "monthly", endsAt: Math.floor(ends.getTime() / 1000), renews: true, manageable: true } });
+    expect(account).toMatchObject({ licensed: true, licence: { plan: "monthly", endsAt: Math.floor(ends.getTime() / 1000), trial: false, renews: true, manageable: true } });
   });
 
   it("locks computers once the subscription is cancelled", async () => {
@@ -150,10 +150,25 @@ describe("subscriptions", () => {
     expect((await activate()).status).toBe(402);
   });
 
-  it("stops working a few days after a period nobody paid for", async () => {
+  it("keeps computers in while Paddle retries a renewal, until it cancels", async () => {
+    const ends = new Date(Date.now() + 30 * day * 1000);
+
+    await paddle("subscription.activated", subscription("active", "pri_month", ends), new Date(Date.now() - 2000));
+    await paddle("subscription.past_due", subscription("past_due", "pri_month", ends), new Date(Date.now() - 1000));
+    const { secret } = (await (await activate()).json()) as { secret: string };
+
+    await paddle("subscription.canceled", subscription("canceled", "pri_month", null));
+
+    expect((await call("/api/refresh", { machine: "mac-1", secret })).status).toBe(402);
+  });
+
+  it("follows Paddle's status after the period it last sent", async () => {
     await paddle("subscription.updated", subscription("active", "pri_month", new Date(Date.now() - 4 * day * 1000)));
 
-    expect((await activate()).status).toBe(402);
+    const { token } = (await (await activate()).json()) as { token: string };
+    const { renew, issued } = claims(token);
+
+    expect(renew - issued).toBe(day);
   });
 
   it("revokes a refunded subscription", async () => {
@@ -170,6 +185,52 @@ describe("subscriptions", () => {
 
     expect(await response.json()).toEqual({ url: "https://customer-portal.paddle.com/ctm_1" });
     expect(portals).toEqual([{ subscription_ids: ["sub_1"] }]);
+  });
+});
+
+describe("trials", () => {
+  it("licenses computers during Paddle's trial", async () => {
+    const ends = new Date(Date.now() + 7 * day * 1000);
+
+    await paddle("subscription.trialing", subscription("trialing", "pri_month", ends));
+
+    const { token } = (await (await activate()).json()) as { token: string };
+
+    expect(claims(token).renew).toBe(Math.floor(ends.getTime() / 1000));
+    expect(await (await call("/api/account", undefined, await signedIn())).json()).toMatchObject({ licensed: true, licence: { plan: "monthly", trial: true } });
+  });
+
+  it("counts a trial as paid once Paddle activates it", async () => {
+    await paddle("subscription.trialing", subscription("trialing", "pri_year", new Date(Date.now() + day * 1000)), new Date(Date.now() - 2000));
+    await paddle("subscription.activated", subscription("active", "pri_year", new Date(Date.now() + 365 * day * 1000)), new Date(Date.now() - 1000));
+    await paddle("subscription.past_due", subscription("past_due", "pri_year", new Date(Date.now() + 365 * day * 1000)));
+
+    expect(await (await call("/api/account", undefined, await signedIn())).json()).toMatchObject({ licensed: true, licence: { plan: "annual", trial: false } });
+  });
+
+  it("locks computers when the first payment after a trial fails", async () => {
+    await paddle("subscription.trialing", subscription("trialing", "pri_month", new Date(Date.now() + day * 1000)), new Date(Date.now() - 1000));
+    const { secret } = (await (await activate()).json()) as { secret: string };
+
+    await paddle("subscription.past_due", subscription("past_due", "pri_month", new Date(Date.now() + 30 * day * 1000)));
+
+    expect((await call("/api/refresh", { machine: "mac-1", secret })).status).toBe(402);
+  });
+
+  it("locks computers when a trial is cancelled", async () => {
+    await paddle("subscription.trialing", subscription("trialing", "pri_month", new Date(Date.now() + day * 1000)), new Date(Date.now() - 1000));
+    const { secret } = (await (await activate()).json()) as { secret: string };
+
+    await paddle("subscription.canceled", subscription("canceled", "pri_month", null));
+
+    expect((await call("/api/refresh", { machine: "mac-1", secret })).status).toBe(402);
+  });
+
+  it("tells older apps that ask for a trial of their own that there isn't one", async () => {
+    const response = await call("/api/trial", { machine: "mac-1" });
+
+    expect(response.status).toBe(402);
+    expect(await response.json()).toMatchObject({ error: "trial_over" });
   });
 });
 
