@@ -37,7 +37,7 @@ public static class Program
 
         if (PhoneStatus.Load().Phones.FirstOrDefault(p => p.IsConnected) is not { Charge: int charge })
         {
-            new StreamWriter(Console.OpenStandardError()) { AutoFlush = true }.WriteLine("No connected phone has reported its battery.");
+            new StreamWriter(Console.OpenStandardError()) { AutoFlush = true }.WriteLine("None of your connected phones has shared its battery yet.");
             return 1;
         }
 

@@ -566,13 +566,13 @@ public sealed class AppModel : Observable, IDeviceDelegate
     public bool CanJoinHotspot => HotspotStatus is null;
 
     public string HotspotText => HotspotStatus ?? (PhoneHotspotName is null
-        ? "Not on this Wi-Fi. Join its hotspot to connect."
-        : "Not on this Wi-Fi. Turn on its hotspot to connect.");
+        ? "It's not on this Wi-Fi. Join its hotspot to connect."
+        : "It's not on this Wi-Fi. Turn on its hotspot to connect.");
 
     /// The name of the phone's hotspot, once this PC has been on it.
     public string? PhoneHotspotName => HotspotPhoneId is string id ? hotspot.Name(id) : null;
 
-    public string HotspotButton => PhoneHotspotName is string ssid ? $"Use {ssid}" : "Use phone's hotspot";
+    public string HotspotButton => PhoneHotspotName is string ssid ? $"Use {ssid}" : "Use your phone's hotspot";
 
     public bool ShowsPairing => Focused is { IsPaired: false };
 
@@ -777,7 +777,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
         if (Primary is not Device phone || !phone.Send(Core.Call.Dial(trimmed)))
         {
-            Record(new Activity(ActivityKind.Failed, $"Couldn't call {trimmed}", "Connect your phone first"));
+            Record(new Activity(ActivityKind.Failed, $"Couldn't call {trimmed}", "Connect your phone first, then try again"));
             return;
         }
 
@@ -1160,7 +1160,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
 
         if (HotspotPhoneId is not string id)
         {
-            HotspotStatus = "Turn on your phone's hotspot and pick it in the Wi-Fi menu once.";
+            HotspotStatus = "Turn on your phone's hotspot and choose it from the Wi-Fi menu once.";
             return;
         }
 

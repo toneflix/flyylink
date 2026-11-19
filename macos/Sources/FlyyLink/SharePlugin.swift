@@ -184,7 +184,7 @@ final class SharePlugin: Plugin {
         let target = partial.flatMap { openForAppend(URL(fileURLWithPath: $0.path), at: offset) }
             ?? (offset == 0 ? reserveFile(Share.safeName(name)) : nil)
         guard let target else {
-            onActivity?(Activity(.failed, title: name, detail: "Could not save to Downloads"))
+            onActivity?(Activity(.failed, title: name, detail: "We couldn't save it to Downloads"))
             return
         }
 

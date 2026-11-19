@@ -68,7 +68,7 @@ struct PhotosWindow: View {
     private var emptyText: String {
         if !store.hasPhone { return "Connect your phone to see its photos" }
         if store.loading { return "Loading your photos…" }
-        return "No photos. Allow photo access in FlyyLink on your phone."
+        return "No photos yet. Allow photo access in FlyyLink on your phone."
     }
 
     private var subtitle: String {
@@ -96,7 +96,7 @@ struct PhotosWindow: View {
                             .onTapGesture { toggle(photo.id) }
                             .contextMenu {
                                 Button("Open") { store.open(photo.id) }
-                                Button("Download to Downloads") { store.download([photo.id]) }
+                                Button("Save to Downloads") { store.download([photo.id]) }
                             }
                             .onAppear { if photo.id == store.photos.last?.id { store.loadMore() } }
                         }

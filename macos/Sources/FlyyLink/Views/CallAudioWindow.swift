@@ -15,7 +15,7 @@ struct CallAudioWindow: View {
                     Text("Hear calls on your Mac").font(.system(size: 20, weight: .bold))
                     ExperimentalBadge()
                 }
-                Text("Works like a Bluetooth headset. Pair once.")
+                Text("It works like a Bluetooth headset, and you only need to pair once.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -108,9 +108,9 @@ struct CallAudioWindow: View {
         case .connecting:
             return AnyView(StepHint(icon: .radio, text: "Connecting to \(audio.phoneName ?? "your phone")…", action: nil, isBusy: true))
         case .paused:
-            return AnyView(StepHint(icon: .circlePause, text: "Paired. Turn on “Use this Mac for calls”.", action: nil))
+            return AnyView(StepHint(icon: .circlePause, text: "You're paired. Now turn on “Use this Mac for calls”.", action: nil))
         case .ready:
-            return AnyView(StepHint(icon: .badgeCheck, text: "Calls play here", action: nil))
+            return AnyView(StepHint(icon: .badgeCheck, text: "Calls play on this Mac", action: nil))
         case .failed(let reason) where audio.isPaired:
             return AnyView(StepHint(icon: .triangleAlert, text: reason, action: ("Try again", audio.retry), isWarning: true))
         default:
@@ -123,7 +123,7 @@ struct CallAudioWindow: View {
             Toggle(isOn: $audio.isEnabled) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Use this Mac for calls").font(.system(size: 13, weight: .semibold))
-                    Text("Off keeps calls on your phone")
+                    Text("When it's off, calls stay on your phone")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
@@ -131,7 +131,7 @@ struct CallAudioWindow: View {
             .toggleStyle(.switch)
             .card(padding: 12)
 
-            Text("Headset-quality audio. Can be unreliable on some macOS versions.")
+            Text("The sound is like a headset's. It can be unreliable on some versions of macOS.")
                 .font(.system(size: 10.5))
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
@@ -326,9 +326,9 @@ struct CallAudioRow: View {
         switch audio.stage {
         case .ready: return audio.audioOnMac ? "Playing on this Mac" : "Calls play on this Mac"
         case .connecting: return "Connecting over Bluetooth…"
-        case .paused: return "Off · calls stay on your phone"
+        case .paused: return "Off, so calls stay on your phone"
         case .pairing: return "Confirm the code on both screens"
-        case .failed: return "Needs attention"
+        case .failed: return "Something needs your attention"
         default: return "Hear and answer calls here"
         }
     }

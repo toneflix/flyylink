@@ -45,7 +45,7 @@ struct NearbyList: View {
         if let send = model.flyyDropSends[device.id] { return send.status }
 
         switch device.pairState {
-        case .notPaired: return device.canFlyyDrop ? "Not paired · drop files here" : "Not paired"
+        case .notPaired: return device.canFlyyDrop ? "Not paired yet. Drop files to send." : "Not paired"
         case .requested: return "Waiting for it to accept"
         case .requestedByPeer: return "Wants to pair next"
         case .paired: return device.battery.map { "Paired · \($0.charge)%" } ?? "Paired"

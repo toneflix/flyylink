@@ -251,9 +251,9 @@ public sealed partial class PanelWindow : Window
 
     // Bound helpers
 
-    public string SearchingTitle(bool hasNearby) => hasNearby ? "Pick a device to pair" : "Looking for your devices";
+    public string SearchingTitle(bool hasNearby) => hasNearby ? "Choose a device to pair" : "Looking for your devices";
 
-    public string SearchingHint(bool hasNearby) => hasNearby ? "" : "Open FlyyLink on your phone or TV, on the same Wi-Fi.";
+    public string SearchingHint(bool hasNearby) => hasNearby ? "" : "Open FlyyLink on your phone or TV and make sure it's on the same Wi-Fi.";
 
     public int BatteryCharge(DeviceState? device) => device?.Battery?.Charge ?? -1;
 

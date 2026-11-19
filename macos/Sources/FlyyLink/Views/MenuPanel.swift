@@ -195,10 +195,10 @@ private struct SearchingCard: View {
             .frame(height: 96)
 
             VStack(spacing: 5) {
-                Text(hasNearby ? "Pick a device to pair" : "Looking for your devices")
+                Text(hasNearby ? "Choose a device to pair" : "Looking for your devices")
                     .font(.system(size: 16, weight: .bold))
                 if !hasNearby {
-                    Text("Open FlyyLink on your phone or TV, on the same Wi-Fi.")
+                    Text("Open FlyyLink on your phone or TV and make sure it's on the same Wi-Fi.")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -219,8 +219,8 @@ private struct HotspotCard: View {
 
     private var explanation: String {
         model.phoneHotspotName == nil
-            ? "Not on this Wi-Fi. Join its hotspot to connect."
-            : "Not on this Wi-Fi. Turn on its hotspot to connect."
+            ? "It's not on this Wi-Fi. Join its hotspot to connect."
+            : "It's not on this Wi-Fi. Turn on its hotspot to connect."
     }
 
     var body: some View {
@@ -241,7 +241,7 @@ private struct HotspotCard: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 if model.hotspotStatus == nil {
-                    Button(model.phoneHotspotName.map { "Use \($0)" } ?? "Use phone's hotspot") { model.joinPhoneHotspot() }
+                    Button(model.phoneHotspotName.map { "Use \($0)" } ?? "Use your phone's hotspot") { model.joinPhoneHotspot() }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.small)
                 } else {

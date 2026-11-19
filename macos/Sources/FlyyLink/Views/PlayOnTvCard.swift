@@ -53,7 +53,7 @@ private struct TvPicker: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(file.name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
-                    Text(model.searching && model.tvs.isEmpty ? "Looking for TVs…" : model.tvs.isEmpty ? "No TVs found" : "Pick a TV")
+                    Text(model.searching && model.tvs.isEmpty ? "Looking for TVs…" : model.tvs.isEmpty ? "We couldn't find any TVs" : "Choose a TV")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }

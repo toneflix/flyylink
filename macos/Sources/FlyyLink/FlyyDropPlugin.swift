@@ -45,12 +45,12 @@ struct FlyyDropSend: Equatable {
         case .waiting: return "Waiting for them to accept…"
         case .sending: return progress.map { "Sending · \(Int($0.fraction * 100))%" } ?? "Sending…"
         case .sent: return "Sent"
-        case .noAnswer: return "No answer"
-        case .failed: return "Didn't finish"
+        case .noAnswer: return "They didn't answer"
+        case .failed: return "It didn't finish. Please try again."
         case .declined:
             switch reason {
-            case .unavailable: return "Not taking FlyyDrops right now"
-            case .busy: return "Busy with another request"
+            case .unavailable: return "They're not taking FlyyDrops right now"
+            case .busy: return "They're busy with another request"
             default: return "Declined"
             }
         }

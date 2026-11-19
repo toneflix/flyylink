@@ -147,8 +147,8 @@ public sealed class ScreenWindow : Window
         };
         statusHint.Text = phase switch
         {
-            MirrorPhase.Ended => "The phone stopped sharing or disconnected.",
-            MirrorPhase.Idle => "Start from Mirror in the FlyyLink panel.",
+            MirrorPhase.Ended => "Your phone stopped sharing its screen or disconnected.",
+            MirrorPhase.Idle => "Start it from Mirror in the FlyyLink panel.",
             _ => "Tap the notification on your phone, then \"Start now\".",
         };
         waiting.IsActive = phase == MirrorPhase.Waiting;
