@@ -1,5 +1,8 @@
 import { type Plan, Plans } from "./plans";
 
+/** SQL that is true unless the order (bound as provider, order id) belonged to a deleted account. */
+const notDeleted = "NOT EXISTS (SELECT 1 FROM deleted_orders WHERE provider = ? AND order_id = ?)";
+
 export type LicenceStatus = "active" | "ended" | "revoked";
 
 export interface Account {
@@ -93,10 +96,10 @@ export class LicenceStore {
   async addLicence(accountId: string, provider: string, orderId: string, now: number): Promise<void> {
     await this.db
       .prepare(
-        "INSERT INTO licences (id, account_id, provider, order_id, status, created_at) VALUES (?, ?, ?, ?, 'active', ?) " +
-          "ON CONFLICT (provider, order_id) DO NOTHING",
+        "INSERT INTO licences (id, account_id, provider, order_id, status, created_at) SELECT ?, ?, ?, ?, 'active', ? " +
+          `WHERE ${notDeleted} ON CONFLICT (provider, order_id) DO NOTHING`,
       )
-      .bind(crypto.randomUUID(), accountId, provider, orderId, now)
+      .bind(crypto.randomUUID(), accountId, provider, orderId, now, provider, orderId)
       .run();
   }
 
@@ -107,13 +110,13 @@ export class LicenceStore {
     await this.db
       .prepare(
         "INSERT INTO licences (id, account_id, provider, order_id, status, plan, trial, ends_at, renews, customer_id, synced_at, created_at) " +
-          "VALUES (?, ?, 'paddle', ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+          `SELECT ?, ?, 'paddle', ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${notDeleted} ` +
           "ON CONFLICT (provider, order_id) DO UPDATE SET plan = excluded.plan, trial = excluded.trial, ends_at = excluded.ends_at, renews = excluded.renews, " +
           "customer_id = excluded.customer_id, synced_at = excluded.synced_at, " +
           "status = CASE WHEN licences.status = 'revoked' THEN 'revoked' ELSE excluded.status END " +
           "WHERE licences.synced_at IS NULL OR licences.synced_at <= excluded.synced_at",
       )
-      .bind(crypto.randomUUID(), accountId, orderId, status, plan, trial ? 1 : 0, endsAt, renews ? 1 : 0, customerId, syncedAt, now)
+      .bind(crypto.randomUUID(), accountId, orderId, status, plan, trial ? 1 : 0, endsAt, renews ? 1 : 0, customerId, syncedAt, now, "paddle", orderId)
       .run();
   }
 
@@ -247,8 +250,12 @@ export class LicenceStore {
     return result.meta.changes ?? 0;
   }
 
-  async deleteAccount(account: Account): Promise<void> {
+  /** Deletes the account and everything in it. Its Paddle orders are remembered, so a webhook or sign-in can't bring them back. */
+  async deleteAccount(account: Account, now: number): Promise<void> {
     await this.db.batch([
+      this.db
+        .prepare("INSERT OR IGNORE INTO deleted_orders (provider, order_id, deleted_at) SELECT provider, order_id, ? FROM licences WHERE account_id = ? AND provider = 'paddle'")
+        .bind(now, account.id),
       this.db.prepare("DELETE FROM sessions WHERE account_id = ?").bind(account.id),
       this.db.prepare("DELETE FROM computers WHERE account_id = ?").bind(account.id),
       this.db.prepare("DELETE FROM licences WHERE account_id = ?").bind(account.id),

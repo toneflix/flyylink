@@ -52,6 +52,8 @@ On a terminal, missing input is asked for and listings let you pick a row and an
 | Notices   | `notify:send <to>`, `notify:continue <id>`, `notify:list`                                 |
 | Operators | `operators:add`, `operators:list`, `operators:revoke`, `audit:list`, `stats`              |
 
+`users:delete` cancels the user's Paddle subscriptions straight away, then deletes them. Their Paddle orders don't come back from a late webhook or a later sign-in, but a new purchase works as usual. If Paddle won't cancel a subscription, the user isn't deleted.
+
 ## Settings
 
 Settings are stored in D1 and override the worker's defaults until unset.

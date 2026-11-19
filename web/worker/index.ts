@@ -87,7 +87,7 @@ function router(env: Env): Router {
   ).register(router);
   notices.register(router);
   new AdminApi(new AdminAuthenticator(operators, env.ADMIN_BOOTSTRAP_KEY), audit, [
-    new UserCommands(store, licensing),
+    new UserCommands(store, licensing, paddleApi),
     new LicenceCommands(store),
     new SystemCommands(settings, store),
     new NotifyCommands(notices),
