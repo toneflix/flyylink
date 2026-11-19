@@ -4,6 +4,7 @@ import { CreditCard, Laptop, LogOut, Monitor } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { type AccountInfo, LicenceClient, LicenceError, type LicenceInfo } from "./api";
 import { AccountSkeleton, Spinner } from "./Loaders";
+import { Session } from "./session";
 
 const client = new LicenceClient();
 
@@ -32,7 +33,9 @@ export function AccountPanel() {
 
   const load = useCallback(async () => {
     try {
-      setStep({ name: "account", info: await client.account() });
+      const info = await client.account();
+      Session.changed(info);
+      setStep({ name: "account", info });
     } catch {
       setStep({ name: "email" });
     }
@@ -105,7 +108,7 @@ export function AccountPanel() {
           <h2>{info.email}</h2>
           <p className="price-note">{planLine(info.licence)}</p>
         </div>
-        <button className="button button-ghost" disabled={busy} onClick={() => run("signOut", async () => { await client.signOut(); setStep({ name: "email" }); })}>
+        <button className="button button-ghost" disabled={busy} onClick={() => run("signOut", async () => { await client.signOut(); Session.changed(null); setStep({ name: "email" }); })}>
           {pending === "signOut" ? <Spinner size={16} /> : <LogOut size={16} />}
           Sign out
         </button>

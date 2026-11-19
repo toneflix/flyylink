@@ -2,8 +2,10 @@
 
 import { Check, ShoppingBag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { LicenceClient, type Plan } from "./api";
+import Link from "next/link";
+import { type LicenceInfo, LicenceClient, type Plan } from "./api";
 import { BuySkeleton } from "./Loaders";
+import { useAccount } from "./session";
 import { PaddleCheckout, type PlanPrice } from "./paddle";
 
 const plans: Record<Plan, { name: string; per: string; perks: string[] }> = {
@@ -14,6 +16,26 @@ const plans: Record<Plan, { name: string; per: string; perks: string[] }> = {
 
 function computersPerk(limit: number): string {
   return limit === 1 ? "Use it on one Mac or PC" : `Use it on up to ${limit} Macs and PCs`;
+}
+
+function date(seconds: number): string {
+  return new Date(seconds * 1000).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+}
+
+/** Why someone who is signed in can't buy `plan`, or null when they can. */
+function blocked(licence: LicenceInfo | null | undefined, plan: Plan): { label: string; reason: string; action?: string } | null {
+  if (!licence) return null;
+  if (licence.plan === "lifetime") return { label: "You own FlyyLink", reason: "You already have FlyyLink for life, so there's nothing more to buy." };
+
+  const name = plans[licence.plan].name.toLowerCase();
+  if (licence.trial) {
+    const until = licence.endsAt ? ` until ${date(licence.endsAt)}` : "";
+
+    return { label: "You're on a free trial", reason: `You're trying the ${name} plan for free${until}.`, action: "change or cancel it" };
+  }
+  if (licence.plan === plan) return { label: "Your current plan", reason: `You're already on the ${name} plan.`, action: "manage it" };
+
+  return null;
 }
 
 /** How much a year on the annual plan saves over twelve months, as a whole percentage. */
@@ -33,6 +55,7 @@ export function BuyPanel() {
   const [boughtBy, setBoughtBy] = useState<string | null>(null);
   const [error, setError] = useState<string>();
   const [loaded, setLoaded] = useState(false);
+  const account = useAccount();
 
   useEffect(() => {
     new LicenceClient()
@@ -62,12 +85,13 @@ export function BuyPanel() {
     );
   }
 
-  if (!loaded) return <BuySkeleton />;
+  if (!loaded || account === undefined) return <BuySkeleton />;
 
   const saving = annualSaving(prices);
   const details = plans[plan];
   const price = prices[plan];
   const perks = limit ? [computersPerk(limit), ...details.perks] : details.perks;
+  const block = blocked(account?.licence, plan);
 
   return (
     <div className="licence-panel">
@@ -100,12 +124,23 @@ export function BuyPanel() {
 
       <button
         className="button button-primary"
-        disabled={!checkout.current || onSale.length === 0 || !!error}
+        disabled={!checkout.current || onSale.length === 0 || !!error || !!block}
         onClick={() => checkout.current?.open(plan, (email) => setBoughtBy(email ?? ""))}
       >
         <ShoppingBag size={18} />
-        {plan === "lifetime" ? "Buy FlyyLink" : price?.trial ? "Try it free" : "Subscribe"}
+        {block?.label ?? (plan === "lifetime" ? "Buy FlyyLink" : price?.trial ? "Try it free" : "Subscribe")}
       </button>
+      {block && (
+        <p className="price-note">
+          {block.reason}
+          {block.action && (
+            <>
+              {" "}
+              You can {block.action} from <Link href="/account">your account</Link>.
+            </>
+          )}
+        </p>
+      )}
       {error && <p className="form-error">{error}</p>}
     </div>
   );
