@@ -205,7 +205,7 @@ public sealed class AppModel : Observable, IDeviceDelegate
         flyyDrop.Drop.Restore(receiving, until);
         plugins = new PluginRouter([notifications, battery, connectivity, clipboard, share, media, sms, contacts, calls, locations, photos, phoneFiles, screen, find, mediaHost, notificationShare, inputShare, screenHost, relay, flyyDrop]);
 
-        updater = new Updater(toasts) { OnInstalling = () => ui.TryEnqueue(() => UpdateInstalling?.Invoke()) };
+        updater = new Updater { OnInstalling = () => ui.TryEnqueue(() => UpdateInstalling?.Invoke()) };
         Licence = new LicenceModel(ui, toasts);
         Licence.LockChanged += () =>
         {
@@ -664,11 +664,12 @@ public sealed class AppModel : Observable, IDeviceDelegate
     /// Whether any device has been paired with this PC, connected or not.
     public bool HasPaired => trustStore.TrustedIds.Count > 0;
 
-    public void CheckForUpdates() => _ = updater.CheckAsync(manual: true);
+    public void CheckForUpdates() => updater.Check();
 
     public void Stop()
     {
         StopLink();
+        updater.Stop();
         folder.Disconnect();
         drives.Stop();
         Audio.Dispose();
